@@ -3,13 +3,23 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: SocialMetaCollector API - Collect metadata from YouTube, Instagram, and Facebook
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: OAuth2 authentication
+  - name: youtube
+    description: YouTube metadata
+  - name: instagram
+    description: Instagram metadata
+  - name: facebook
+    description: Facebook metadata
+  - name: dashboard
+    description: Aggregated dashboard data
 paths:
   /healthz:
     get:
@@ -24,6 +34,324 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/status:
+    get:
+      operationId: getAuthStatus
+      tags: [auth]
+      summary: Get authentication status for all platforms
+      responses:
+        "200":
+          description: Auth status for all platforms
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthStatus"
+
+  /auth/youtube/connect:
+    post:
+      operationId: connectYoutube
+      tags: [auth]
+      summary: Initiate YouTube OAuth2 connection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OAuthConnectBody"
+      responses:
+        "200":
+          description: Connection initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OAuthConnectResponse"
+
+  /auth/instagram/connect:
+    post:
+      operationId: connectInstagram
+      tags: [auth]
+      summary: Initiate Instagram OAuth2 connection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OAuthConnectBody"
+      responses:
+        "200":
+          description: Connection initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OAuthConnectResponse"
+
+  /auth/facebook/connect:
+    post:
+      operationId: connectFacebook
+      tags: [auth]
+      summary: Initiate Facebook OAuth2 connection
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OAuthConnectBody"
+      responses:
+        "200":
+          description: Connection initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OAuthConnectResponse"
+
+  /auth/{platform}/disconnect:
+    post:
+      operationId: disconnectPlatform
+      tags: [auth]
+      summary: Disconnect a platform
+      parameters:
+        - name: platform
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [youtube, instagram, facebook]
+      responses:
+        "200":
+          description: Disconnected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /youtube/channel:
+    get:
+      operationId: getYoutubeChannel
+      tags: [youtube]
+      summary: Get YouTube channel metadata
+      responses:
+        "200":
+          description: Channel metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/YoutubeChannel"
+
+  /youtube/videos:
+    get:
+      operationId: listYoutubeVideos
+      tags: [youtube]
+      summary: List YouTube videos with metadata
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of videos
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/YoutubeVideoList"
+
+  /youtube/videos/{videoId}:
+    get:
+      operationId: getYoutubeVideo
+      tags: [youtube]
+      summary: Get specific YouTube video metadata
+      parameters:
+        - name: videoId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Video metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/YoutubeVideo"
+
+  /youtube/analytics:
+    get:
+      operationId: getYoutubeAnalytics
+      tags: [youtube]
+      summary: Get YouTube channel analytics summary
+      responses:
+        "200":
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformAnalytics"
+
+  /instagram/profile:
+    get:
+      operationId: getInstagramProfile
+      tags: [instagram]
+      summary: Get Instagram profile metadata
+      responses:
+        "200":
+          description: Profile metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstagramProfile"
+
+  /instagram/media:
+    get:
+      operationId: listInstagramMedia
+      tags: [instagram]
+      summary: List Instagram media with metadata
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of media
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InstagramMediaList"
+
+  /instagram/analytics:
+    get:
+      operationId: getInstagramAnalytics
+      tags: [instagram]
+      summary: Get Instagram analytics summary
+      responses:
+        "200":
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformAnalytics"
+
+  /facebook/page:
+    get:
+      operationId: getFacebookPage
+      tags: [facebook]
+      summary: Get Facebook page metadata
+      responses:
+        "200":
+          description: Page metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacebookPage"
+
+  /facebook/posts:
+    get:
+      operationId: listFacebookPosts
+      tags: [facebook]
+      summary: List Facebook posts with metadata
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of posts
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FacebookPostList"
+
+  /facebook/analytics:
+    get:
+      operationId: getFacebookAnalytics
+      tags: [facebook]
+      summary: Get Facebook page analytics summary
+      responses:
+        "200":
+          description: Analytics data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformAnalytics"
+
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get aggregated summary across all platforms
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+
+  /dashboard/recent-metadata:
+    get:
+      operationId: listRecentMetadata
+      tags: [dashboard]
+      summary: List recently collected metadata entries
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Recent metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecentMetadataList"
+
+  /dashboard/engagement-trends:
+    get:
+      operationId: getEngagementTrends
+      tags: [dashboard]
+      summary: Get engagement trends over time per platform
+      responses:
+        "200":
+          description: Engagement trends
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EngagementTrends"
+
+  /metadata/sync:
+    post:
+      operationId: syncAllMetadata
+      tags: [dashboard]
+      summary: Trigger a sync of all connected platforms metadata
+      responses:
+        "200":
+          description: Sync started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +362,510 @@ components:
       required:
         - status
 
+    AuthStatus:
+      type: object
+      properties:
+        youtube:
+          $ref: "#/components/schemas/PlatformAuthStatus"
+        instagram:
+          $ref: "#/components/schemas/PlatformAuthStatus"
+        facebook:
+          $ref: "#/components/schemas/PlatformAuthStatus"
+      required:
+        - youtube
+        - instagram
+        - facebook
+
+    PlatformAuthStatus:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        accountName:
+          type: string
+        connectedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+      required:
+        - connected
+
+    OAuthConnectBody:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        accountName:
+          type: string
+      required:
+        - accessToken
+        - accountName
+
+    OAuthConnectResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        platform:
+          type: string
+        accountName:
+          type: string
+      required:
+        - success
+        - platform
+        - accountName
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+        - message
+
+    YoutubeChannel:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        subscriberCount:
+          type: integer
+        videoCount:
+          type: integer
+        viewCount:
+          type: integer
+        thumbnailUrl:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - subscriberCount
+        - videoCount
+        - viewCount
+
+    YoutubeVideo:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        viewCount:
+          type: integer
+        likeCount:
+          type: integer
+        commentCount:
+          type: integer
+        duration:
+          type: string
+        thumbnailUrl:
+          type: string
+        publishedAt:
+          type: string
+          format: date-time
+        platform:
+          type: string
+      required:
+        - id
+        - title
+        - viewCount
+        - likeCount
+        - commentCount
+
+    YoutubeVideoList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/YoutubeVideo"
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+      required:
+        - items
+        - total
+        - limit
+        - offset
+
+    InstagramProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        name:
+          type: string
+        biography:
+          type: string
+        followersCount:
+          type: integer
+        followingCount:
+          type: integer
+        mediaCount:
+          type: integer
+        profilePictureUrl:
+          type: string
+        website:
+          type: string
+      required:
+        - id
+        - username
+        - followersCount
+        - followingCount
+        - mediaCount
+
+    InstagramMedia:
+      type: object
+      properties:
+        id:
+          type: string
+        caption:
+          type: string
+        mediaType:
+          type: string
+          enum: [IMAGE, VIDEO, CAROUSEL_ALBUM]
+        likeCount:
+          type: integer
+        commentsCount:
+          type: integer
+        reach:
+          type: integer
+        impressions:
+          type: integer
+        mediaUrl:
+          type: string
+        thumbnailUrl:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        platform:
+          type: string
+      required:
+        - id
+        - mediaType
+        - likeCount
+        - commentsCount
+
+    InstagramMediaList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InstagramMedia"
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+      required:
+        - items
+        - total
+        - limit
+        - offset
+
+    FacebookPage:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        about:
+          type: string
+        category:
+          type: string
+        fanCount:
+          type: integer
+        followersCount:
+          type: integer
+        talkingAboutCount:
+          type: integer
+        websiteUrl:
+          type: string
+        profilePictureUrl:
+          type: string
+      required:
+        - id
+        - name
+        - fanCount
+        - followersCount
+
+    FacebookPost:
+      type: object
+      properties:
+        id:
+          type: string
+        message:
+          type: string
+        story:
+          type: string
+        likeCount:
+          type: integer
+        commentCount:
+          type: integer
+        shareCount:
+          type: integer
+        reach:
+          type: integer
+        impressions:
+          type: integer
+        postType:
+          type: string
+        createdTime:
+          type: string
+          format: date-time
+        platform:
+          type: string
+      required:
+        - id
+        - likeCount
+        - commentCount
+        - shareCount
+
+    FacebookPostList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/FacebookPost"
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+      required:
+        - items
+        - total
+        - limit
+        - offset
+
+    PlatformAnalytics:
+      type: object
+      properties:
+        platform:
+          type: string
+        totalContent:
+          type: integer
+        totalViews:
+          type: integer
+        totalLikes:
+          type: integer
+        totalComments:
+          type: integer
+        totalShares:
+          type: integer
+        averageEngagementRate:
+          type: number
+        followerCount:
+          type: integer
+        growthRate:
+          type: number
+        topContent:
+          type: array
+          items:
+            $ref: "#/components/schemas/TopContentItem"
+      required:
+        - platform
+        - totalContent
+        - totalViews
+        - totalLikes
+        - totalComments
+        - averageEngagementRate
+        - followerCount
+
+    TopContentItem:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        views:
+          type: integer
+        likes:
+          type: integer
+        engagementRate:
+          type: number
+        platform:
+          type: string
+      required:
+        - id
+        - title
+        - views
+        - likes
+        - engagementRate
+        - platform
+
+    DashboardSummary:
+      type: object
+      properties:
+        totalPlatforms:
+          type: integer
+        connectedPlatforms:
+          type: integer
+        totalFollowers:
+          type: integer
+        totalContent:
+          type: integer
+        totalViews:
+          type: integer
+        totalEngagements:
+          type: integer
+        averageEngagementRate:
+          type: number
+        platformBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/PlatformBreakdown"
+        lastSyncAt:
+          type: string
+          format: date-time
+      required:
+        - totalPlatforms
+        - connectedPlatforms
+        - totalFollowers
+        - totalContent
+        - totalViews
+        - totalEngagements
+        - averageEngagementRate
+        - platformBreakdown
+
+    PlatformBreakdown:
+      type: object
+      properties:
+        platform:
+          type: string
+        connected:
+          type: boolean
+        followers:
+          type: integer
+        content:
+          type: integer
+        engagementRate:
+          type: number
+      required:
+        - platform
+        - connected
+        - followers
+        - content
+        - engagementRate
+
+    RecentMetadataList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetadataEntry"
+        total:
+          type: integer
+      required:
+        - items
+        - total
+
+    MetadataEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        platform:
+          type: string
+        contentType:
+          type: string
+        contentId:
+          type: string
+        title:
+          type: string
+        views:
+          type: integer
+        likes:
+          type: integer
+        comments:
+          type: integer
+        shares:
+          type: integer
+        collectedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - platform
+        - contentType
+        - contentId
+        - views
+        - likes
+        - comments
+        - collectedAt
+
+    EngagementTrends:
+      type: object
+      properties:
+        period:
+          type: string
+        dataPoints:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrendDataPoint"
+      required:
+        - period
+        - dataPoints
+
+    TrendDataPoint:
+      type: object
+      properties:
+        date:
+          type: string
+        youtube:
+          type: integer
+        instagram:
+          type: integer
+        facebook:
+          type: integer
+      required:
+        - date
+        - youtube
+        - instagram
+        - facebook
+
+    SyncResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        platformsSynced:
+          type: array
+          items:
+            type: string
+        syncedAt:
+          type: string
+          format: date-time
+      required:
+        - success
+        - message
+        - platformsSynced
