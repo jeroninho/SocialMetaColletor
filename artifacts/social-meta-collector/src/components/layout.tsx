@@ -83,8 +83,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="mt-auto pt-8">
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={location === "/login"}>
-                    <Link href="/login">
+                  <SidebarMenuButton asChild isActive={location === "/connections"}>
+                    <Link href="/connections">
                       <Settings className="w-4 h-4" />
                       <span>Connections</span>
                     </Link>
@@ -102,7 +102,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </h1>
             <div className="flex items-center gap-4">
               <Button variant="outline" size="sm" asChild>
-                <Link href="/login">Manage Connections</Link>
+                <Link href="/connections">Manage Connections</Link>
               </Button>
             </div>
           </header>
