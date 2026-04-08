@@ -36,6 +36,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/context/theme";
+import { getTooltipStyle, getAxisStyle, getGridStyle } from "@/lib/chart-theme";
 
 function fmt(n?: number) {
   if (n === undefined || n === null) return "—";
@@ -44,18 +46,55 @@ function fmt(n?: number) {
   return n.toLocaleString();
 }
 
-const platformBadge: Record<string, { color: string; hex: string; icon: React.ReactNode }> = {
-  youtube: { color: "text-[#FF0000]", hex: "#FF0000", icon: <Youtube className="w-3 h-3" /> },
-  instagram: { color: "text-[#E1306C]", hex: "#E1306C", icon: <Instagram className="w-3 h-3" /> },
-  facebook: { color: "text-[#1877F2]", hex: "#1877F2", icon: <Facebook className="w-3 h-3" /> },
+const PLATFORM_HEX: Record<string, string> = {
+  youtube: "#FF4444",
+  instagram: "#E1306C",
+  facebook: "#2D88FF",
+};
+
+const platformBadge: Record<string, { hex: string; icon: React.ReactNode }> = {
+  youtube: { hex: "#FF4444", icon: <Youtube className="w-3 h-3" /> },
+  instagram: { hex: "#E1306C", icon: <Instagram className="w-3 h-3" /> },
+  facebook: { hex: "#2D88FF", icon: <Facebook className="w-3 h-3" /> },
 };
 
 type ChartTab = "line" | "bar" | "pie";
+
+function ChartTabBtn({
+  tab,
+  current,
+  label,
+  onClick,
+}: {
+  tab: ChartTab;
+  current: ChartTab;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+        current === tab
+          ? "bg-primary text-primary-foreground shadow-sm"
+          : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
 
 export default function Reports() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [chartTab, setChartTab] = useState<ChartTab>("line");
+  const { theme } = useTheme();
+  const dark = theme === "dark";
+
+  const tooltipStyle = getTooltipStyle(dark);
+  const axisStyle = getAxisStyle(dark);
+  const gridColor = getGridStyle(dark);
 
   const { data: recentData, isLoading: loadingRecent } = useListRecentMetadata(
     { limit: 10 },
@@ -89,74 +128,61 @@ export default function Reports() {
   }));
 
   const pieData = [
-    { name: "YouTube", value: trends?.dataPoints.reduce((s, d) => s + d.youtube, 0) ?? 0, color: "#FF0000" },
+    { name: "YouTube", value: trends?.dataPoints.reduce((s, d) => s + d.youtube, 0) ?? 0, color: "#FF4444" },
     { name: "Instagram", value: trends?.dataPoints.reduce((s, d) => s + d.instagram, 0) ?? 0, color: "#E1306C" },
-    { name: "Facebook", value: trends?.dataPoints.reduce((s, d) => s + d.facebook, 0) ?? 0, color: "#1877F2" },
+    { name: "Facebook", value: trends?.dataPoints.reduce((s, d) => s + d.facebook, 0) ?? 0, color: "#2D88FF" },
   ].filter((d) => d.value > 0);
 
-  const tooltipStyle = {
-    background: "hsl(var(--card))",
-    border: "1px solid hsl(var(--border))",
-    borderRadius: 8,
-    fontSize: 12,
-    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-  };
-
-  const tabBtn = (tab: ChartTab, label: string) => (
-    <button
-      onClick={() => setChartTab(tab)}
-      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
-        chartTab === tab
-          ? "bg-primary text-primary-foreground shadow-sm"
-          : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
-      }`}
-    >
-      {label}
-    </button>
-  );
+  const legendStyle = { fontSize: 12, color: dark ? "hsl(220 20% 70%)" : "hsl(220 10% 46%)" };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold">Reports</h2>
-          <p className="text-sm text-muted-foreground mt-0.5">Engagement trends and recently collected metadata</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Tendencias de engajamento e metadata coletada</p>
         </div>
-        <Button size="sm" onClick={handleSync} disabled={sync.isPending} className="rounded-full">
+        <Button size="sm" onClick={handleSync} disabled={sync.isPending} className="rounded-full h-9">
           <RefreshCw className={`w-4 h-4 mr-2 ${sync.isPending ? "animate-spin" : ""}`} />
           {sync.isPending ? "Syncing..." : "Sync Now"}
         </Button>
       </div>
 
-      {/* Chart tabs */}
-      <Card className="border-border/60">
-        <CardHeader className="pb-3 flex flex-row items-start justify-between gap-4">
+      {/* Engagement chart card */}
+      <Card className="border-border/50 shadow-sm">
+        <CardHeader className="pb-3 pt-5 flex flex-row items-start justify-between gap-4">
           <div>
             <CardTitle className="text-sm font-semibold">Engagement Trends</CardTitle>
-            <p className="text-xs text-muted-foreground mt-0.5">Cross-platform performance over time</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Performance cross-platform ao longo do tempo</p>
           </div>
-          <div className="flex items-center gap-1 bg-muted/50 rounded-lg p-1 flex-shrink-0">
-            {tabBtn("line", "Line")}
-            {tabBtn("bar", "Bar")}
-            {tabBtn("pie", "Pie")}
+          <div className="flex items-center gap-1 bg-muted/50 rounded-xl p-1 flex-shrink-0">
+            {(["line", "bar", "pie"] as ChartTab[]).map((tab) => (
+              <ChartTabBtn
+                key={tab}
+                tab={tab}
+                current={chartTab}
+                label={tab.charAt(0).toUpperCase() + tab.slice(1)}
+                onClick={() => setChartTab(tab)}
+              />
+            ))}
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pb-5">
           {loadingTrends ? (
-            <Skeleton className="h-64 w-full rounded-lg" />
+            <Skeleton className="h-64 w-full rounded-xl" />
           ) : (
             <>
               {chartTab === "line" && (
                 <ResponsiveContainer width="100%" height={260}>
                   <LineChart data={chartData} margin={{ top: 4, right: 16, left: -8, bottom: 4 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => fmt(v)} axisLine={false} tickLine={false} />
+                    <CartesianGrid strokeDasharray="4 4" stroke={gridColor} vertical={false} />
+                    <XAxis dataKey="date" tick={axisStyle.tick} axisLine={false} tickLine={false} />
+                    <YAxis tick={axisStyle.tick} axisLine={false} tickLine={false} tickFormatter={(v) => fmt(v)} />
                     <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [fmt(v), ""]} />
-                    <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Line type="monotone" dataKey="YouTube" stroke="#FF0000" strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
-                    <Line type="monotone" dataKey="Instagram" stroke="#E1306C" strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
-                    <Line type="monotone" dataKey="Facebook" stroke="#1877F2" strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
+                    <Legend wrapperStyle={legendStyle} />
+                    <Line type="monotone" dataKey="YouTube" stroke="#FF4444" strokeWidth={2.5} dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
+                    <Line type="monotone" dataKey="Instagram" stroke="#E1306C" strokeWidth={2.5} dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
+                    <Line type="monotone" dataKey="Facebook" stroke="#2D88FF" strokeWidth={2.5} dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
                   </LineChart>
                 </ResponsiveContainer>
               )}
@@ -164,46 +190,45 @@ export default function Reports() {
               {chartTab === "bar" && (
                 <ResponsiveContainer width="100%" height={260}>
                   <BarChart data={chartData} margin={{ top: 4, right: 16, left: -8, bottom: 4 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => fmt(v)} axisLine={false} tickLine={false} />
+                    <CartesianGrid strokeDasharray="4 4" stroke={gridColor} vertical={false} />
+                    <XAxis dataKey="date" tick={axisStyle.tick} axisLine={false} tickLine={false} />
+                    <YAxis tick={axisStyle.tick} axisLine={false} tickLine={false} tickFormatter={(v) => fmt(v)} />
                     <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [fmt(v), ""]} />
-                    <Legend wrapperStyle={{ fontSize: 12 }} />
-                    <Bar dataKey="YouTube" fill="#FF0000" fillOpacity={0.85} radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="Instagram" fill="#E1306C" fillOpacity={0.85} radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="Facebook" fill="#1877F2" fillOpacity={0.85} radius={[4, 4, 0, 0]} />
+                    <Legend wrapperStyle={legendStyle} />
+                    <Bar dataKey="YouTube" fill="#FF4444" fillOpacity={0.9} radius={[4, 4, 0, 0]} maxBarSize={20} />
+                    <Bar dataKey="Instagram" fill="#E1306C" fillOpacity={0.9} radius={[4, 4, 0, 0]} maxBarSize={20} />
+                    <Bar dataKey="Facebook" fill="#2D88FF" fillOpacity={0.9} radius={[4, 4, 0, 0]} maxBarSize={20} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
 
               {chartTab === "pie" && (
-                <div className="flex flex-col md:flex-row items-center gap-6">
-                  <ResponsiveContainer width="100%" height={220}>
+                <div className="flex flex-col md:flex-row items-center gap-8">
+                  <ResponsiveContainer width="100%" height={240}>
                     <PieChart>
                       <Pie
                         data={pieData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={60}
-                        outerRadius={95}
-                        paddingAngle={3}
+                        innerRadius={65}
+                        outerRadius={100}
+                        paddingAngle={4}
                         dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        labelLine={false}
+                        strokeWidth={0}
                       >
                         {pieData.map((entry) => (
                           <Cell key={entry.name} fill={entry.color} />
                         ))}
                       </Pie>
-                      <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [fmt(v), "Engagements"]} />
+                      <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [fmt(v), "Engajamentos"]} />
                     </PieChart>
                   </ResponsiveContainer>
-                  <div className="flex flex-col gap-3 min-w-fit">
+                  <div className="flex flex-col gap-3 min-w-fit md:pr-8">
                     {pieData.map((entry) => (
                       <div key={entry.name} className="flex items-center gap-3">
                         <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: entry.color }} />
-                        <span className="text-sm">{entry.name}</span>
-                        <span className="font-semibold text-sm tabular-nums ml-auto pl-4">{fmt(entry.value)}</span>
+                        <span className="text-sm text-muted-foreground">{entry.name}</span>
+                        <span className="font-bold text-sm tabular-nums ml-auto pl-6">{fmt(entry.value)}</span>
                       </div>
                     ))}
                   </div>
@@ -215,23 +240,23 @@ export default function Reports() {
       </Card>
 
       {/* Recent metadata table */}
-      <Card className="border-border/60">
-        <CardHeader className="pb-3">
+      <Card className="border-border/50 shadow-sm">
+        <CardHeader className="pb-3 pt-5">
           <CardTitle className="text-sm font-semibold">Recent Metadata Entries</CardTitle>
-          <p className="text-xs text-muted-foreground">Latest collected content across platforms</p>
+          <p className="text-xs text-muted-foreground">Ultimo conteudo coletado por plataforma</p>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="p-0 pb-2">
           <Table>
             <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="text-xs">Platform</TableHead>
+              <TableRow className="hover:bg-transparent border-border/50">
+                <TableHead className="text-xs pl-6">Platform</TableHead>
                 <TableHead className="text-xs">Content</TableHead>
                 <TableHead className="text-xs">Type</TableHead>
                 <TableHead className="text-xs text-right">Views</TableHead>
                 <TableHead className="text-xs text-right">Likes</TableHead>
                 <TableHead className="text-xs text-right">Comments</TableHead>
                 <TableHead className="text-xs text-right">Shares</TableHead>
-                <TableHead className="text-xs text-right">Collected</TableHead>
+                <TableHead className="text-xs text-right pr-6">Collected</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -246,18 +271,18 @@ export default function Reports() {
                 : recentData?.items.map((entry) => {
                     const pb = platformBadge[entry.platform];
                     return (
-                      <TableRow key={entry.id} className="hover:bg-muted/30 transition-colors">
-                        <TableCell>
+                      <TableRow key={entry.id} className="hover:bg-muted/30 transition-colors border-border/40">
+                        <TableCell className="pl-6">
                           <Badge
                             variant="outline"
-                            className={`flex items-center gap-1 w-fit text-xs ${pb?.color}`}
-                            style={{ borderColor: `${pb?.hex}40` }}
+                            className="flex items-center gap-1.5 w-fit text-xs rounded-full px-2.5"
+                            style={{ color: pb?.hex, borderColor: `${pb?.hex}40`, background: `${pb?.hex}12` }}
                           >
                             {pb?.icon}
                             <span className="capitalize">{entry.platform}</span>
                           </Badge>
                         </TableCell>
-                        <TableCell className="max-w-[200px] truncate text-sm font-medium">
+                        <TableCell className="max-w-[180px] truncate text-sm font-medium">
                           {entry.title ?? entry.contentId}
                         </TableCell>
                         <TableCell className="text-xs text-muted-foreground capitalize">{entry.contentType}</TableCell>
@@ -265,8 +290,8 @@ export default function Reports() {
                         <TableCell className="text-right text-sm tabular-nums">{fmt(entry.likes)}</TableCell>
                         <TableCell className="text-right text-sm tabular-nums">{fmt(entry.comments)}</TableCell>
                         <TableCell className="text-right text-sm tabular-nums">{fmt(entry.shares)}</TableCell>
-                        <TableCell className="text-right text-xs text-muted-foreground">
-                          {new Date(entry.collectedAt).toLocaleDateString()}
+                        <TableCell className="text-right text-xs text-muted-foreground pr-6">
+                          {new Date(entry.collectedAt).toLocaleDateString("pt-BR")}
                         </TableCell>
                       </TableRow>
                     );

@@ -39,6 +39,8 @@ import {
   Cell,
 } from "recharts";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/context/theme";
+import { getTooltipStyle, getAxisStyle } from "@/lib/chart-theme";
 
 function fmt(n?: number | null) {
   if (n === undefined || n === null) return "—";
@@ -116,6 +118,10 @@ function MetricChip({
 
 function MetadataCard({ data }: { data: FetchResult }) {
   const pc = platformConfig[data.platform] ?? { color: "#888", icon: null, label: data.platform, gradient: "" };
+  const { theme } = useTheme();
+  const dark = theme === "dark";
+  const tooltipStyle = getTooltipStyle(dark);
+  const axisStyle = getAxisStyle(dark);
 
   const chartData = [
     { name: "Views", value: data.views ?? 0 },
@@ -208,25 +214,20 @@ function MetadataCard({ data }: { data: FetchResult }) {
               </p>
               <ResponsiveContainer width="100%" height={130}>
                 <BarChart data={chartData} margin={{ top: 0, right: 4, left: -20, bottom: 0 }}>
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="name" tick={axisStyle.tick} axisLine={false} tickLine={false} />
                   <YAxis
-                    tick={{ fontSize: 10 }}
+                    tick={axisStyle.tick}
                     tickFormatter={(v) => fmt(v)}
                     axisLine={false}
                     tickLine={false}
                   />
                   <Tooltip
                     formatter={(v: number) => [fmt(v), ""]}
-                    contentStyle={{
-                      background: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: 8,
-                      fontSize: 11,
-                    }}
+                    contentStyle={tooltipStyle}
                   />
-                  <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                  <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={48}>
                     {chartData.map((_, i) => (
-                      <Cell key={i} fill={pc.color} fillOpacity={0.85 - i * 0.15} />
+                      <Cell key={i} fill={pc.color} fillOpacity={0.9 - i * 0.15} />
                     ))}
                   </Bar>
                 </BarChart>
