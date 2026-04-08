@@ -10,6 +10,7 @@ import InstagramPage from "@/pages/instagram";
 import FacebookPage from "@/pages/facebook";
 import Reports from "@/pages/reports";
 import Connections from "@/pages/connections";
+import FetchPage from "@/pages/fetch";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ function Router() {
         <Route path="/facebook" component={FacebookPage} />
         <Route path="/reports" component={Reports} />
         <Route path="/connections" component={Connections} />
+        <Route path="/fetch" component={FetchPage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

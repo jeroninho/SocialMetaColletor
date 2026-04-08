@@ -407,3 +407,61 @@ export const SyncAllMetadataResponse = zod.object({
   platformsSynced: zod.array(zod.string()),
   syncedAt: zod.coerce.date().optional(),
 });
+
+/**
+ * Accepts a URL from YouTube, TikTok, Instagram, Facebook, or X/Twitter and returns normalized metadata
+ * @summary Fetch metadata from any social media URL
+ */
+export const FetchMetadataFromUrlBody = zod.object({
+  url: zod.string().describe("URL of the social media post or video"),
+});
+
+export const FetchMetadataFromUrlResponse = zod.object({
+  platform: zod.enum(["youtube", "tiktok", "instagram", "facebook", "twitter"]),
+  url: zod.string(),
+  title: zod.string(),
+  author: zod.string(),
+  description: zod.string().optional(),
+  thumbnailUrl: zod.string().optional(),
+  views: zod.number().optional(),
+  likes: zod.number().optional(),
+  comments: zod.number().optional(),
+  shares: zod.number().optional(),
+  publishedAt: zod.coerce.date().optional(),
+  duration: zod.string().optional(),
+  tags: zod.array(zod.string()).optional(),
+  historyId: zod.number().optional(),
+});
+
+/**
+ * @summary List previously fetched URLs with their metadata
+ */
+export const listFetchHistoryQueryLimitDefault = 20;
+export const listFetchHistoryQueryOffsetDefault = 0;
+
+export const ListFetchHistoryQueryParams = zod.object({
+  limit: zod.coerce.number().default(listFetchHistoryQueryLimitDefault),
+  offset: zod.coerce.number().default(listFetchHistoryQueryOffsetDefault),
+});
+
+export const ListFetchHistoryResponse = zod.object({
+  items: zod.array(
+    zod.object({
+      id: zod.number(),
+      platform: zod.string(),
+      url: zod.string(),
+      title: zod.string(),
+      author: zod.string(),
+      thumbnailUrl: zod.string().optional(),
+      views: zod.number().optional(),
+      likes: zod.number().optional(),
+      comments: zod.number().optional(),
+      shares: zod.number().optional(),
+      publishedAt: zod.coerce.date().optional(),
+      fetchedAt: zod.coerce.date(),
+    }),
+  ),
+  total: zod.number(),
+  limit: zod.number(),
+  offset: zod.number(),
+});

@@ -22,10 +22,15 @@ import type {
   EngagementTrends,
   FacebookPage,
   FacebookPostList,
+  FetchHistoryList,
+  FetchMetadataBody,
+  FetchMetadataError,
+  FetchedMetadata,
   HealthStatus,
   InstagramMediaList,
   InstagramProfile,
   ListFacebookPostsParams,
+  ListFetchHistoryParams,
   ListInstagramMediaParams,
   ListRecentMetadataParams,
   ListYoutubeVideosParams,
@@ -1703,3 +1708,187 @@ export const useSyncAllMetadata = <
 > => {
   return useMutation(getSyncAllMetadataMutationOptions(options));
 };
+
+/**
+ * Accepts a URL from YouTube, TikTok, Instagram, Facebook, or X/Twitter and returns normalized metadata
+ * @summary Fetch metadata from any social media URL
+ */
+export const getFetchMetadataFromUrlUrl = () => {
+  return `/api/fetch-metadata`;
+};
+
+export const fetchMetadataFromUrl = async (
+  fetchMetadataBody: FetchMetadataBody,
+  options?: RequestInit,
+): Promise<FetchedMetadata> => {
+  return customFetch<FetchedMetadata>(getFetchMetadataFromUrlUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(fetchMetadataBody),
+  });
+};
+
+export const getFetchMetadataFromUrlMutationOptions = <
+  TError = ErrorType<FetchMetadataError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof fetchMetadataFromUrl>>,
+    TError,
+    { data: BodyType<FetchMetadataBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof fetchMetadataFromUrl>>,
+  TError,
+  { data: BodyType<FetchMetadataBody> },
+  TContext
+> => {
+  const mutationKey = ["fetchMetadataFromUrl"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof fetchMetadataFromUrl>>,
+    { data: BodyType<FetchMetadataBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return fetchMetadataFromUrl(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type FetchMetadataFromUrlMutationResult = NonNullable<
+  Awaited<ReturnType<typeof fetchMetadataFromUrl>>
+>;
+export type FetchMetadataFromUrlMutationBody = BodyType<FetchMetadataBody>;
+export type FetchMetadataFromUrlMutationError = ErrorType<FetchMetadataError>;
+
+/**
+ * @summary Fetch metadata from any social media URL
+ */
+export const useFetchMetadataFromUrl = <
+  TError = ErrorType<FetchMetadataError>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof fetchMetadataFromUrl>>,
+    TError,
+    { data: BodyType<FetchMetadataBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof fetchMetadataFromUrl>>,
+  TError,
+  { data: BodyType<FetchMetadataBody> },
+  TContext
+> => {
+  return useMutation(getFetchMetadataFromUrlMutationOptions(options));
+};
+
+/**
+ * @summary List previously fetched URLs with their metadata
+ */
+export const getListFetchHistoryUrl = (params?: ListFetchHistoryParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/fetch-metadata/history?${stringifiedParams}`
+    : `/api/fetch-metadata/history`;
+};
+
+export const listFetchHistory = async (
+  params?: ListFetchHistoryParams,
+  options?: RequestInit,
+): Promise<FetchHistoryList> => {
+  return customFetch<FetchHistoryList>(getListFetchHistoryUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListFetchHistoryQueryKey = (
+  params?: ListFetchHistoryParams,
+) => {
+  return [`/api/fetch-metadata/history`, ...(params ? [params] : [])] as const;
+};
+
+export const getListFetchHistoryQueryOptions = <
+  TData = Awaited<ReturnType<typeof listFetchHistory>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListFetchHistoryParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listFetchHistory>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getListFetchHistoryQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listFetchHistory>>
+  > = ({ signal }) => listFetchHistory(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof listFetchHistory>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListFetchHistoryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listFetchHistory>>
+>;
+export type ListFetchHistoryQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List previously fetched URLs with their metadata
+ */
+
+export function useListFetchHistory<
+  TData = Awaited<ReturnType<typeof listFetchHistory>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: ListFetchHistoryParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listFetchHistory>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListFetchHistoryQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}

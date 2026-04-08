@@ -223,6 +223,67 @@ export interface SyncResponse {
   syncedAt?: string;
 }
 
+export interface FetchMetadataBody {
+  /** URL of the social media post or video */
+  url: string;
+}
+
+export type FetchedMetadataPlatform =
+  (typeof FetchedMetadataPlatform)[keyof typeof FetchedMetadataPlatform];
+
+export const FetchedMetadataPlatform = {
+  youtube: "youtube",
+  tiktok: "tiktok",
+  instagram: "instagram",
+  facebook: "facebook",
+  twitter: "twitter",
+} as const;
+
+export interface FetchedMetadata {
+  platform: FetchedMetadataPlatform;
+  url: string;
+  title: string;
+  author: string;
+  description?: string;
+  thumbnailUrl?: string;
+  views?: number;
+  likes?: number;
+  comments?: number;
+  shares?: number;
+  publishedAt?: string;
+  duration?: string;
+  tags?: string[];
+  historyId?: number;
+}
+
+export interface FetchMetadataError {
+  error: string;
+  message: string;
+  platform?: string;
+}
+
+export interface FetchHistoryItem {
+  id: number;
+  platform: string;
+  url: string;
+  title: string;
+  author: string;
+  thumbnailUrl?: string;
+  views?: number;
+  likes?: number;
+  comments?: number;
+  shares?: number;
+  publishedAt?: string;
+  fetchedAt: string;
+}
+
+export interface FetchHistoryList {
+  items: FetchHistoryItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
 export type ListYoutubeVideosParams = {
   limit?: number;
   offset?: number;
@@ -240,4 +301,9 @@ export type ListFacebookPostsParams = {
 
 export type ListRecentMetadataParams = {
   limit?: number;
+};
+
+export type ListFetchHistoryParams = {
+  limit?: number;
+  offset?: number;
 };

@@ -7,6 +7,7 @@ import {
   Youtube, 
   Instagram, 
   Facebook,
+  Link2,
   LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -75,6 +76,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   <Link href="/reports">
                     <BarChart className="w-4 h-4" />
                     <span>Reports</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location === "/fetch"}>
+                  <Link href="/fetch">
+                    <Link2 className="w-4 h-4" />
+                    <span>Buscar Metadata</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

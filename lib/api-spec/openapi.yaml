@@ -352,6 +352,56 @@ paths:
               schema:
                 $ref: "#/components/schemas/SyncResponse"
 
+  /fetch-metadata:
+    post:
+      operationId: fetchMetadataFromUrl
+      tags: [fetch]
+      summary: Fetch metadata from any social media URL
+      description: Accepts a URL from YouTube, TikTok, Instagram, Facebook, or X/Twitter and returns normalized metadata
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FetchMetadataBody"
+      responses:
+        "200":
+          description: Normalized metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FetchedMetadata"
+        "400":
+          description: Invalid or unsupported URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FetchMetadataError"
+
+  /fetch-metadata/history:
+    get:
+      operationId: listFetchHistory
+      tags: [fetch]
+      summary: List previously fetched URLs with their metadata
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Fetch history list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FetchHistoryList"
+
 components:
   schemas:
     HealthStatus:
@@ -869,3 +919,122 @@ components:
         - success
         - message
         - platformsSynced
+
+    FetchMetadataBody:
+      type: object
+      properties:
+        url:
+          type: string
+          description: URL of the social media post or video
+      required:
+        - url
+
+    FetchedMetadata:
+      type: object
+      properties:
+        platform:
+          type: string
+          enum: [youtube, tiktok, instagram, facebook, twitter]
+        url:
+          type: string
+        title:
+          type: string
+        author:
+          type: string
+        description:
+          type: string
+        thumbnailUrl:
+          type: string
+        views:
+          type: integer
+        likes:
+          type: integer
+        comments:
+          type: integer
+        shares:
+          type: integer
+        publishedAt:
+          type: string
+          format: date-time
+        duration:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        historyId:
+          type: integer
+      required:
+        - platform
+        - url
+        - title
+        - author
+
+    FetchMetadataError:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        platform:
+          type: string
+      required:
+        - error
+        - message
+
+    FetchHistoryList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/FetchHistoryItem"
+        total:
+          type: integer
+        limit:
+          type: integer
+        offset:
+          type: integer
+      required:
+        - items
+        - total
+        - limit
+        - offset
+
+    FetchHistoryItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        platform:
+          type: string
+        url:
+          type: string
+        title:
+          type: string
+        author:
+          type: string
+        thumbnailUrl:
+          type: string
+        views:
+          type: integer
+        likes:
+          type: integer
+        comments:
+          type: integer
+        shares:
+          type: integer
+        publishedAt:
+          type: string
+          format: date-time
+        fetchedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - platform
+        - url
+        - title
+        - author
+        - fetchedAt
