@@ -1,98 +1,114 @@
 import React from "react";
 import { Link, useLocation } from "wouter";
-import { 
-  BarChart, 
-  LayoutDashboard, 
-  Settings, 
-  Youtube, 
-  Instagram, 
+import {
+  BarChart2,
+  LayoutDashboard,
+  Settings,
+  Youtube,
+  Instagram,
   Facebook,
   Link2,
-  LogOut
+  Sun,
+  Moon,
+  TrendingUp,
+  Twitter,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { 
-  Sidebar, 
-  SidebarContent, 
-  SidebarHeader, 
-  SidebarMenu, 
-  SidebarMenuItem, 
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuItem,
   SidebarMenuButton,
-  SidebarProvider
+  SidebarProvider,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "@/context/theme";
+
+const pageLabels: Record<string, string> = {
+  "/": "Dashboard",
+  "/youtube": "YouTube",
+  "/instagram": "Instagram",
+  "/facebook": "Facebook",
+  "/reports": "Reports",
+  "/fetch": "Buscar Metadata",
+  "/connections": "Connections",
+};
+
+const navMain = [
+  { href: "/", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/youtube", icon: Youtube, label: "YouTube", color: "#FF0000" },
+  { href: "/instagram", icon: Instagram, label: "Instagram", color: "#E1306C" },
+  { href: "/facebook", icon: Facebook, label: "Facebook", color: "#1877F2" },
+  { href: "/reports", icon: TrendingUp, label: "Reports" },
+  { href: "/fetch", icon: Link2, label: "Buscar Metadata" },
+];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  const { theme, toggleTheme } = useTheme();
+
+  const pageTitle = pageLabels[location] ?? location.slice(1);
 
   return (
     <SidebarProvider>
-      <div className="min-h-[100dvh] flex w-full bg-muted/30">
+      <div className="min-h-[100dvh] flex w-full bg-background">
         <Sidebar className="border-r border-border bg-sidebar">
-          <SidebarHeader className="h-16 flex items-center px-4 border-b border-border">
-            <div className="flex items-center gap-2 font-bold text-lg tracking-tight text-sidebar-foreground">
-              <div className="w-8 h-8 bg-primary rounded flex items-center justify-center text-primary-foreground">
-                <BarChart className="w-5 h-5" />
+          <SidebarHeader className="h-16 flex items-center px-5 border-b border-border">
+            <div className="flex items-center gap-2.5 font-bold text-lg tracking-tight">
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shadow-sm">
+                <BarChart2 className="w-4 h-4 text-primary-foreground" />
               </div>
-              <span>MetaCollector</span>
+              <span className="gradient-text">MetaCollector</span>
             </div>
           </SidebarHeader>
-          <SidebarContent className="py-4">
+
+          <SidebarContent className="py-4 px-2">
+            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-3 mb-2">
+              Navigation
+            </p>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location === "/"}>
-                  <Link href="/">
-                    <LayoutDashboard className="w-4 h-4" />
-                    <span>Dashboard</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location === "/youtube"}>
-                  <Link href="/youtube">
-                    <Youtube className="w-4 h-4 text-[#FF0000]" />
-                    <span>YouTube</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location === "/instagram"}>
-                  <Link href="/instagram">
-                    <Instagram className="w-4 h-4 text-[#E1306C]" />
-                    <span>Instagram</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location === "/facebook"}>
-                  <Link href="/facebook">
-                    <Facebook className="w-4 h-4 text-[#1877F2]" />
-                    <span>Facebook</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location === "/reports"}>
-                  <Link href="/reports">
-                    <BarChart className="w-4 h-4" />
-                    <span>Reports</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={location === "/fetch"}>
-                  <Link href="/fetch">
-                    <Link2 className="w-4 h-4" />
-                    <span>Buscar Metadata</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {navMain.map(({ href, icon: Icon, label, color }) => (
+                <SidebarMenuItem key={href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location === href}
+                    className={cn(
+                      "rounded-lg transition-all",
+                      location === href
+                        ? "bg-primary/10 text-primary font-medium"
+                        : "hover:bg-muted/60"
+                    )}
+                  >
+                    <Link href={href}>
+                      <Icon
+                        className="w-4 h-4 flex-shrink-0"
+                        style={color ? { color } : undefined}
+                      />
+                      <span>{label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
 
-            <div className="mt-auto pt-8">
+            <div className="mt-6">
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-3 mb-2">
+                Settings
+              </p>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={location === "/connections"}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location === "/connections"}
+                    className={cn(
+                      "rounded-lg transition-all",
+                      location === "/connections"
+                        ? "bg-primary/10 text-primary font-medium"
+                        : "hover:bg-muted/60"
+                    )}
+                  >
                     <Link href="/connections">
                       <Settings className="w-4 h-4" />
                       <span>Connections</span>
@@ -102,20 +118,50 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </SidebarMenu>
             </div>
           </SidebarContent>
+
+          <div className="p-4 border-t border-border mt-auto">
+            <div className="flex items-center gap-2 px-1">
+              <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center">
+                <BarChart2 className="w-3.5 h-3.5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium truncate">Social Analytics</p>
+                <p className="text-[10px] text-muted-foreground">Free plan</p>
+              </div>
+            </div>
+          </div>
         </Sidebar>
 
         <main className="flex-1 flex flex-col min-w-0">
-          <header className="h-16 flex items-center justify-between px-8 border-b border-border bg-card">
-            <h1 className="text-xl font-semibold capitalize">
-              {location === "/" ? "Dashboard" : location.slice(1)}
-            </h1>
-            <div className="flex items-center gap-4">
-              <Button variant="outline" size="sm" asChild>
+          <header className="h-16 flex items-center justify-between px-8 border-b border-border bg-card/60 backdrop-blur-sm sticky top-0 z-10">
+            <div className="flex items-center gap-3">
+              <h1 className="text-lg font-semibold tracking-tight">{pageTitle}</h1>
+              <div className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/60 rounded-md px-2.5 py-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+                Live
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={toggleTheme}
+                className="rounded-full w-9 h-9 hover:bg-muted/60"
+                title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {theme === "dark" ? (
+                  <Sun className="w-4 h-4 text-yellow-400" />
+                ) : (
+                  <Moon className="w-4 h-4" />
+                )}
+              </Button>
+              <Button variant="outline" size="sm" className="rounded-full text-xs" asChild>
                 <Link href="/connections">Manage Connections</Link>
               </Button>
             </div>
           </header>
-          <div className="flex-1 p-8 overflow-auto">
+
+          <div className="flex-1 p-6 md:p-8 overflow-auto">
             {children}
           </div>
         </main>
