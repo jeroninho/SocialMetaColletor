@@ -19,6 +19,91 @@ function safeEncrypt(token: string): string {
   }
 }
 
+async function validateYoutubeToken(token: string): Promise<void> {
+  let response: Response;
+  try {
+    response = await fetch(
+      "https://www.googleapis.com/youtube/v3/channels?part=id&mine=true",
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+  } catch {
+    throw { status: 502, message: "Unable to reach YouTube API" };
+  }
+  if (response.status === 401) {
+    throw { status: 401, message: "Invalid access token" };
+  }
+  if (response.status === 403) {
+    const body = await response.json().catch(() => ({})) as Record<string, unknown>;
+    const errors = (body?.error as Record<string, unknown> | undefined)?.errors;
+    const reason = Array.isArray(errors) && errors.length > 0
+      ? (errors[0] as Record<string, unknown>)?.reason
+      : undefined;
+    const authReasons = new Set(["authError", "invalidCredentials", "required", "forbidden"]);
+    if (typeof reason === "string" && authReasons.has(reason)) {
+      throw { status: 401, message: "Invalid access token" };
+    }
+    throw { status: 502, message: "YouTube API returned an unexpected error" };
+  }
+  if (!response.ok) {
+    throw { status: 502, message: "YouTube API returned an unexpected error" };
+  }
+}
+
+async function validateInstagramToken(token: string): Promise<void> {
+  let response: Response;
+  try {
+    response = await fetch(
+      `https://graph.instagram.com/me?fields=id,username&access_token=${encodeURIComponent(token)}`
+    );
+  } catch {
+    throw { status: 502, message: "Unable to reach Instagram API" };
+  }
+  if (response.status === 401 || response.status === 403) {
+    throw { status: 401, message: "Invalid access token" };
+  }
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({})) as Record<string, unknown>;
+    const err = body?.error as Record<string, unknown> | undefined;
+    const code = typeof err?.code === "number" ? err.code : 0;
+    if (code === 190 || code === 102) {
+      throw { status: 401, message: "Invalid access token" };
+    }
+    throw { status: 502, message: "Instagram API returned an unexpected error" };
+  }
+}
+
+async function validateFacebookToken(token: string): Promise<void> {
+  let response: Response;
+  try {
+    response = await fetch(
+      `https://graph.facebook.com/me?fields=id,name&access_token=${encodeURIComponent(token)}`
+    );
+  } catch {
+    throw { status: 502, message: "Unable to reach Facebook API" };
+  }
+  if (response.status === 401 || response.status === 403) {
+    throw { status: 401, message: "Invalid access token" };
+  }
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({})) as Record<string, unknown>;
+    const err = body?.error as Record<string, unknown> | undefined;
+    const code = typeof err?.code === "number" ? err.code : 0;
+    if (code === 190 || code === 102) {
+      throw { status: 401, message: "Invalid access token" };
+    }
+    throw { status: 502, message: "Facebook API returned an unexpected error" };
+  }
+}
+
+function isValidationError(err: unknown): err is { status: number; message: string } {
+  return (
+    typeof err === "object" &&
+    err !== null &&
+    "status" in err &&
+    "message" in err
+  );
+}
+
 router.get("/auth/status", async (req, res) => {
   try {
     const tokens = await db
@@ -62,6 +147,18 @@ router.post("/auth/youtube/connect", async (req, res) => {
   const { accessToken, accountName } = parsed.data;
 
   try {
+    await validateYoutubeToken(accessToken);
+  } catch (err) {
+    if (isValidationError(err)) {
+      res.status(err.status).json({ error: err.message });
+    } else {
+      req.log.error({ err }, "Unexpected error validating YouTube token");
+      res.status(502).json({ error: "Unable to validate token" });
+    }
+    return;
+  }
+
+  try {
     const encryptedToken = safeEncrypt(accessToken);
 
     await db.delete(tokensTable).where(eq(tokensTable.platform, "youtube"));
@@ -88,6 +185,18 @@ router.post("/auth/instagram/connect", async (req, res) => {
   const { accessToken, accountName } = parsed.data;
 
   try {
+    await validateInstagramToken(accessToken);
+  } catch (err) {
+    if (isValidationError(err)) {
+      res.status(err.status).json({ error: err.message });
+    } else {
+      req.log.error({ err }, "Unexpected error validating Instagram token");
+      res.status(502).json({ error: "Unable to validate token" });
+    }
+    return;
+  }
+
+  try {
     const encryptedToken = safeEncrypt(accessToken);
 
     await db.delete(tokensTable).where(eq(tokensTable.platform, "instagram"));
@@ -112,6 +221,18 @@ router.post("/auth/facebook/connect", async (req, res) => {
     return;
   }
   const { accessToken, accountName } = parsed.data;
+
+  try {
+    await validateFacebookToken(accessToken);
+  } catch (err) {
+    if (isValidationError(err)) {
+      res.status(err.status).json({ error: err.message });
+    } else {
+      req.log.error({ err }, "Unexpected error validating Facebook token");
+      res.status(502).json({ error: "Unable to validate token" });
+    }
+    return;
+  }
 
   try {
     const encryptedToken = safeEncrypt(accessToken);
