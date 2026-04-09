@@ -11,12 +11,13 @@ import {
   Sun,
   Moon,
   TrendingUp,
-  LogIn,
+  LogOut,
   Menu,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/context/theme";
+import { useAuth } from "@/context/auth";
 
 /* ── Design tokens ─────────────────────────────────────── */
 const PETROLEUM = "#1E2A38";
@@ -35,7 +36,6 @@ const navMain = [
 
 const navSettings = [
   { href: "/connections", icon: Settings, label: "Conexões" },
-  { href: "/login",       icon: LogIn,    label: "Entrar / Conta" },
 ];
 
 const pageLabels: Record<string, string> = {
@@ -109,10 +109,14 @@ function NavLink({
 function SidebarContent({
   location,
   onNav,
+  onLogout,
 }: {
   location: string;
   onNav?: () => void;
+  onLogout: () => void;
 }) {
+  const { user } = useAuth();
+
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: PETROLEUM }}>
       {/* Brand */}
@@ -177,30 +181,40 @@ function SidebarContent({
         </div>
       </nav>
 
-      {/* Footer */}
+      {/* User footer */}
       <div
         className="p-4 flex-shrink-0"
         style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
       >
-        <div className="flex items-center gap-2.5 px-1">
-          <div
-            className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-            style={{ background: "rgba(108,99,255,0.25)" }}
-          >
-            <BarChart2 className="w-4 h-4" style={{ color: PURPLE }} />
-          </div>
-          <div className="min-w-0">
-            <p
-              className="text-xs font-semibold text-white/90 truncate"
-              style={{ fontFamily: "var(--app-font-heading)" }}
+        {user ? (
+          <div className="flex items-center gap-2.5 px-1">
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold text-white uppercase"
+              style={{ background: `linear-gradient(135deg, ${PURPLE}, ${ROSE})` }}
             >
-              Social Analytics
-            </p>
-            <p className="text-[10px]" style={{ color: "rgba(224,224,224,0.45)" }}>
-              Plano gratuito
-            </p>
+              {user.nome.charAt(0)}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p
+                className="text-xs font-semibold text-white/90 truncate"
+                style={{ fontFamily: "var(--app-font-heading)" }}
+              >
+                {user.nome}
+              </p>
+              <p className="text-[10px] truncate" style={{ color: "rgba(224,224,224,0.55)" }}>
+                {user.email}
+              </p>
+            </div>
+            <button
+              onClick={onLogout}
+              title="Sair"
+              className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-200 hover:bg-white/15"
+              style={{ color: "rgba(255,255,255,0.55)" }}
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
-        </div>
+        ) : null}
       </div>
     </div>
   );
@@ -210,10 +224,17 @@ function SidebarContent({
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const { logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [, navigate] = useLocation();
 
   const dark = theme === "dark";
   const pageTitle = pageLabels[location] ?? location.replace("/", "");
+
+  function handleLogout() {
+    logout();
+    navigate("/login");
+  }
 
   /* Close sidebar when route changes */
   useEffect(() => {
@@ -238,7 +259,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         className="hidden lg:flex flex-col w-60 xl:w-64 flex-shrink-0 sticky top-0 h-screen"
         style={{ backgroundColor: PETROLEUM }}
       >
-        <SidebarContent location={location} />
+        <SidebarContent location={location} onLogout={handleLogout} />
       </aside>
 
       {/* ── Mobile overlay ──────────────────────────── */}
@@ -267,7 +288,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         >
           <X className="w-4 h-4 text-white/80" />
         </button>
-        <SidebarContent location={location} onNav={() => setMobileOpen(false)} />
+        <SidebarContent location={location} onNav={() => setMobileOpen(false)} onLogout={handleLogout} />
       </aside>
 
       {/* ── Main ────────────────────────────────────── */}

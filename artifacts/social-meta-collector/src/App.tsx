@@ -3,6 +3,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/context/theme";
+import { AuthProvider } from "@/context/auth";
+import { ProtectedRoute, PublicOnlyRoute } from "@/components/protected-route";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/layout";
 import Dashboard from "@/pages/dashboard";
@@ -18,19 +20,29 @@ const queryClient = new QueryClient();
 
 function Router() {
   return (
-    <Layout>
-      <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/youtube" component={YouTubePage} />
-        <Route path="/instagram" component={InstagramPage} />
-        <Route path="/facebook" component={FacebookPage} />
-        <Route path="/reports" component={Reports} />
-        <Route path="/connections" component={Connections} />
-        <Route path="/fetch" component={FetchPage} />
-        <Route path="/login" component={LoginPage} />
-        <Route component={NotFound} />
-      </Switch>
-    </Layout>
+    <Switch>
+      <Route path="/login">
+        <PublicOnlyRoute>
+          <LoginPage />
+        </PublicOnlyRoute>
+      </Route>
+      <Route>
+        <ProtectedRoute>
+          <Layout>
+            <Switch>
+              <Route path="/" component={Dashboard} />
+              <Route path="/youtube" component={YouTubePage} />
+              <Route path="/instagram" component={InstagramPage} />
+              <Route path="/facebook" component={FacebookPage} />
+              <Route path="/reports" component={Reports} />
+              <Route path="/connections" component={Connections} />
+              <Route path="/fetch" component={FetchPage} />
+              <Route component={NotFound} />
+            </Switch>
+          </Layout>
+        </ProtectedRoute>
+      </Route>
+    </Switch>
   );
 }
 
@@ -40,7 +52,9 @@ function App() {
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
+            <AuthProvider>
+              <Router />
+            </AuthProvider>
           </WouterRouter>
           <Toaster />
         </TooltipProvider>

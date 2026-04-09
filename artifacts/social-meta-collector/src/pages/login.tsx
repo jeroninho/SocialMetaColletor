@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/auth";
 
 type Mode = "login" | "register";
 
@@ -18,6 +19,7 @@ export default function LoginPage() {
   const [mode, setMode] = useState<Mode>("login");
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { refetch } = useAuth();
 
   const [email, setEmail] = useState("");
   const [nome, setNome] = useState("");
@@ -52,6 +54,7 @@ export default function LoginPage() {
 
       if (data.token) {
         localStorage.setItem("smc_token", data.token);
+        await refetch();
       }
 
       toast({
