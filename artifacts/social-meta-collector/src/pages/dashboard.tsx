@@ -4,9 +4,8 @@ import {
   getGetDashboardSummaryQueryKey,
 } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Eye, Heart, Activity, ArrowUpRight } from "lucide-react";
+import { Users, Eye, Heart, Activity, TrendingUp, TrendingDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import {
   PieChart,
   Pie,
@@ -18,6 +17,8 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
+  LineChart,
+  Line,
 } from "recharts";
 import { useTheme } from "@/context/theme";
 import {
@@ -27,71 +28,92 @@ import {
   getGridStyle,
 } from "@/lib/chart-theme";
 
+/* ── Helpers ─────────────────────────────────────────────── */
 function fmt(n: number) {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-  return n.toLocaleString();
+  return n.toLocaleString("pt-BR");
 }
 
+/* ── Stat card config ────────────────────────────────────── */
 const statConfig = [
   {
     key: "totalFollowers",
-    title: "Total Followers",
+    title: "Total de Seguidores",
     icon: Users,
-    desc: "Across all platforms",
-    gradient: "from-violet-500/10 to-purple-500/5",
-    accent: "text-violet-600 dark:text-violet-400",
-    iconBg: "bg-violet-100 dark:bg-violet-950",
-    iconColor: "#7C6FEA",
+    desc: "Em todas as plataformas",
+    iconBg: "rgba(108,99,255,0.15)",
+    iconColor: "#6C63FF",
+    trend: +12.4,
   },
   {
     key: "totalViews",
-    title: "Total Views",
+    title: "Total de Visualizações",
     icon: Eye,
-    desc: "Lifetime video views",
-    gradient: "from-blue-500/10 to-cyan-500/5",
-    accent: "text-blue-600 dark:text-blue-400",
-    iconBg: "bg-blue-100 dark:bg-blue-950",
-    iconColor: "#2D88FF",
+    desc: "Views acumulados",
+    iconBg: "rgba(24,119,242,0.15)",
+    iconColor: "#1877F2",
+    trend: +8.1,
   },
   {
     key: "totalEngagements",
-    title: "Total Engagements",
+    title: "Total de Engajamentos",
     icon: Heart,
-    desc: "Likes, comments & shares",
-    gradient: "from-rose-500/10 to-pink-500/5",
-    accent: "text-rose-600 dark:text-rose-400",
-    iconBg: "bg-rose-100 dark:bg-rose-950",
-    iconColor: "#E1306C",
+    desc: "Curtidas, comentários e shares",
+    iconBg: "rgba(255,111,145,0.15)",
+    iconColor: "#FF6F91",
+    trend: -2.3,
   },
   {
     key: "averageEngagementRate",
-    title: "Avg Engagement Rate",
+    title: "Taxa Média de Engajamento",
     icon: Activity,
-    desc: "Aggregated performance",
-    gradient: "from-emerald-500/10 to-teal-500/5",
-    accent: "text-emerald-600 dark:text-emerald-400",
-    iconBg: "bg-emerald-100 dark:bg-emerald-950",
-    iconColor: "#10B981",
+    desc: "Performance agregada",
+    iconBg: "rgba(76,175,80,0.15)",
+    iconColor: "#4CAF50",
+    trend: +1.7,
     isRate: true,
   },
 ];
 
+/* ── Skeleton ────────────────────────────────────────────── */
 function StatCardSkeleton() {
   return (
-    <Card className="border-border/50 shadow-sm">
+    <Card className="border-border/40 card-static">
       <CardContent className="pt-5 pb-5 space-y-3">
         <div className="flex items-start justify-between">
-          <Skeleton className="h-4 w-28" />
-          <Skeleton className="h-9 w-9 rounded-xl" />
+          <Skeleton className="h-4 w-32 skeleton-shimmer" />
+          <Skeleton className="h-10 w-10 rounded-xl skeleton-shimmer" />
         </div>
-        <Skeleton className="h-8 w-24" />
-        <Skeleton className="h-3 w-36" />
+        <Skeleton className="h-9 w-28 skeleton-shimmer" />
+        <div className="flex justify-between">
+          <Skeleton className="h-3 w-36 skeleton-shimmer" />
+          <Skeleton className="h-3 w-12 skeleton-shimmer" />
+        </div>
       </CardContent>
     </Card>
   );
 }
 
+/* ── Trend badge ─────────────────────────────────────────── */
+function TrendBadge({ value }: { value: number }) {
+  const up = value >= 0;
+  const Icon = up ? TrendingUp : TrendingDown;
+  return (
+    <span
+      className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
+      style={{
+        background: up ? "rgba(76,175,80,0.14)" : "rgba(244,67,54,0.14)",
+        color: up ? "#4CAF50" : "#F44336",
+      }}
+    >
+      <Icon className="w-3 h-3" />
+      {Math.abs(value).toFixed(1)}%
+    </span>
+  );
+}
+
+/* ── Dashboard ───────────────────────────────────────────── */
 export default function Dashboard() {
   const { theme } = useTheme();
   const dark = theme === "dark";
@@ -101,26 +123,28 @@ export default function Dashboard() {
   });
 
   const tooltipStyle = getTooltipStyle(dark);
-  const axisStyle = getAxisStyle(dark);
-  const gridColor = getGridStyle(dark);
+  const axisStyle    = getAxisStyle(dark);
+  const gridColor    = getGridStyle(dark);
 
+  /* Skeleton state */
   if (isLoading || !summary) {
     return (
       <div className="space-y-6 animate-in fade-in duration-300">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => <StatCardSkeleton key={i} />)}
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Skeleton className="h-72 rounded-2xl" />
-          <Skeleton className="h-72 rounded-2xl" />
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <Skeleton className="lg:col-span-3 h-72 rounded-2xl skeleton-shimmer" />
+          <Skeleton className="lg:col-span-2 h-72 rounded-2xl skeleton-shimmer" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-44 rounded-2xl" />)}
+          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-44 rounded-2xl skeleton-shimmer" />)}
         </div>
       </div>
     );
   }
 
+  /* Chart data */
   const pieData = summary.platformBreakdown.map((p) => ({
     name: p.platform.charAt(0).toUpperCase() + p.platform.slice(1),
     value: p.followers,
@@ -129,38 +153,69 @@ export default function Dashboard() {
 
   const barData = summary.platformBreakdown.map((p) => ({
     platform: p.platform.charAt(0).toUpperCase() + p.platform.slice(1),
-    Followers: p.followers,
+    Seguidores: p.followers,
     raw: p.platform,
   }));
 
+  /* Engagement trend sparkline mock */
+  const trendData = [
+    { mes: "Nov", engaj: 38200 },
+    { mes: "Dez", engaj: 44100 },
+    { mes: "Jan", engaj: 57400 },
+  ];
+
   return (
-    <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="space-y-6 animate-in fade-in zoom-in-98 duration-300">
+
+      {/* ── Stat cards ─────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {statConfig.map((cfg) => {
           const Icon = cfg.icon;
           const raw = summary[cfg.key as keyof typeof summary] as number;
           const value = cfg.isRate ? `${raw.toFixed(2)}%` : fmt(raw);
+
           return (
             <Card
               key={cfg.key}
-              className={`border-border/50 shadow-sm hover:shadow-md bg-gradient-to-br ${cfg.gradient} transition-all duration-200`}
+              className="border-border/40 overflow-hidden group"
             >
-              <CardContent className="pt-5 pb-5">
-                <div className="flex items-start justify-between mb-4">
-                  <p className="text-sm font-medium text-muted-foreground leading-tight pr-2">{cfg.title}</p>
-                  <div
-                    className={`w-9 h-9 rounded-xl ${cfg.iconBg} flex items-center justify-center flex-shrink-0 shadow-sm`}
+              {/* Thin accent bar on top */}
+              <div
+                className="h-0.5 w-full"
+                style={{
+                  background: `linear-gradient(90deg, ${cfg.iconColor}, transparent)`,
+                }}
+              />
+              <CardContent className="pt-4 pb-5">
+                <div className="flex items-start justify-between mb-3">
+                  <p
+                    className="text-[13px] font-medium leading-tight pr-2"
+                    style={{ color: dark ? "#E0E0E0" : "#4B5563" }}
                   >
-                    <Icon className="w-4 h-4" style={{ color: cfg.iconColor }} />
+                    {cfg.title}
+                  </p>
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: cfg.iconBg }}
+                  >
+                    <Icon className="w-5 h-5" style={{ color: cfg.iconColor }} />
                   </div>
                 </div>
-                <p className="text-2xl font-bold tracking-tight tabular-nums">{value}</p>
-                <div className="flex items-center justify-between mt-1.5">
-                  <p className="text-xs text-muted-foreground">{cfg.desc}</p>
-                  <span className="flex items-center gap-0.5 text-[10px] font-semibold text-emerald-500">
-                    <ArrowUpRight className="w-3 h-3" /> live
-                  </span>
+
+                {/* Big metric number */}
+                <p
+                  className="text-3xl font-bold tabular-nums tracking-tight"
+                  style={{
+                    fontFamily: "var(--app-font-heading)",
+                    color: dark ? "#FFFFFF" : "#111827",
+                  }}
+                >
+                  {value}
+                </p>
+
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-[12px] text-muted-foreground">{cfg.desc}</p>
+                  <TrendBadge value={cfg.trend} />
                 </div>
               </CardContent>
             </Card>
@@ -168,57 +223,80 @@ export default function Dashboard() {
         })}
       </div>
 
-      {/* Charts */}
+      {/* ── Charts ─────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <Card className="lg:col-span-3 border-border/50 shadow-sm">
-          <CardHeader className="pb-2 pt-5">
-            <CardTitle className="text-sm font-semibold">Platform Followers</CardTitle>
-            <p className="text-xs text-muted-foreground">Seguidores por plataforma</p>
+
+        {/* Bar chart */}
+        <Card className="lg:col-span-3 border-border/40">
+          <CardHeader className="pb-1 pt-5">
+            <CardTitle
+              className="text-base"
+              style={{ fontFamily: "var(--app-font-heading)" }}
+            >
+              Seguidores por Plataforma
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Últimos dados coletados
+            </p>
           </CardHeader>
           <CardContent className="pb-5">
-            <ResponsiveContainer width="100%" height={230}>
-              <BarChart data={barData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
-                <XAxis
-                  dataKey="platform"
-                  tick={axisStyle.tick}
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  tick={axisStyle.tick}
-                  axisLine={false}
-                  tickLine={false}
-                  tickFormatter={(v) => fmt(v)}
-                />
-                <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [fmt(v), "Followers"]} />
-                <Bar dataKey="Followers" radius={[8, 8, 0, 0]} maxBarSize={56}>
-                  {barData.map((entry) => (
-                    <Cell
-                      key={entry.platform}
-                      fill={PLATFORM_COLORS[entry.raw as keyof typeof PLATFORM_COLORS] ?? "#7C6FEA"}
-                    />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="chart-scroll-mobile">
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={barData} margin={{ top: 4, right: 8, left: -12, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                  <XAxis
+                    dataKey="platform"
+                    tick={axisStyle.tick}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={axisStyle.tick}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(v) => fmt(v)}
+                  />
+                  <Tooltip
+                    contentStyle={tooltipStyle}
+                    formatter={(v: number) => [fmt(v), "Seguidores"]}
+                    cursor={{ fill: "rgba(108,99,255,0.08)" }}
+                  />
+                  <Bar dataKey="Seguidores" radius={[8, 8, 0, 0]} maxBarSize={56}>
+                    {barData.map((entry) => (
+                      <Cell
+                        key={entry.platform}
+                        fill={PLATFORM_COLORS[entry.raw as keyof typeof PLATFORM_COLORS] ?? "#6C63FF"}
+                      />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2 border-border/50 shadow-sm">
-          <CardHeader className="pb-2 pt-5">
-            <CardTitle className="text-sm font-semibold">Audience Share</CardTitle>
-            <p className="text-xs text-muted-foreground">Distribuicao de seguidores</p>
+        {/* Pie + legend */}
+        <Card className="lg:col-span-2 border-border/40">
+          <CardHeader className="pb-1 pt-5">
+            <CardTitle
+              className="text-base"
+              style={{ fontFamily: "var(--app-font-heading)" }}
+            >
+              Distribuição de Audiência
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Resumo das contas conectadas
+            </p>
           </CardHeader>
           <CardContent className="pb-5">
-            <ResponsiveContainer width="100%" height={165}>
+            <ResponsiveContainer width="100%" height={160}>
               <PieChart>
                 <Pie
                   data={pieData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={46}
-                  outerRadius={72}
+                  innerRadius={44}
+                  outerRadius={70}
                   paddingAngle={3}
                   dataKey="value"
                   strokeWidth={0}
@@ -227,20 +305,29 @@ export default function Dashboard() {
                     <Cell key={entry.name} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [fmt(v), "Followers"]} />
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  formatter={(v: number) => [fmt(v), "Seguidores"]}
+                />
               </PieChart>
             </ResponsiveContainer>
+
             <div className="flex flex-col gap-2 mt-2">
               {pieData.map((entry) => (
                 <div key={entry.name} className="flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     <span
                       className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
-                      style={{ backgroundColor: entry.color }}
+                      style={{ background: entry.color }}
                     />
                     <span className="text-muted-foreground">{entry.name}</span>
                   </div>
-                  <span className="font-semibold tabular-nums">{fmt(entry.value)}</span>
+                  <span
+                    className="font-bold tabular-nums"
+                    style={{ fontFamily: "var(--app-font-heading)" }}
+                  >
+                    {fmt(entry.value)}
+                  </span>
                 </div>
               ))}
             </div>
@@ -248,10 +335,46 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Platform cards */}
+      {/* ── Engagement trend sparkline ──────────────── */}
+      <Card className="border-border/40">
+        <CardHeader className="pb-1 pt-5">
+          <CardTitle
+            className="text-base"
+            style={{ fontFamily: "var(--app-font-heading)" }}
+          >
+            Tendência de Engajamento
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">Últimos 3 meses</p>
+        </CardHeader>
+        <CardContent className="pb-5">
+          <div className="chart-scroll-mobile">
+            <ResponsiveContainer width="100%" height={140}>
+              <LineChart data={trendData} margin={{ top: 4, right: 16, left: -8, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
+                <XAxis dataKey="mes" tick={axisStyle.tick} axisLine={false} tickLine={false} />
+                <YAxis tick={axisStyle.tick} axisLine={false} tickLine={false} tickFormatter={(v) => fmt(v)} />
+                <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [fmt(v), "Engajamento"]} />
+                <Line
+                  type="monotone"
+                  dataKey="engaj"
+                  stroke="#6C63FF"
+                  strokeWidth={3}
+                  dot={{ r: 5, fill: "#6C63FF", strokeWidth: 2, stroke: "#fff" }}
+                  activeDot={{ r: 7, fill: "#FF6F91" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Platform cards ─────────────────────────── */}
       <div>
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">
-          Platform Overview
+        <p
+          className="text-[11px] font-bold uppercase tracking-widest mb-3 text-muted-foreground"
+          style={{ fontFamily: "var(--app-font-heading)" }}
+        >
+          Visão por Plataforma
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {summary.platformBreakdown.map((platform) => {
@@ -259,32 +382,53 @@ export default function Dashboard() {
             return (
               <Card
                 key={platform.platform}
-                className="border-border/50 shadow-sm hover:shadow-md overflow-hidden transition-all"
+                className="border-border/40 overflow-hidden"
               >
-                <div className="h-1.5 w-full" style={{ background: `linear-gradient(90deg, ${color}, ${color}99)` }} />
+                {/* Platform color top bar */}
+                <div
+                  className="h-1 w-full"
+                  style={{ background: `linear-gradient(90deg, ${color}, ${color}60)` }}
+                />
                 <CardContent className="pt-4 pb-5">
                   <div className="flex items-center justify-between mb-4">
-                    <span className="font-semibold capitalize text-sm">{platform.platform}</span>
-                    <Badge
-                      className="text-[10px] rounded-full px-2.5 font-medium border-0"
-                      style={
-                        platform.connected
-                          ? { background: `${color}20`, color }
-                          : undefined
-                      }
-                      variant={platform.connected ? "outline" : "secondary"}
+                    <span
+                      className="font-bold capitalize text-sm"
+                      style={{ fontFamily: "var(--app-font-heading)" }}
                     >
-                      {platform.connected ? "Connected" : "Disconnected"}
-                    </Badge>
+                      {platform.platform}
+                    </span>
+                    <span
+                      className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
+                      style={{
+                        background: platform.connected
+                          ? `${color}22`
+                          : dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+                        color: platform.connected ? color : "var(--color-muted-foreground)",
+                      }}
+                    >
+                      {platform.connected ? "Conectado" : "Desconectado"}
+                    </span>
                   </div>
+
                   <div className="grid grid-cols-3 gap-2 text-center">
                     {[
-                      { label: "Followers", value: fmt(platform.followers) },
-                      { label: "Content", value: fmt(platform.content) },
-                      { label: "Eng. Rate", value: `${platform.engagementRate.toFixed(1)}%` },
+                      { label: "Seguidores", value: fmt(platform.followers) },
+                      { label: "Conteúdo", value: fmt(platform.content) },
+                      { label: "Taxa Eng.", value: `${platform.engagementRate.toFixed(1)}%` },
                     ].map(({ label, value }) => (
-                      <div key={label} className="bg-muted/40 rounded-xl py-2.5 px-1">
-                        <p className="text-sm font-bold tabular-nums">{value}</p>
+                      <div
+                        key={label}
+                        className="rounded-xl py-2.5 px-1"
+                        style={{
+                          background: dark ? "rgba(255,255,255,0.05)" : "rgba(30,42,56,0.05)",
+                        }}
+                      >
+                        <p
+                          className="text-sm font-bold tabular-nums"
+                          style={{ fontFamily: "var(--app-font-heading)" }}
+                        >
+                          {value}
+                        </p>
                         <p className="text-[10px] text-muted-foreground mt-0.5">{label}</p>
                       </div>
                     ))}

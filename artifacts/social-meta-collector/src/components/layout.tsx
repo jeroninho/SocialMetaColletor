@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import {
   BarChart2,
@@ -12,215 +12,342 @@ import {
   Moon,
   TrendingUp,
   LogIn,
+  Menu,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarProvider,
-} from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 import { useTheme } from "@/context/theme";
 
-const pageLabels: Record<string, string> = {
-  "/": "Dashboard",
-  "/youtube": "YouTube",
-  "/instagram": "Instagram",
-  "/facebook": "Facebook",
-  "/reports": "Relatórios",
-  "/fetch": "Buscar Metadados",
-  "/connections": "Conexões",
-  "/login": "Entrar",
-};
+/* ── Design tokens ─────────────────────────────────────── */
+const PETROLEUM = "#1E2A38";
+const PURPLE    = "#6C63FF";
+const ROSE      = "#FF6F91";
 
+/* ── Nav items ─────────────────────────────────────────── */
 const navMain = [
-  { href: "/", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/youtube", icon: Youtube, label: "YouTube", color: "#FF0000" },
-  { href: "/instagram", icon: Instagram, label: "Instagram", color: "#FF6F91" },
-  { href: "/facebook", icon: Facebook, label: "Facebook", color: "#1877F2" },
-  { href: "/reports", icon: TrendingUp, label: "Relatórios" },
-  { href: "/fetch", icon: Link2, label: "Buscar Metadados" },
+  { href: "/",            icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/youtube",     icon: Youtube,         label: "YouTube",         color: "#FF0000" },
+  { href: "/instagram",   icon: Instagram,       label: "Instagram",       color: "#FF6F91" },
+  { href: "/facebook",    icon: Facebook,        label: "Facebook",        color: "#1877F2" },
+  { href: "/reports",     icon: TrendingUp,      label: "Relatórios" },
+  { href: "/fetch",       icon: Link2,           label: "Buscar Metadados" },
 ];
 
+const navSettings = [
+  { href: "/connections", icon: Settings, label: "Conexões" },
+  { href: "/login",       icon: LogIn,    label: "Entrar / Conta" },
+];
+
+const pageLabels: Record<string, string> = {
+  "/":            "Dashboard",
+  "/youtube":     "YouTube",
+  "/instagram":   "Instagram",
+  "/facebook":    "Facebook",
+  "/reports":     "Relatórios",
+  "/fetch":       "Buscar Metadados",
+  "/connections": "Conexões",
+  "/login":       "Entrar",
+};
+
+/* ── NavLink ────────────────────────────────────────────── */
+function NavLink({
+  href,
+  icon: Icon,
+  label,
+  color,
+  active,
+  onClick,
+}: {
+  href: string;
+  icon: React.ElementType;
+  label: string;
+  color?: string;
+  active: boolean;
+  onClick?: () => void;
+}) {
+  return (
+    <Link href={href} onClick={onClick}>
+      <span
+        className={cn(
+          "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer",
+          "transition-all duration-200 ease-in-out",
+          active
+            ? "font-semibold"
+            : "hover:bg-white/10 text-white/70 hover:text-white"
+        )}
+        style={
+          active
+            ? {
+                backgroundColor: "rgba(108,99,255,0.22)",
+                color: PURPLE,
+                boxShadow: "inset 0 0 0 1px rgba(108,99,255,0.30)",
+              }
+            : undefined
+        }
+      >
+        <Icon
+          className="w-4 h-4 flex-shrink-0"
+          style={
+            active ? { color: PURPLE } : color ? { color } : { color: "rgba(255,255,255,0.65)" }
+          }
+        />
+        <span style={active ? { color: PURPLE } : { color: "rgba(255,255,255,0.85)" }}>
+          {label}
+        </span>
+        {active && (
+          <span
+            className="ml-auto w-1.5 h-1.5 rounded-full"
+            style={{ background: PURPLE }}
+          />
+        )}
+      </span>
+    </Link>
+  );
+}
+
+/* ── Sidebar content ────────────────────────────────────── */
+function SidebarContent({
+  location,
+  onNav,
+}: {
+  location: string;
+  onNav?: () => void;
+}) {
+  return (
+    <div className="flex flex-col h-full" style={{ backgroundColor: PETROLEUM }}>
+      {/* Brand */}
+      <div
+        className="h-16 flex items-center px-5 flex-shrink-0"
+        style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0"
+            style={{ background: `linear-gradient(135deg, ${PURPLE}, ${ROSE})` }}
+          >
+            <BarChart2 className="w-5 h-5 text-white" />
+          </div>
+          <span
+            className="text-white font-bold text-[17px] tracking-tight select-none"
+            style={{ fontFamily: "var(--app-font-heading)", letterSpacing: "-0.025em" }}
+          >
+            <span style={{ color: PURPLE }}>Meta</span>
+            <span style={{ color: "rgba(255,255,255,0.90)" }}>Collector</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Nav */}
+      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
+        <p
+          className="text-[10px] font-semibold uppercase tracking-widest mb-2 px-1"
+          style={{ color: "rgba(224,224,224,0.38)" }}
+        >
+          Navegação
+        </p>
+        {navMain.map(({ href, icon, label, color }) => (
+          <NavLink
+            key={href}
+            href={href}
+            icon={icon}
+            label={label}
+            color={color}
+            active={location === href}
+            onClick={onNav}
+          />
+        ))}
+
+        <div className="pt-5">
+          <p
+            className="text-[10px] font-semibold uppercase tracking-widest mb-2 px-1"
+            style={{ color: "rgba(224,224,224,0.38)" }}
+          >
+            Configurações
+          </p>
+          {navSettings.map(({ href, icon, label }) => (
+            <NavLink
+              key={href}
+              href={href}
+              icon={icon}
+              label={label}
+              active={location === href}
+              onClick={onNav}
+            />
+          ))}
+        </div>
+      </nav>
+
+      {/* Footer */}
+      <div
+        className="p-4 flex-shrink-0"
+        style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
+      >
+        <div className="flex items-center gap-2.5 px-1">
+          <div
+            className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ background: "rgba(108,99,255,0.25)" }}
+          >
+            <BarChart2 className="w-4 h-4" style={{ color: PURPLE }} />
+          </div>
+          <div className="min-w-0">
+            <p
+              className="text-xs font-semibold text-white/90 truncate"
+              style={{ fontFamily: "var(--app-font-heading)" }}
+            >
+              Social Analytics
+            </p>
+            <p className="text-[10px]" style={{ color: "rgba(224,224,224,0.45)" }}>
+              Plano gratuito
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Layout ─────────────────────────────────────────────── */
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const pageTitle = pageLabels[location] ?? location.slice(1);
   const dark = theme === "dark";
+  const pageTitle = pageLabels[location] ?? location.replace("/", "");
+
+  /* Close sidebar when route changes */
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location]);
+
+  /* Prevent scroll when mobile sidebar is open */
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
 
   return (
-    <SidebarProvider>
-      <div className="min-h-[100dvh] flex w-full bg-background">
-        <Sidebar
-          className="border-r border-border"
-          style={{ backgroundColor: dark ? "#1E2A38" : undefined }}
+    <div className="min-h-[100dvh] flex w-full bg-background">
+
+      {/* ── Desktop sidebar ─────────────────────────── */}
+      <aside
+        className="hidden lg:flex flex-col w-60 xl:w-64 flex-shrink-0 sticky top-0 h-screen"
+        style={{ backgroundColor: PETROLEUM }}
+      >
+        <SidebarContent location={location} />
+      </aside>
+
+      {/* ── Mobile overlay ──────────────────────────── */}
+      {mobileOpen && (
+        <div
+          className="sidebar-overlay lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* ── Mobile sidebar drawer ───────────────────── */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-72 flex flex-col lg:hidden",
+          "transition-transform duration-300 ease-in-out",
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+        style={{ backgroundColor: PETROLEUM }}
+      >
+        {/* Close button */}
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center z-50"
+          style={{ background: "rgba(255,255,255,0.12)" }}
+          aria-label="Fechar menu"
         >
-          <SidebarHeader
-            className="h-16 flex items-center px-5 border-b border-border/40"
-            style={{ backgroundColor: dark ? "#1E2A38" : undefined }}
-          >
+          <X className="w-4 h-4 text-white/80" />
+        </button>
+        <SidebarContent location={location} onNav={() => setMobileOpen(false)} />
+      </aside>
+
+      {/* ── Main ────────────────────────────────────── */}
+      <div className="flex-1 flex flex-col min-w-0">
+
+        {/* Top header */}
+        <header
+          className="h-16 flex items-center justify-between px-4 md:px-8 sticky top-0 z-30 backdrop-blur-md"
+          style={{
+            backgroundColor: dark
+              ? "rgba(44,44,44,0.88)"
+              : "rgba(245,247,250,0.90)",
+            borderBottom: `1px solid ${dark ? "rgba(255,255,255,0.07)" : "rgba(30,42,56,0.10)"}`,
+          }}
+        >
+          <div className="flex items-center gap-3">
+            {/* Hamburger — mobile only */}
+            <button
+              className="lg:hidden w-9 h-9 rounded-xl flex items-center justify-center transition-colors duration-200"
+              style={{ background: "rgba(108,99,255,0.12)" }}
+              onClick={() => setMobileOpen(true)}
+              aria-label="Abrir menu"
+            >
+              <Menu className="w-5 h-5" style={{ color: PURPLE }} />
+            </button>
+
             <div className="flex items-center gap-2.5">
-              <div
-                className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm"
-                style={{ background: "linear-gradient(135deg, #6C63FF, #FF6F91)" }}
-              >
-                <BarChart2 className="w-4 h-4 text-white" />
-              </div>
-              <span
-                className="font-bold text-lg tracking-tight"
-                style={{ fontFamily: "var(--app-font-heading)", letterSpacing: "-0.02em" }}
-              >
-                <span style={{ color: "#6C63FF" }}>Meta</span>
-                <span className="text-foreground/90">Collector</span>
-              </span>
-            </div>
-          </SidebarHeader>
-
-          <SidebarContent
-            className="py-4 px-2"
-            style={{ backgroundColor: dark ? "#1E2A38" : undefined }}
-          >
-            <p className="text-[10px] font-semibold uppercase tracking-widest px-3 mb-2"
-              style={{ color: dark ? "rgba(224,224,224,0.45)" : undefined }}>
-              Navegação
-            </p>
-            <SidebarMenu>
-              {navMain.map(({ href, icon: Icon, label, color }) => {
-                const active = location === href;
-                return (
-                  <SidebarMenuItem key={href}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={active}
-                      className={cn(
-                        "rounded-lg transition-all duration-200",
-                        active
-                          ? "font-medium"
-                          : "hover:bg-white/8"
-                      )}
-                      style={active ? { backgroundColor: "rgba(108,99,255,0.18)", color: "#6C63FF" } : undefined}
-                    >
-                      <Link href={href}>
-                        <Icon
-                          className="w-4 h-4 flex-shrink-0"
-                          style={active ? { color: "#6C63FF" } : color ? { color } : undefined}
-                        />
-                        <span>{label}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-
-            <div className="mt-6">
-              <p className="text-[10px] font-semibold uppercase tracking-widest px-3 mb-2"
-                style={{ color: dark ? "rgba(224,224,224,0.45)" : undefined }}>
-                Configurações
-              </p>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={location === "/connections"}
-                    className={cn(
-                      "rounded-lg transition-all duration-200",
-                      location === "/connections" ? "font-medium" : "hover:bg-white/8"
-                    )}
-                    style={location === "/connections" ? { backgroundColor: "rgba(108,99,255,0.18)", color: "#6C63FF" } : undefined}
-                  >
-                    <Link href="/connections">
-                      <Settings className="w-4 h-4" style={location === "/connections" ? { color: "#6C63FF" } : undefined} />
-                      <span>Conexões</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={location === "/login"}
-                    className="rounded-lg transition-all duration-200 hover:bg-white/8"
-                  >
-                    <Link href="/login">
-                      <LogIn className="w-4 h-4" />
-                      <span>Entrar / Conta</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </div>
-          </SidebarContent>
-
-          <div
-            className="p-4 border-t border-border/30 mt-auto"
-            style={{ backgroundColor: dark ? "#1E2A38" : undefined }}
-          >
-            <div className="flex items-center gap-2.5 px-1">
-              <div
-                className="w-7 h-7 rounded-full flex items-center justify-center"
-                style={{ background: "rgba(108,99,255,0.22)" }}
-              >
-                <BarChart2 className="w-3.5 h-3.5" style={{ color: "#6C63FF" }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold truncate" style={{ fontFamily: "var(--app-font-heading)" }}>
-                  Social Analytics
-                </p>
-                <p className="text-[10px] text-muted-foreground">Plano gratuito</p>
-              </div>
-            </div>
-          </div>
-        </Sidebar>
-
-        <main className="flex-1 flex flex-col min-w-0">
-          <header className="h-16 flex items-center justify-between px-8 border-b border-border bg-card/60 backdrop-blur-sm sticky top-0 z-10">
-            <div className="flex items-center gap-3">
               <h1
-                className="text-lg font-bold tracking-tight"
-                style={{ fontFamily: "var(--app-font-heading)" }}
+                className="text-xl font-bold tracking-tight"
+                style={{ fontFamily: "var(--app-font-heading)", letterSpacing: "-0.025em" }}
               >
                 {pageTitle}
               </h1>
-              <div className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/60 rounded-md px-2.5 py-1">
+              <span
+                className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full"
+                style={{
+                  background: dark ? "rgba(74,207,80,0.15)" : "rgba(74,207,80,0.12)",
+                  color: "#4CAF50",
+                }}
+              >
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Ao vivo
-              </div>
+              </span>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleTheme}
-                className="rounded-full w-9 h-9 hover:bg-muted/60"
-                title={theme === "dark" ? "Modo claro" : "Modo escuro"}
-              >
-                {theme === "dark" ? (
-                  <Sun className="w-4 h-4 text-yellow-400" />
-                ) : (
-                  <Moon className="w-4 h-4" />
-                )}
-              </Button>
-              <Button
-                size="sm"
-                className="rounded-full text-xs font-semibold text-white border-0"
-                style={{ background: "linear-gradient(135deg, #6C63FF, #FF6F91)", transition: "opacity 0.2s" }}
-                asChild
-              >
-                <Link href="/connections">Gerenciar Conexões</Link>
-              </Button>
-            </div>
-          </header>
-
-          <div className="flex-1 p-6 md:p-8 overflow-auto">
-            {children}
           </div>
+
+          <div className="flex items-center gap-2">
+            {/* Dark mode toggle */}
+            <button
+              onClick={toggleTheme}
+              className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200"
+              style={{
+                background: dark ? "rgba(255,255,255,0.10)" : "rgba(30,42,56,0.08)",
+              }}
+              title={dark ? "Modo claro" : "Modo escuro"}
+            >
+              {dark ? (
+                <Sun className="w-4 h-4 icon-enter" style={{ color: "#FBBF24" }} />
+              ) : (
+                <Moon className="w-4 h-4 icon-enter" style={{ color: PETROLEUM }} />
+              )}
+            </button>
+
+            {/* Primary CTA */}
+            <Link href="/connections">
+              <span
+                className="btn-gradient hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold cursor-pointer"
+                style={{ fontFamily: "var(--app-font-heading)" }}
+              >
+                Gerenciar Conexões
+              </span>
+            </Link>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto">
+          {children}
         </main>
       </div>
-    </SidebarProvider>
+    </div>
   );
 }
