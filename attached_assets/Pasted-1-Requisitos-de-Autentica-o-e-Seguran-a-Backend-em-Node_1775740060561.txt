@@ -1,0 +1,620 @@
+1. Requisitos de Autenticação e Segurança
+Backend em Node.js + TypeScript com Express que implemente:
+
+
+Validação de token OAuth2
+
+
+Implementar fluxo para validar se um token OAuth2 é elegível/ativo.
+
+
+Considerar o fluxo padrão: Authorization Code → Access Token → Refresh Token.
+
+
+Crie serviços para lidar com tokens de APIs sociais (YouTube, Facebook, Instagram), mesmo que sejam mocks.
+
+
+Criptografia de tokens
+
+
+Todos os tokens OAuth2 devem ser armazenados somente no banco de dados após criptografia simétrica AES‑256‑GCM.
+
+
+Criar um módulo utilitário para:
+
+
+encryptToken(plaintext: string): string
+
+
+decryptToken(ciphertext: string): string
+
+
+Usar uma SECRET_KEY vinda de variável de ambiente (process.env.TOKEN_SECRET).
+
+
+Nunca logar tokens em texto puro.
+
+
+Sistema de LOGIN / Usuários
+
+
+Model de usuário com campos:
+
+
+id (uuid v4)
+
+
+email (único)
+
+
+nome
+
+
+senhaHash (senha criptografada)
+
+
+timestamps (createdAt, updatedAt)
+
+
+Rotas:
+
+
+POST /api/auth/register
+
+
+Recebe: email, nome, senha
+
+
+Valida dados
+
+
+Criptografa senha com BCRYPT (salt adequado, ex: 10+ rounds)
+
+
+Salva usuário com uuid
+
+
+POST /api/auth/login
+
+
+Recebe: email, senha
+
+
+Valida credenciais
+
+
+Gera um JSON Web Token (JWT) de acesso para o usuário logado
+
+
+Configurar expiração razoável (ex: 15min–1h) e, opcionalmente, refresh token
+
+
+Uso de JSONWEBTOKEN (JWT)
+
+
+Criar middleware authMiddleware que:
+
+
+Lê o JWT do header Authorization: Bearer <token>
+
+
+Valida assinatura e expiração
+
+
+Anexa o usuário autenticado ao req.user
+
+
+Proteger rotas sensíveis como /api/dashboard/* e /api/metadata/*.
+
+
+Criptografia de senhas com BCRYPT
+
+
+Usar bcrypt para:
+
+
+Hash da senha no registro
+
+
+Comparação na autenticação (bcrypt.compare)
+
+
+Nunca armazenar senha em texto puro.
+
+
+2. Arquitetura de Integrações com Redes Sociais
+Quero uma arquitetura de backend bem estruturada, com:
+
+
+Services/Providers isolados
+
+
+Criar classes ou módulos:
+
+
+YouTubeProvider.ts
+
+
+MetaProvider.ts (para Facebook e Instagram)
+
+
+Cada provider deve:
+
+
+Isolar lógica de autenticação com a API externa
+
+
+Ter métodos como:
+
+
+getChannelStats(userId)
+
+
+getRecentEngagement(userId)
+
+
+etc. (pode ser mockado, mas bem estruturado)
+
+
+As rotas do Express não devem conter lógica de integração direta — apenas chamar services.
+
+
+Job Queue (Redis + BullMQ)
+
+
+Integrar Redis + BullMQ para filas de jobs.
+
+
+Criar fila para sincronização de metadados:
+
+
+Ex: metadataSyncQueue
+
+
+Rota:
+
+
+POST /api/metadata/sync
+
+
+Em vez de fazer tudo síncrono, enfileira um job (userId, platforms, etc.)
+
+
+Retorna um ID de job ou status.
+
+
+Worker:
+
+
+Processa jobs de sincronização, chama os providers (YouTubeProvider, MetaProvider), atualiza banco.
+
+
+Suporta retentativas e tratamento de rate limiting.
+
+
+Webhooks (Facebook / Instagram)
+
+
+Estrutura de rotas para webhooks:
+
+
+POST /api/webhooks/meta
+
+
+Trate verificação de webhook (challenge) e callbacks de eventos (ex: novos posts, comentários, etc.).
+
+
+Mesmo que seja um mock, quero a estrutura pronta para plugar com Meta Webhooks.
+
+
+Caching com Redis
+
+
+Usar Redis para cachear respostas agregadas de dashboard.
+
+
+Exemplo:
+
+
+Rota GET /api/dashboard/summary
+
+
+Tenta retornar de cache (chave: dashboard:summary:userId)
+
+
+Se não houver cache ou estiver expirado, consulta DB/serviços, monta resumo, guarda no Redis com TTL configurável (ex: 60s) e retorna.
+
+
+3. Segurança – Foco em SQL Injection e Boas Práticas
+Considere que o projeto usa Postgres (pode ser outro, mas mantenha a ideia):
+
+
+Consultas Parametrizadas
+
+
+Todas as consultas devem usar placeholders ($1, $2, etc. ou ? dependendo do driver).
+
+
+Nada de string concatenada com input direto de usuário.
+
+
+Uso de ORM/Query Builder
+
+
+Utilize Sequelize ou Knex (ou Prisma, se preferir, mas siga a ideia).
+
+
+Isso garante parametrização nativa e reduz risco de SQL Injection.
+
+
+Validação de Dados
+
+
+Usar joi ou zod para validar payloads:
+
+
+Tipo, formato, tamanho, e-mail válido, etc.
+
+
+Criar middlewares de validação para as rotas de register, login, sync metadata, etc.
+
+
+Princípio do Menor Privilégio
+
+
+Configurar usuário do banco no código com permissões mínimas (sem acesso root).
+
+
+Deixar isso documentado no README.
+
+
+Desativar múltiplas consultas
+
+
+Não permitir "multi statement" em uma mesma query no driver/config do banco.
+
+
+Boas práticas adicionais
+
+
+Nunca versionar secrets.
+
+
+Usar .env e, de preferência, dotenv-safe para garantir variáveis obrigatórias.
+
+
+Explicar no README quais envs são necessários:
+
+
+DATABASE_URL
+
+
+REDIS_URL
+
+
+JWT_SECRET
+
+
+TOKEN_SECRET (para AES‑256‑GCM)
+
+
+Credenciais de APIs (mockadas ou não).
+
+
+4. Frontend – Design e UX (React)
+Crie um frontend em React (pode ser Vite + TS) com foco em um dashboard bonito, usando as diretrizes abaixo:
+
+
+4.1. Paleta de cores
+Primária: Azul petróleo #1E2A38
+
+
+Secundária: Roxo profundo #6C63FF
+
+
+Neutros:
+
+
+Fundo escuro: #2C2C2C
+
+
+Texto secundário: #E0E0E0
+
+
+Feedback:
+
+
+Verde sucesso: #4CAF50
+
+
+Vermelho alerta: #F44336
+
+
+Acento: Rosa suave #FF6F91
+
+
+4.2. Tipografia
+Títulos / Cabeçalhos: Space Grotesk (bold)
+
+
+Texto / Corpo: Inter (regular)
+
+
+Alternativa: Manrope para títulos + Roboto para corpo
+
+
+Configurar via Google Fonts ou similar.
+
+
+4.3. Componentes principais
+Navbar
+
+
+Fundo azul petróleo
+
+
+Título com Space Grotesk bold
+
+
+Toggle de dark mode com ícone minimalista (lua/sol)
+
+
+Cards de métricas
+
+
+Fundo cinza escuro
+
+
+Bordas arredondadas (8px)
+
+
+Sombras suaves (rgba(0,0,0,0.2))
+
+
+Números grandes em Space Grotesk bold
+
+
+Labels em Inter regular
+
+
+Usar cores de feedback (verde para crescimento, vermelho para queda).
+
+
+Botões
+
+
+Primário:
+
+
+Fundo roxo profundo com hover em gradiente roxo → rosa
+
+
+Secundário:
+
+
+Fundo cinza escuro com borda clara
+
+
+Texto em Space Grotesk medium
+
+
+Gráficos (Recharts.js, por exemplo)
+
+
+Usar cores:
+
+
+YouTube: Vermelho #FF0000
+
+
+Instagram: Rosa #FF6F91
+
+
+Facebook: Azul #1877F2
+
+
+Linhas com strokeWidth: 3 para dar impacto.
+
+
+Labels discretos em Inter, cor cinza claro.
+
+
+4.4. Microvariações e naturalidade
+Evitar simetria perfeita em todos os elementos — pequenas diferenças de espaçamento ou sombras para sensação mais “humana”.
+
+
+Sombras suaves e gradientes discretos em cards e botões.
+
+
+Adicionar microinterações:
+
+
+Hover nos gráficos e botões com animações suaves (ex: transition: all 0.2s).
+
+
+Exibir loaders ou skeletons enquanto dados são carregados.
+
+
+4.5. Conteúdo e linguagem
+Textos curtos e naturais, em português, como:
+
+
+“Últimos dados coletados”
+
+
+“Tendência de engajamento”
+
+
+“Resumo das contas conectadas”
+
+
+Evitar termos técnicos demais ou traduções literais esquisitas.
+
+
+4.6. Detalhes de textura e profundidade
+Leves gradientes ou blur em fundos de gráficos.
+
+
+Ícones personalizados para cada plataforma (não usar apenas ícones genéricos) para dar toque artesanal.
+
+
+5. Documentação e Maturidade do Projeto
+Quero um README.md completo com:
+
+
+Motivação / Problema que resolve
+
+
+Explicar o contexto do projeto: dashboard de redes sociais, centralização de métricas, etc.
+
+
+Mostrar o “porquê” e não só o “como”.
+
+
+Resumo do fluxo OAuth2
+
+
+Descrever (com texto e, se possível, um diagrama simples em ASCII ou link) o fluxo:
+
+
+Authorization Code
+
+
+Access Token
+
+
+Refresh Token
+
+
+Como isso se conecta com o armazenamento criptografado de tokens.
+
+
+Diagramas visuais
+
+
+Diagrama simples da arquitetura:
+
+
+frontend ↔ backend ↔ DB ↔ Redis ↔ APIs externas (YouTube, Meta)
+
+
+Pode ser uma seção no README com descrição ou mermaid.
+
+
+Roadmap
+
+
+Lista de futuras features, por exemplo:
+
+
+Suporte a TikTok
+
+
+Suporte a X/Twitter
+
+
+Relatórios exportáveis (PDF/CSV)
+
+
+Alertas por e-mail/Slack
+
+
+Mostrar que o projeto é vivo e planejado.
+
+
+Contribuição
+
+
+Como rodar o projeto localmente (backend + frontend).
+
+
+Como rodar testes.
+
+
+Padrões de código (lint, formatação).
+
+
+Como abrir PRs.
+
+
+Segurança
+
+
+Reforçar:
+
+
+Não versionar .env
+
+
+Uso de dotenv ou dotenv-safe
+
+
+Boas práticas contra SQL Injection (parametrização, ORM, validação de dados, menor privilégio, sem múltiplas queries).
+
+
+Deploy
+
+
+Explicar opções:
+
+
+Backend em Docker (Dockerfile + docker-compose com Redis + DB).
+
+
+Possível uso de Railway/Render/Fly.io para backend.
+
+
+Frontend em Vercel/Netlify.
+
+
+Incluir exemplos de comandos de build e deploy.
+
+
+6. O que eu quero como saída
+Gere:
+
+
+Estrutura de pastas sugerida (backend e frontend).
+
+
+Exemplos de arquivos principais:
+
+
+server.ts ou app.ts
+
+
+Rotas de auth e dashboard
+
+
+Providers (YouTubeProvider, MetaProvider)
+
+
+Configuração do BullMQ + Redis
+
+
+Middleware de autenticação JWT
+
+
+Utils de AES‑256‑GCM e BCRYPT
+
+
+Componentes React principais (Navbar, Cards, Gráficos de exemplo).
+
+
+Um README.md inicial já escrito com tudo descrito acima.
+
+
+Instruções de como rodar o backend e frontend em ambiente de desenvolvimento.
+
+
+Siga TODAS as instruções com cuidado, priorizando:
+
+
+Segurança (JWT, BCRYPT, AES‑256‑GCM, SQL Injection)
+
+
+Arquitetura limpa (providers, services, filas, cache)
+
+
+Boa UX/UI (cores, tipografia, microinterações, textos naturais)
+
