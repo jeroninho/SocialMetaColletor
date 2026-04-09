@@ -141,7 +141,7 @@ export default function LoginPage() {
         title: mode === "login" ? "Bem-vindo de volta!" : "Conta criada!",
         description: mode === "login" ? "Login realizado com sucesso." : "Sua conta foi criada com sucesso.",
       });
-      navigate("/");
+      navigate("/dashboard");
     } catch {
       setError("Erro de conexão. Verifique sua rede e tente novamente.");
     } finally {

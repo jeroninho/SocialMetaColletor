@@ -21,7 +21,13 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
+export function PublicOnlyRoute({
+  children,
+  redirectTo = "/dashboard",
+}: {
+  children: React.ReactNode;
+  redirectTo?: string;
+}) {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -33,7 +39,7 @@ export function PublicOnlyRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (user) {
-    return <Redirect to="/" />;
+    return <Redirect to={redirectTo} />;
   }
 
   return <>{children}</>;

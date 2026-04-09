@@ -26,7 +26,7 @@ const ROSE      = "#FF6F91";
 
 /* ── Nav items ─────────────────────────────────────────── */
 const navMain = [
-  { href: "/",            icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/dashboard",   icon: LayoutDashboard, label: "Dashboard" },
   { href: "/youtube",     icon: Youtube,         label: "YouTube",         color: "#FF0000" },
   { href: "/instagram",   icon: Instagram,       label: "Instagram",       color: "#FF6F91" },
   { href: "/facebook",    icon: Facebook,        label: "Facebook",        color: "#1877F2" },
@@ -39,14 +39,13 @@ const navSettings = [
 ];
 
 const pageLabels: Record<string, string> = {
-  "/":            "Dashboard",
+  "/dashboard":   "Dashboard",
   "/youtube":     "YouTube",
   "/instagram":   "Instagram",
   "/facebook":    "Facebook",
   "/reports":     "Relatórios",
   "/fetch":       "Buscar Metadados",
   "/connections": "Conexões",
-  "/login":       "Entrar",
 };
 
 /* ── NavLink ────────────────────────────────────────────── */

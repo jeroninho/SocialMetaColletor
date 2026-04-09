@@ -7,6 +7,7 @@ import { AuthProvider } from "@/context/auth";
 import { ProtectedRoute, PublicOnlyRoute } from "@/components/protected-route";
 import NotFound from "@/pages/not-found";
 import { Layout } from "@/components/layout";
+import LandingPage from "@/pages/landing";
 import Dashboard from "@/pages/dashboard";
 import YouTubePage from "@/pages/youtube";
 import InstagramPage from "@/pages/instagram";
@@ -21,16 +22,20 @@ const queryClient = new QueryClient();
 function Router() {
   return (
     <Switch>
+      {/* Public routes */}
+      <Route path="/" component={LandingPage} />
       <Route path="/login">
-        <PublicOnlyRoute>
+        <PublicOnlyRoute redirectTo="/dashboard">
           <LoginPage />
         </PublicOnlyRoute>
       </Route>
+
+      {/* Protected app routes */}
       <Route>
         <ProtectedRoute>
           <Layout>
             <Switch>
-              <Route path="/" component={Dashboard} />
+              <Route path="/dashboard" component={Dashboard} />
               <Route path="/youtube" component={YouTubePage} />
               <Route path="/instagram" component={InstagramPage} />
               <Route path="/facebook" component={FacebookPage} />
