@@ -120,6 +120,7 @@
   --chart-5: 200 90% 50%;
 
   --app-font-sans: 'Inter', sans-serif;
+  --app-font-heading: 'Space Grotesk', 'Inter', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: 'JetBrains Mono', Menlo, monospace;
   --radius: 0.875rem;
@@ -152,49 +153,59 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  --background: 230 20% 9%;
-  --foreground: 220 20% 94%;
+  /* Dark bg: #2C2C2C = hsl(0, 0%, 17%) */
+  --background: 0 0% 17%;
+  /* Foreground: #E0E0E0 = hsl(0, 0%, 88%) */
+  --foreground: 0 0% 88%;
 
-  --border: 230 18% 18%;
+  --border: 212 18% 24%;
 
-  --card: 230 20% 12%;
-  --card-foreground: 220 20% 94%;
-  --card-border: 230 18% 18%;
+  /* Card slightly lighter than bg */
+  --card: 212 20% 21%;
+  --card-foreground: 0 0% 88%;
+  --card-border: 212 18% 26%;
 
-  --sidebar: 230 20% 10%;
-  --sidebar-foreground: 220 20% 90%;
-  --sidebar-border: 230 18% 16%;
-  --sidebar-primary: 258 88% 68%;
+  /* Sidebar: petroleum blue #1E2A38 = hsl(212, 32%, 17%) */
+  --sidebar: 212 32% 17%;
+  --sidebar-foreground: 0 0% 88%;
+  --sidebar-border: 212 24% 22%;
+  /* Sidebar primary: deep purple #6C63FF = hsl(244, 100%, 69%) */
+  --sidebar-primary: 244 100% 69%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 230 18% 16%;
-  --sidebar-accent-foreground: 220 20% 90%;
-  --sidebar-ring: 258 88% 68%;
+  --sidebar-accent: 212 26% 22%;
+  --sidebar-accent-foreground: 0 0% 80%;
+  --sidebar-ring: 244 100% 69%;
 
-  --popover: 230 20% 12%;
-  --popover-foreground: 220 20% 94%;
-  --popover-border: 230 18% 18%;
+  --popover: 212 26% 20%;
+  --popover-foreground: 0 0% 88%;
+  --popover-border: 212 18% 26%;
 
-  --primary: 258 88% 68%;
+  /* Primary: deep purple #6C63FF */
+  --primary: 244 100% 69%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 230 18% 18%;
-  --secondary-foreground: 220 20% 90%;
+  --secondary: 212 22% 24%;
+  --secondary-foreground: 0 0% 82%;
 
-  --muted: 230 18% 16%;
-  --muted-foreground: 220 12% 55%;
+  --muted: 212 18% 22%;
+  --muted-foreground: 212 10% 58%;
 
-  --accent: 230 18% 16%;
-  --accent-foreground: 220 20% 90%;
+  --accent: 212 20% 22%;
+  --accent-foreground: 0 0% 84%;
 
-  --destructive: 0 70% 50%;
+  /* Destructive: #F44336 = hsl(4, 90%, 58%) */
+  --destructive: 4 90% 58%;
   --destructive-foreground: 0 0% 100%;
 
-  --input: 230 18% 18%;
-  --ring: 258 88% 68%;
+  --input: 212 20% 24%;
+  --ring: 244 100% 69%;
 
-  --chart-1: 258 88% 72%;
-  --chart-2: 340 82% 65%;
-  --chart-3: 142 71% 50%;
+  /* Platform chart colors */
+  --chart-1: 244 100% 72%;
+  /* Instagram: #FF6F91 = hsl(344, 100%, 72%) */
+  --chart-2: 344 100% 72%;
+  /* Success: #4CAF50 = hsl(122, 39%, 49%) */
+  --chart-3: 122 39% 55%;
   --chart-4: 30 92% 60%;
   --chart-5: 200 90% 58%;
 }
@@ -219,10 +230,11 @@
     box-shadow: var(--shadow-sm);
   }
 
-  /* Improve heading weights with Inter */
+  /* Space Grotesk for headings */
   h1, h2, h3, h4, h5, h6 {
+    font-family: var(--app-font-heading);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
   }
 
   /* Smooth number transitions */
@@ -312,4 +324,29 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  .font-heading {
+    font-family: var(--app-font-heading);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  /* Petroleum blue sidebar override */
+  .sidebar-petroleum {
+    background-color: #1E2A38 !important;
+  }
+
+  /* Primary button gradient hover */
+  .btn-primary-gradient {
+    background: hsl(244 100% 69%);
+    transition: all 0.2s ease;
+  }
+  .btn-primary-gradient:hover {
+    background: linear-gradient(135deg, hsl(244 100% 69%), hsl(344 100% 72%));
+  }
+
+  /* Success/error feedback */
+  .text-success { color: #4CAF50; }
+  .text-alert  { color: #F44336; }
+  .text-accent { color: #FF6F91; }
 }

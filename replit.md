@@ -13,10 +13,14 @@ Fullstack application for collecting and analyzing social media metadata from Yo
 - **Frontend**: React + Vite (artifacts/social-meta-collector)
 - **Backend**: Express 5 (artifacts/api-server)
 - **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
+- **Validation**: Zod v3 (api-server uses `zod` directly; lib/db uses `zod/v4` subpath)
+- **Auth**: JWT (jsonwebtoken) + bcrypt (password hashing)
+- **Token security**: AES-256-GCM via `src/utils/crypto.ts` (TOKEN_SECRET env var)
+- **Cache/Queue**: Redis (ioredis) + BullMQ — graceful fallback if Redis not available
 - **API codegen**: Orval (from OpenAPI spec)
 - **Charts**: Recharts
-- **Build**: esbuild (CJS bundle for backend)
+- **Build**: esbuild — `ioredis` and `bullmq` are marked external in `build.mjs`
+- **Design**: Space Grotesk (headings) + Inter (body), petroleum blue (#1E2A38) + deep purple (#6C63FF)
 
 ## Key Commands
 
@@ -31,15 +35,23 @@ Fullstack application for collecting and analyzing social media metadata from Yo
 
 ```
 artifacts/
-  api-server/            # Express backend
-    src/routes/          # auth, youtube, instagram, facebook, dashboard
+  api-server/
+    src/
+      routes/         # auth, users, youtube, instagram, facebook, dashboard, webhooks
+      middleware/     # auth.ts — JWT bearer middleware (req.user)
+      utils/          # crypto.ts (AES-256-GCM), jwt.ts (sign/verify)
+      services/       # YouTubeProvider.ts, MetaProvider.ts, RedisClient.ts
+      queues/         # metadataSyncQueue.ts (BullMQ)
   social-meta-collector/ # React + Vite frontend
-    src/pages/           # Dashboard, YouTube, Instagram, Facebook, Reports, Login
+    src/pages/        # Dashboard, YouTube, Instagram, Facebook, Reports, Login, Fetch
+    src/components/   # layout.tsx (petroleum blue sidebar, Space Grotesk)
+    src/context/      # theme.tsx (dark/light toggle)
+    src/lib/          # chart-theme.ts
 lib/
-  api-spec/openapi.yaml  # OpenAPI spec (single source of truth)
+  api-spec/openapi.yaml  # OpenAPI spec
   api-client-react/      # Generated React Query hooks
   api-zod/               # Generated Zod schemas
-  db/src/schema/         # Drizzle schemas: tokens, metadata
+  db/src/schema/         # tokens, metadata, fetch-history, users
 ```
 
 ## API Surface
@@ -63,7 +75,17 @@ lib/
 
 ## Database Schema
 
-- `tokens` — OAuth tokens per platform (platform, accountName, accessToken, connected, connectedAt, expiresAt)
-- `metadata` — Normalized collected metadata (platform, contentType, contentId, title, views, likes, comments, shares, engagementRate, collectedAt)
+- `tokens` — OAuth tokens per platform (accessToken stored AES-256-GCM encrypted)
+- `metadata` — Normalized collected metadata (platform, contentType, contentId, views, likes, comments, engagementRate)
+- `fetch_history` — URL metadata fetch history
+- `users` — User accounts (id uuid, email unique, nome, senhaHash via bcrypt)
+
+## Security Notes
+
+- Tokens encrypted with `encryptToken()`/`decryptToken()` from `src/utils/crypto.ts` before DB storage
+- JWT signed with `JWT_SECRET`, expires per `JWT_EXPIRES_IN` (default: 1h)
+- `optionalAuth` middleware applied globally in routes/index.ts — enriches req.user if Bearer token present
+- `authMiddleware` available for requiring auth on specific routes
+- `ioredis` and `bullmq` externalized in esbuild (build.mjs) — they must be available at runtime via node_modules
 
 See `references/server.md` for server patterns, `references/db.md` for Drizzle guidance, `references/openapi.md` for codegen rules.

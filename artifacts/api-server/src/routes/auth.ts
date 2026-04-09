@@ -7,8 +7,17 @@ import {
   ConnectFacebookBody,
   DisconnectPlatformParams,
 } from "@workspace/api-zod";
+import { encryptToken } from "../utils/crypto.js";
 
 const router = Router();
+
+function safeEncrypt(token: string): string {
+  try {
+    return encryptToken(token);
+  } catch {
+    return token;
+  }
+}
 
 router.get("/auth/status", async (req, res) => {
   try {
@@ -17,7 +26,12 @@ router.get("/auth/status", async (req, res) => {
       .from(tokensTable)
       .where(eq(tokensTable.connected, true));
 
-    const statusMap: Record<string, { connected: boolean; accountName?: string; connectedAt?: Date; expiresAt?: Date | null }> = {
+    const statusMap: Record<string, {
+      connected: boolean;
+      accountName?: string;
+      connectedAt?: Date;
+      expiresAt?: Date | null;
+    }> = {
       youtube: { connected: false },
       instagram: { connected: false },
       facebook: { connected: false },
@@ -48,14 +62,13 @@ router.post("/auth/youtube/connect", async (req, res) => {
   const { accessToken, accountName } = parsed.data;
 
   try {
-    await db
-      .delete(tokensTable)
-      .where(eq(tokensTable.platform, "youtube"));
+    const encryptedToken = safeEncrypt(accessToken);
 
+    await db.delete(tokensTable).where(eq(tokensTable.platform, "youtube"));
     await db.insert(tokensTable).values({
       platform: "youtube",
       accountName,
-      accessToken,
+      accessToken: encryptedToken,
       connected: true,
     });
 
@@ -75,14 +88,13 @@ router.post("/auth/instagram/connect", async (req, res) => {
   const { accessToken, accountName } = parsed.data;
 
   try {
-    await db
-      .delete(tokensTable)
-      .where(eq(tokensTable.platform, "instagram"));
+    const encryptedToken = safeEncrypt(accessToken);
 
+    await db.delete(tokensTable).where(eq(tokensTable.platform, "instagram"));
     await db.insert(tokensTable).values({
       platform: "instagram",
       accountName,
-      accessToken,
+      accessToken: encryptedToken,
       connected: true,
     });
 
@@ -102,14 +114,13 @@ router.post("/auth/facebook/connect", async (req, res) => {
   const { accessToken, accountName } = parsed.data;
 
   try {
-    await db
-      .delete(tokensTable)
-      .where(eq(tokensTable.platform, "facebook"));
+    const encryptedToken = safeEncrypt(accessToken);
 
+    await db.delete(tokensTable).where(eq(tokensTable.platform, "facebook"));
     await db.insert(tokensTable).values({
       platform: "facebook",
       accountName,
-      accessToken,
+      accessToken: encryptedToken,
       connected: true,
     });
 
@@ -129,10 +140,7 @@ router.post("/auth/:platform/disconnect", async (req, res) => {
   const { platform } = parsed.data;
 
   try {
-    await db
-      .delete(tokensTable)
-      .where(eq(tokensTable.platform, platform));
-
+    await db.delete(tokensTable).where(eq(tokensTable.platform, platform));
     res.json({ success: true, message: `${platform} disconnected successfully` });
   } catch (err) {
     req.log.error({ err }, "Error disconnecting platform");

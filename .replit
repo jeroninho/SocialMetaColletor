@@ -24,3 +24,12 @@ expertMode = true
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
+
+[userenv]
+
+[userenv.shared]
+JWT_SECRET = "zG2NVJzvmmMw8xAbEhgMPu/2m/NYIEgTorz9ZhVYftWZhGvxHTw+65pWmJqSxmth"
+TOKEN_SECRET = "0ec13726054c6f6b4afe856afded2b40aec3ac792e026fdb2dc01e48dfa85f49"
+REDIS_URL = "redis://localhost:6379"
+JWT_EXPIRES_IN = "1h"
+CACHE_TTL_SECONDS = "60"
