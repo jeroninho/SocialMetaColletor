@@ -42,8 +42,8 @@ const statConfig = [
     title: "Total de Seguidores",
     icon: Users,
     desc: "Em todas as plataformas",
-    iconBg: "rgba(108,99,255,0.15)",
-    iconColor: "#6C63FF",
+    iconBg: "rgba(79,107,244,0.12)",
+    iconColor: "#4F6BF4",
     trend: +12.4,
   },
   {
@@ -51,7 +51,7 @@ const statConfig = [
     title: "Total de Visualizações",
     icon: Eye,
     desc: "Views acumulados",
-    iconBg: "rgba(24,119,242,0.15)",
+    iconBg: "rgba(24,119,242,0.12)",
     iconColor: "#1877F2",
     trend: +8.1,
   },
@@ -60,8 +60,8 @@ const statConfig = [
     title: "Total de Engajamentos",
     icon: Heart,
     desc: "Curtidas, comentários e shares",
-    iconBg: "rgba(255,111,145,0.15)",
-    iconColor: "#FF6F91",
+    iconBg: "rgba(225,48,108,0.12)",
+    iconColor: "#E1306C",
     trend: -2.3,
   },
   {
@@ -69,7 +69,7 @@ const statConfig = [
     title: "Taxa Média de Engajamento",
     icon: Activity,
     desc: "Performance agregada",
-    iconBg: "rgba(76,175,80,0.15)",
+    iconBg: "rgba(76,175,80,0.12)",
     iconColor: "#4CAF50",
     trend: +1.7,
     isRate: true,
@@ -259,7 +259,7 @@ export default function Dashboard() {
                   <Tooltip
                     contentStyle={tooltipStyle}
                     formatter={(v: number) => [fmt(v), "Seguidores"]}
-                    cursor={{ fill: "rgba(108,99,255,0.08)" }}
+                    cursor={{ fill: "rgba(79,107,244,0.07)" }}
                   />
                   <Bar dataKey="Seguidores" radius={[8, 8, 0, 0]} maxBarSize={56}>
                     {barData.map((entry) => (
@@ -357,10 +357,10 @@ export default function Dashboard() {
                 <Line
                   type="monotone"
                   dataKey="engaj"
-                  stroke="#6C63FF"
-                  strokeWidth={3}
-                  dot={{ r: 5, fill: "#6C63FF", strokeWidth: 2, stroke: "#fff" }}
-                  activeDot={{ r: 7, fill: "#FF6F91" }}
+                  stroke="#4F6BF4"
+                  strokeWidth={2.5}
+                  dot={{ r: 4, fill: "#4F6BF4", strokeWidth: 2, stroke: "#fff" }}
+                  activeDot={{ r: 6, fill: "#4F6BF4" }}
                 />
               </LineChart>
             </ResponsiveContainer>

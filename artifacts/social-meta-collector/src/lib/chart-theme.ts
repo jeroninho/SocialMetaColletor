@@ -7,7 +7,7 @@ export const PLATFORM_COLORS = {
 } as const;
 
 export const CHART_PALETTE = [
-  "#7C6FEA",
+  "#4F6BF4",
   "#FF4444",
   "#E1306C",
   "#2D88FF",
@@ -19,7 +19,7 @@ export function getTooltipStyle(isDark: boolean) {
   return {
     background: isDark ? "hsl(230 20% 16%)" : "#ffffff",
     border: `1px solid ${isDark ? "hsl(230 18% 22%)" : "hsl(220 20% 90%)"}`,
-    borderRadius: 10,
+    borderRadius: 6,
     fontSize: 12,
     color: isDark ? "hsl(220 20% 90%)" : "hsl(224 47% 12%)",
     boxShadow: isDark
