@@ -288,16 +288,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
           className="h-14 flex items-center justify-between px-4 md:px-6 sticky top-0 z-30"
           style={{
             backgroundColor: dark
-              ? "hsl(222 28% 12%)"
-              : "hsl(220 22% 96%)",
-            borderBottom: `1px solid ${dark ? "rgba(255,255,255,0.07)" : "rgba(30,42,56,0.09)"}`,
+              ? "rgba(25,25,38,0.88)"
+              : "rgba(255,255,255,0.90)",
+            borderBottom: `1px solid ${dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)"}`,
           }}
         >
           <div className="flex items-center gap-3">
             {/* Hamburger — mobile only */}
             <button
               className="lg:hidden w-8 h-8 rounded-md flex items-center justify-center transition-colors duration-150"
-              style={{ background: dark ? "rgba(255,255,255,0.08)" : "rgba(30,42,56,0.07)" }}
+              style={{ background: dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)" }}
               onClick={() => setMobileOpen(true)}
               aria-label="Abrir menu"
             >
@@ -330,7 +330,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               onClick={toggleTheme}
               className="w-8 h-8 rounded-md flex items-center justify-center transition-colors duration-150"
               style={{
-                background: dark ? "rgba(255,255,255,0.08)" : "rgba(30,42,56,0.07)",
+                background: dark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.07)",
               }}
               title={dark ? "Modo claro" : "Modo escuro"}
             >

@@ -191,29 +191,29 @@ export default function LoginPage() {
         .fade-slide-4 { animation: fadeSlideUp 0.4s ease-out 0.16s both; }
         .login-input {
           width: 100%;
-          padding: 10px 12px 10px 38px;
-          border-radius: 6px;
-          border: 1px solid #D1D5DB;
-          background: #F9FAFB;
+          padding: 11px 14px 11px 40px;
+          border-radius: 0.625rem;
+          border: 1px solid rgba(0,0,0,0.12);
+          background: #ffffff;
           font-size: 14px;
-          color: #111827;
+          color: #030213;
           outline: none;
           font-family: 'Inter', sans-serif;
           transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
           box-sizing: border-box;
         }
         .login-input:focus {
-          border-color: ${BLUE};
-          box-shadow: 0 0 0 3px rgba(79,107,244,0.12);
+          border-color: rgba(0,0,0,0.30);
+          box-shadow: 0 0 0 3px rgba(3,2,19,0.08);
           background: #fff;
         }
         .login-input::placeholder { color: #9CA3AF; }
         .login-btn {
           width: 100%;
-          padding: 11px;
-          border-radius: 6px;
+          padding: 12px;
+          border-radius: 0.625rem;
           border: none;
-          background: ${BLUE};
+          background: #030213;
           color: white;
           font-size: 14px;
           font-weight: 600;
@@ -222,34 +222,37 @@ export default function LoginPage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 7px;
-          transition: background 0.15s;
+          gap: 8px;
+          transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+          box-shadow: 0 2px 8px rgba(3,2,19,0.18);
         }
         .login-btn:hover:not(:disabled) {
-          background: #3D59E8;
+          opacity: 0.88;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 16px rgba(3,2,19,0.22);
         }
         .login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
         .tab-btn {
           flex: 1;
-          padding: 7px;
+          padding: 8px;
           font-size: 13px;
           font-weight: 600;
           font-family: 'Inter', sans-serif;
           border: none;
-          border-radius: 4px;
+          border-radius: calc(0.625rem - 2px);
           cursor: pointer;
           transition: all 0.15s;
           background: transparent;
           color: #6B7280;
         }
         .tab-btn.active {
-          background: white;
-          color: ${PETROLEUM};
-          box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+          background: #030213;
+          color: white;
+          box-shadow: 0 2px 8px rgba(3,2,19,0.18);
         }
       `}</style>
 
-      <div style={{ display: "flex", minHeight: "100dvh" }}>
+      <div style={{ display: "flex", minHeight: "100dvh", background: "#ffffff" }}>
 
         {/* ── Left panel: form ──────────────────────────── */}
         <div style={{
@@ -259,7 +262,7 @@ export default function LoginPage() {
           alignItems: "center",
           justifyContent: "center",
           padding: "32px 24px",
-          background: "#F2F4F7",
+          background: "#ffffff",
         }}>
 
           {/* Mobile logo */}
@@ -269,7 +272,7 @@ export default function LoginPage() {
               marginBottom: 0,
             }}>
               <div style={{
-                width: 30, height: 30, borderRadius: 6,
+                width: 30, height: 30, borderRadius: "0.625rem",
                 background: BLUE,
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
@@ -291,10 +294,9 @@ export default function LoginPage() {
             style={{
               width: "100%", maxWidth: 400,
               background: "white",
-              borderRadius: 8,
-              padding: "32px 28px",
-              border: "1px solid #E5E7EB",
-              boxShadow: "0 2px 12px rgba(30,42,56,0.08)",
+              borderRadius: 20,
+              padding: "36px 32px",
+              boxShadow: "0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.05)",
             }}
           >
             {/* Heading */}
@@ -525,19 +527,19 @@ export default function LoginPage() {
           <div style={{ marginBottom: 40, width: "100%", maxWidth: 380 }}>
             <div style={{
               display: "inline-flex", alignItems: "center", gap: 9,
-              marginBottom: 36,
+              marginBottom: 20,
             }}>
               <div style={{
-                width: 32, height: 32, borderRadius: 6,
+                width: 34, height: 34, borderRadius: 8,
                 background: BLUE,
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
-                <BarChart2 size={16} color="white" />
+                <BarChart2 size={18} color="white" />
               </div>
               <span style={{
                 fontFamily: "'Space Grotesk', sans-serif",
-                fontSize: 17, fontWeight: 700,
-                color: "white", letterSpacing: "-0.025em",
+                fontSize: 20, fontWeight: 700, color: "white",
+                letterSpacing: "-0.025em",
               }}>
                 MetaCollector
               </span>
@@ -545,24 +547,26 @@ export default function LoginPage() {
 
             <h2 style={{
               fontFamily: "'Space Grotesk', sans-serif",
-              fontSize: 26, fontWeight: 700,
-              color: "white", letterSpacing: "-0.03em",
-              lineHeight: 1.2, marginBottom: 12,
+              fontSize: "clamp(22px, 2.5vw, 30px)",
+              fontWeight: 700, color: "white",
+              letterSpacing: "-0.03em", lineHeight: 1.25,
+              marginBottom: 12,
             }}>
-              Centralize suas<br />métricas sociais
+              Unifique suas métricas sociais em um só painel.
             </h2>
-
             <p style={{
               fontFamily: "'Inter', sans-serif",
-              fontSize: 14, color: "rgba(232,234,240,0.58)",
-              lineHeight: 1.65, marginBottom: 32,
+              fontSize: 14, color: "rgba(232,234,240,0.60)",
+              lineHeight: 1.65,
             }}>
-              YouTube, Instagram e Facebook em um só painel. Dados reais, automação segura.
+              YouTube, Instagram e Facebook com insights reais. Dados atualizados automaticamente.
             </p>
           </div>
 
-          {/* Dashboard preview */}
-          <DashboardPreview />
+          {/* Dashboard preview widget */}
+          <div style={{ width: "100%", maxWidth: 380 }}>
+            <DashboardPreview />
+          </div>
         </div>
       </div>
     </>

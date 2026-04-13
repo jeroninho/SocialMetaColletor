@@ -30,6 +30,7 @@ import { useTheme } from "@/context/theme";
 /* ─── Design tokens ──────────────────────────────────────── */
 const PETROLEUM = "#1E2A38";
 const BLUE      = "#4F6BF4";
+const PURPLE    = "#6C63FF";
 const SUCCESS   = "#4CAF50";
 
 /* ─── Scroll reveal hook ─────────────────────────────────── */
@@ -108,13 +109,13 @@ function Navbar({ dark, toggleTheme }: { dark: boolean; toggleTheme: () => void 
 
   const navBg = scrolled
     ? dark
-      ? "rgba(18,26,38,0.97)"
+      ? "rgba(26,26,46,0.97)"
       : "rgba(255,255,255,0.97)"
     : "transparent";
 
   const linkColor = scrolled
-    ? (dark ? "rgba(255,255,255,0.72)" : "rgba(30,42,56,0.70)")
-    : "rgba(255,255,255,0.72)";
+    ? (dark ? "rgba(255,255,255,0.80)" : "rgba(3,2,19,0.65)")
+    : "rgba(255,255,255,0.80)";
   const logoTextColor = scrolled
     ? (dark ? "white" : PETROLEUM)
     : "white";
@@ -126,7 +127,7 @@ function Navbar({ dark, toggleTheme }: { dark: boolean; toggleTheme: () => void 
           position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
           background: navBg,
           borderBottom: scrolled
-            ? `1px solid ${dark ? "rgba(255,255,255,0.07)" : "rgba(30,42,56,0.09)"}`
+            ? `1px solid ${dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`
             : "none",
           transition: "background 0.25s, border-color 0.25s",
           padding: "0 clamp(20px, 5vw, 80px)",
@@ -181,7 +182,7 @@ function Navbar({ dark, toggleTheme }: { dark: boolean; toggleTheme: () => void 
             style={{
               width: 34, height: 34, borderRadius: 6,
               display: "flex", alignItems: "center", justifyContent: "center",
-              background: dark ? "rgba(255,255,255,0.08)" : "rgba(30,42,56,0.07)",
+              background: dark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.07)",
               border: "none", cursor: "pointer",
               transition: "background 0.15s",
             }}
@@ -216,7 +217,7 @@ function Navbar({ dark, toggleTheme }: { dark: boolean; toggleTheme: () => void 
             style={{
               display: "none", width: 34, height: 34, borderRadius: 6,
               alignItems: "center", justifyContent: "center",
-              background: dark ? "rgba(255,255,255,0.08)" : "rgba(30,42,56,0.07)",
+              background: dark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.07)",
               border: "none", cursor: "pointer",
             }}
           >
@@ -312,8 +313,9 @@ function HeroChart({ dark }: { dark: boolean }) {
           <YAxis tick={{ fontSize: 10, fill: "rgba(255,255,255,0.40)" }} axisLine={false} tickLine={false} />
           <Tooltip
             contentStyle={{
-              background: "rgba(18,26,38,0.95)", border: "1px solid rgba(255,255,255,0.10)",
-              borderRadius: 6, fontSize: 12, color: "white",
+              background: "rgba(20,26,38,0.97)", border: "1px solid rgba(255,255,255,0.10)",
+              borderRadius: "0.625rem", fontSize: 12, color: "white",
+              backdropFilter: "blur(8px)",
             }}
             cursor={{ fill: "rgba(255,255,255,0.04)" }}
           />
@@ -341,11 +343,11 @@ export default function LandingPage() {
   const dark = theme === "dark";
   useScrollReveal();
 
-  const bg        = dark ? "#0D1520" : "#F2F4F7";
-  const text      = dark ? "#E8EAF0" : PETROLEUM;
-  const textMuted = dark ? "rgba(232,234,240,0.55)" : "rgba(30,42,56,0.55)";
-  const cardBg    = dark ? "#151E2C" : "white";
-  const cardBorder = dark ? "rgba(255,255,255,0.08)" : "rgba(30,42,56,0.10)";
+  const bg        = dark ? "#1A1A2E"  : "#ffffff";
+  const text      = dark ? "#E5E5E5"  : "#030213";
+  const textMuted = dark ? "rgba(229,229,229,0.6)" : "rgba(3,2,19,0.55)";
+  const cardBg    = dark ? "#1E1E30"  : "white";
+  const cardBorder = dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.10)";
 
   return (
     <>
@@ -544,7 +546,10 @@ export default function LandingPage() {
                   style={{
                     background: cardBg,
                     border: `1px solid ${cardBorder}`,
-                    borderRadius: 8, padding: "28px 24px",
+                    borderRadius: 20, padding: "32px 28px",
+                    boxShadow: dark
+                      ? "0 4px 20px rgba(0,0,0,0.3)"
+                      : "0 4px 20px rgba(0,0,0,0.06)",
                     cursor: "default",
                     transition: "background 0.15s",
                   }}
@@ -587,10 +592,8 @@ export default function LandingPage() {
 
         {/* ── 3. DEMO SECTION ──────────────────────────────── */}
         <section id="demo" style={{
-          padding: "80px clamp(20px, 6vw, 100px)",
-          background: dark ? "rgba(255,255,255,0.02)" : "rgba(30,42,56,0.03)",
-          borderTop: `1px solid ${cardBorder}`,
-          borderBottom: `1px solid ${cardBorder}`,
+          padding: "96px clamp(20px, 6vw, 100px)",
+          background: dark ? "rgba(255,255,255,0.025)" : "rgba(0,0,0,0.02)",
         }}>
           <div style={{ maxWidth: 1240, margin: "0 auto" }}>
             <div className="demo-grid" style={{ display: "flex", alignItems: "center", gap: 56 }}>
@@ -602,8 +605,8 @@ export default function LandingPage() {
                   border: `1px solid ${cardBorder}`,
                   borderRadius: 8, padding: "24px 20px",
                   boxShadow: dark
-                    ? "0 4px 24px rgba(0,0,0,0.25)"
-                    : "0 4px 20px rgba(30,42,56,0.07)",
+                    ? "0 8px 32px rgba(0,0,0,0.3)"
+                    : "0 8px 32px rgba(0,0,0,0.07)",
                 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
                     <h3 style={{
@@ -635,26 +638,26 @@ export default function LandingPage() {
                       </defs>
                       <CartesianGrid
                         strokeDasharray="3 3"
-                        stroke={dark ? "rgba(255,255,255,0.06)" : "rgba(30,42,56,0.07)"}
+                        stroke={dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)"}
                         vertical={false}
                       />
                       <XAxis
                         dataKey="mes"
-                        tick={{ fontSize: 11, fill: dark ? "rgba(255,255,255,0.36)" : "rgba(30,42,56,0.42)" }}
+                        tick={{ fontSize: 11, fill: dark ? "rgba(255,255,255,0.40)" : "rgba(3,2,19,0.45)" }}
                         axisLine={false} tickLine={false}
                       />
                       <YAxis
-                        tick={{ fontSize: 11, fill: dark ? "rgba(255,255,255,0.36)" : "rgba(30,42,56,0.42)" }}
+                        tick={{ fontSize: 11, fill: dark ? "rgba(255,255,255,0.40)" : "rgba(3,2,19,0.45)" }}
                         axisLine={false} tickLine={false}
                         tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v}
                       />
                       <Tooltip
                         contentStyle={{
-                          background: dark ? "rgba(18,26,38,0.97)" : "white",
-                          border: `1px solid ${dark ? "rgba(255,255,255,0.10)" : "rgba(30,42,56,0.10)"}`,
-                          borderRadius: 6, fontSize: 12,
-                          color: dark ? "white" : PETROLEUM,
-                          boxShadow: "0 4px 16px rgba(0,0,0,0.10)",
+                          background: dark ? "hsl(240 6% 13%)" : "white",
+                          border: `1px solid ${dark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.10)"}`,
+                          borderRadius: "0.625rem", fontSize: 12,
+                          color: dark ? "rgba(255,255,255,0.90)" : "#030213",
+                          boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
                         }}
                         formatter={(v: number) => [`${(v / 1000).toFixed(1)}K`, "Engajamento"]}
                       />
@@ -752,15 +755,24 @@ export default function LandingPage() {
             }}>
               {clients.map((name) => (
                 <div key={name} style={{
-                  padding: "12px 28px", borderRadius: 6,
-                  background: dark ? "rgba(255,255,255,0.04)" : "rgba(30,42,56,0.04)",
+                  padding: "14px 32px", borderRadius: 12,
+                  background: dark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
                   border: `1px solid ${cardBorder}`,
-                  transition: "all 0.15s",
-                }}>
+                  transition: "all 0.2s",
+                }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = dark ? "rgba(255,255,255,0.08)" : `${PURPLE}12`;
+                    (e.currentTarget as HTMLElement).style.borderColor = `${PURPLE}40`;
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = dark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)";
+                    (e.currentTarget as HTMLElement).style.borderColor = cardBorder;
+                  }}
+                >
                   <span style={{
                     fontFamily: "'Space Grotesk', sans-serif",
-                    fontSize: 18, fontWeight: 700,
-                    color: dark ? "rgba(255,255,255,0.30)" : "rgba(30,42,56,0.25)",
+                    fontSize: 20, fontWeight: 700,
+                    color: dark ? "rgba(255,255,255,0.35)" : "rgba(3,2,19,0.28)",
                     letterSpacing: "-0.02em",
                   }}>
                     {name}

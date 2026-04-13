@@ -17,14 +17,14 @@ export const CHART_PALETTE = [
 
 export function getTooltipStyle(isDark: boolean) {
   return {
-    background: isDark ? "hsl(230 20% 16%)" : "#ffffff",
-    border: `1px solid ${isDark ? "hsl(230 18% 22%)" : "hsl(220 20% 90%)"}`,
-    borderRadius: 6,
+    background: isDark ? "hsl(240 6% 13%)" : "#ffffff",
+    border: `1px solid ${isDark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.10)"}`,
+    borderRadius: "0.625rem",
     fontSize: 12,
-    color: isDark ? "hsl(220 20% 90%)" : "hsl(224 47% 12%)",
+    color: isDark ? "hsl(0 0% 90%)" : "#030213",
     boxShadow: isDark
       ? "0 8px 24px rgba(0,0,0,0.4)"
-      : "0 8px 24px rgba(0,0,0,0.08)",
+      : "0 4px 16px rgba(0,0,0,0.08)",
     padding: "8px 12px",
   };
 }

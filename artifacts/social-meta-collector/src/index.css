@@ -60,10 +60,10 @@
   --font-serif: var(--app-font-serif);
   --font-mono: var(--app-font-mono);
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 2px);
+  --radius-sm: calc(var(--radius) - 0.125rem);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 0.125rem);
+  --radius-xl: calc(var(--radius) + 0.25rem);
 }
 
 /* ─── Light Mode ─────────────────────────────────────────── */
@@ -74,14 +74,16 @@
   --elevate-1: rgba(0,0,0,.03);
   --elevate-2: rgba(0,0,0,.08);
 
-  --background: 220 22% 96%;
-  --foreground: 215 28% 14%;
+  /* Light content background — pure white */
+  --background: 0 0% 100%;
+  --foreground: 244 91% 4%;
 
-  --border: 220 18% 88%;
+  /* Borders use rgba(0,0,0,0.1) — lighter, less contrast */
+  --border: 0 0% 88%;
 
   --card: 0 0% 100%;
-  --card-foreground: 215 28% 14%;
-  --card-border: 220 18% 88%;
+  --card-foreground: 244 91% 4%;
+  --card-border: 0 0% 88%;
 
   /* Sidebar always petroleum blue #1E2A38 */
   --sidebar: 212 32% 17%;
@@ -94,31 +96,32 @@
   --sidebar-ring: 228 86% 63%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 215 28% 14%;
-  --popover-border: 220 18% 88%;
+  --popover-foreground: 244 91% 4%;
+  --popover-border: 0 0% 88%;
 
-  /* Primary: blue-indigo #4F6BF4 */
-  --primary: 228 86% 63%;
+  /* Primary: near-black #030213 — neutral-dark */
+  --primary: 244 91% 6%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 220 16% 92%;
-  --secondary-foreground: 215 28% 14%;
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 244 91% 4%;
 
-  --muted: 220 16% 92%;
-  --muted-foreground: 220 10% 48%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 46%;
 
-  --accent: 220 16% 92%;
-  --accent-foreground: 215 28% 14%;
+  --accent: 0 0% 96%;
+  --accent-foreground: 244 91% 4%;
 
   /* Destructive: #F44336 */
   --destructive: 4 90% 58%;
   --destructive-foreground: 0 0% 100%;
 
-  --input: 220 18% 88%;
-  --ring: 228 86% 63%;
+  --input: 0 0% 88%;
+  --ring: 244 91% 6%;
 
-  --chart-1: 228 86% 63%;
-  --chart-2: 210 90% 52%;
+  /* Chart colors — preserved as semantic exceptions */
+  --chart-1: 244 100% 69%;
+  --chart-2: 344 100% 69%;
   --chart-3: 122 39% 46%;
   --chart-4: 30 92% 53%;
   --chart-5: 200 90% 50%;
@@ -127,7 +130,7 @@
   --app-font-heading: 'Space Grotesk', 'Inter', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: 'JetBrains Mono', Menlo, monospace;
-  --radius: 0.375rem;
+  --radius: 0.625rem;
 
   --shadow-2xs: 0px 1px 2px rgba(0,0,0,0.04);
   --shadow-xs:  0px 1px 4px rgba(0,0,0,0.06), 0px 0px 0px 1px rgba(0,0,0,0.03);
@@ -153,16 +156,16 @@
   --elevate-1: rgba(255,255,255,.04);
   --elevate-2: rgba(255,255,255,.09);
 
-  /* Deep slate background */
-  --background: 222 28% 12%;
-  --foreground: 215 20% 88%;
+  /* Dark bg: deep neutral */
+  --background: 240 6% 10%;
+  --foreground: 0 0% 90%;
 
-  --border: 220 20% 20%;
+  --border: 0 0% 20%;
 
   /* Card slightly lighter than bg */
-  --card: 222 26% 16%;
-  --card-foreground: 215 20% 88%;
-  --card-border: 220 20% 22%;
+  --card: 240 6% 13%;
+  --card-foreground: 0 0% 90%;
+  --card-border: 0 0% 22%;
 
   /* Sidebar: petroleum blue #1E2A38 */
   --sidebar: 212 32% 17%;
@@ -174,32 +177,33 @@
   --sidebar-accent-foreground: 0 0% 80%;
   --sidebar-ring: 228 86% 63%;
 
-  --popover: 222 26% 16%;
-  --popover-foreground: 215 20% 88%;
-  --popover-border: 220 20% 22%;
+  --popover: 240 6% 13%;
+  --popover-foreground: 0 0% 90%;
+  --popover-border: 0 0% 22%;
 
-  /* Primary: blue-indigo #4F6BF4 */
-  --primary: 228 86% 63%;
+  /* Primary: near-black adapted for dark — use purple accent */
+  --primary: 244 91% 6%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 222 22% 20%;
-  --secondary-foreground: 215 16% 82%;
+  --secondary: 240 4% 18%;
+  --secondary-foreground: 0 0% 84%;
 
-  --muted: 222 20% 18%;
-  --muted-foreground: 215 12% 55%;
+  --muted: 240 4% 16%;
+  --muted-foreground: 0 0% 56%;
 
-  --accent: 222 22% 20%;
-  --accent-foreground: 215 16% 84%;
+  --accent: 240 4% 18%;
+  --accent-foreground: 0 0% 86%;
 
   /* Destructive: #F44336 */
   --destructive: 4 90% 58%;
   --destructive-foreground: 0 0% 100%;
 
-  --input: 222 22% 20%;
-  --ring: 228 86% 63%;
+  --input: 240 4% 20%;
+  --ring: 244 91% 6%;
 
-  --chart-1: 228 86% 66%;
-  --chart-2: 210 90% 58%;
+  /* Chart colors — preserved as semantic exceptions */
+  --chart-1: 244 100% 72%;
+  --chart-2: 344 100% 72%;
   --chart-3: 122 39% 55%;
   --chart-4: 30 92% 60%;
   --chart-5: 200 90% 58%;
@@ -213,7 +217,7 @@
 
   html {
     @apply scroll-smooth;
-    font-size: 16px;
+    font-size: 14px;
   }
 
   body {
@@ -400,6 +404,11 @@
     .chart-scroll-mobile > * {
       min-width: 360px;
     }
+  }
+
+  /* Stat card glow — uses purple accent for visual distinction */
+  .stat-card-glow {
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
   }
 
   /* Platform icon colors */

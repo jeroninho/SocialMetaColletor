@@ -189,8 +189,7 @@ export default function Dashboard() {
               <CardContent className="pt-4 pb-5">
                 <div className="flex items-start justify-between mb-3">
                   <p
-                    className="text-[13px] font-medium leading-tight pr-2"
-                    style={{ color: dark ? "#E0E0E0" : "#4B5563" }}
+                    className="text-[13px] font-medium leading-tight pr-2 text-muted-foreground"
                   >
                     {cfg.title}
                   </p>
@@ -204,11 +203,8 @@ export default function Dashboard() {
 
                 {/* Big metric number */}
                 <p
-                  className="text-3xl font-bold tabular-nums tracking-tight"
-                  style={{
-                    fontFamily: "var(--app-font-heading)",
-                    color: dark ? "#FFFFFF" : "#111827",
-                  }}
+                  className="text-3xl font-bold tabular-nums tracking-tight text-foreground"
+                  style={{ fontFamily: "var(--app-font-heading)" }}
                 >
                   {value}
                 </p>
@@ -420,7 +416,7 @@ export default function Dashboard() {
                         key={label}
                         className="rounded-xl py-2.5 px-1"
                         style={{
-                          background: dark ? "rgba(255,255,255,0.05)" : "rgba(30,42,56,0.05)",
+                          background: dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
                         }}
                       >
                         <p
