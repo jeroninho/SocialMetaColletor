@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
 import healthRouter from "./health";
 import authRouter from "./auth";
+import oauthRouter from "./oauth";
 import usersRouter from "./users";
 import youtubeRouter from "./youtube";
 import instagramRouter from "./instagram";
@@ -15,6 +16,8 @@ const router: IRouter = Router();
 router.use(healthRouter);
 
 router.use(webhooksRouter);
+
+router.use(oauthRouter);
 
 router.use(optionalAuth);
 

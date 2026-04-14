@@ -1,123 +1,154 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef } from "react";
+import { useSearch } from "wouter";
 import {
   useGetAuthStatus,
   getGetAuthStatusQueryKey,
-  useConnectYoutube,
-  useConnectInstagram,
-  useConnectFacebook,
   useDisconnectPlatform,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Youtube, Instagram, Facebook, CheckCircle, XCircle, Loader2, Link, Unlink } from "lucide-react";
+import {
+  Youtube,
+  Instagram,
+  Facebook,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  LogIn,
+  Unlink,
+  AlertCircle,
+  Info,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-interface PlatformConnectFormProps {
+const PLATFORM_LABELS: Record<string, string> = {
+  youtube: "YouTube",
+  instagram: "Instagram",
+  facebook: "Facebook",
+};
+
+interface PlatformCardProps {
   platform: "youtube" | "instagram" | "facebook";
   connected: boolean;
   accountName?: string;
   connectedAt?: string;
+  expiresAt?: string | null;
   icon: React.ReactNode;
   color: string;
   label: string;
-  onConnected: () => void;
+  onDisconnected: () => void;
 }
 
-function PlatformConnectForm({
+function PlatformCard({
   platform,
   connected,
   accountName,
   connectedAt,
+  expiresAt,
   icon,
   color,
   label,
-  onConnected,
-}: PlatformConnectFormProps) {
-  const [token, setToken] = useState("");
-  const [name, setName] = useState("");
+  onDisconnected,
+}: PlatformCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
-  const connectYoutube = useConnectYoutube();
-  const connectInstagram = useConnectInstagram();
-  const connectFacebook = useConnectFacebook();
   const disconnect = useDisconnectPlatform();
 
-  const isConnecting =
-    connectYoutube.isPending || connectInstagram.isPending || connectFacebook.isPending;
-  const isDisconnecting = disconnect.isPending;
-
-  const handleConnect = async () => {
-    if (!token.trim() || !name.trim()) {
-      toast({ title: "Missing fields", description: "Please enter both an account name and access token.", variant: "destructive" });
-      return;
-    }
-    try {
-      const body = { accessToken: token.trim(), accountName: name.trim() };
-      if (platform === "youtube") await connectYoutube.mutateAsync({ data: body });
-      else if (platform === "instagram") await connectInstagram.mutateAsync({ data: body });
-      else await connectFacebook.mutateAsync({ data: body });
-
-      toast({ title: `${label} connected`, description: `Successfully connected as ${name.trim()}.` });
-      setToken("");
-      setName("");
-      queryClient.invalidateQueries({ queryKey: getGetAuthStatusQueryKey() });
-      onConnected();
-    } catch {
-      toast({ title: "Connection failed", description: "Please check your access token and try again.", variant: "destructive" });
-    }
+  const handleConnect = () => {
+    window.location.href = `/api/auth/${platform}/connect`;
   };
 
   const handleDisconnect = async () => {
     try {
       await disconnect.mutateAsync({ platform });
-      toast({ title: `${label} disconnected`, description: "Platform disconnected successfully." });
+      toast({
+        title: `${label} desconectado`,
+        description: "Plataforma desconectada com sucesso.",
+      });
       queryClient.invalidateQueries({ queryKey: getGetAuthStatusQueryKey() });
-      onConnected();
+      onDisconnected();
     } catch {
-      toast({ title: "Error", description: "Failed to disconnect. Please try again.", variant: "destructive" });
+      toast({
+        title: "Erro",
+        description: "Falha ao desconectar. Tente novamente.",
+        variant: "destructive",
+      });
     }
   };
 
+  const isExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
+
   return (
     <Card className="overflow-hidden">
-      <div className={`h-1.5 w-full`} style={{ backgroundColor: color }} />
+      <div className="h-1.5 w-full" style={{ backgroundColor: color }} />
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: `${color}18` }}>
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: `${color}18` }}
+            >
               {icon}
             </div>
             <div>
               <CardTitle className="text-base">{label}</CardTitle>
               {connected && accountName && (
-                <CardDescription className="text-xs mt-0.5">@{accountName}</CardDescription>
+                <CardDescription className="text-xs mt-0.5">
+                  @{accountName}
+                </CardDescription>
               )}
             </div>
           </div>
           <Badge
-            variant={connected ? "default" : "secondary"}
+            variant={connected && !isExpired ? "default" : "secondary"}
             className="flex items-center gap-1"
           >
-            {connected ? (
-              <><CheckCircle className="w-3 h-3" /> Connected</>
+            {connected && !isExpired ? (
+              <>
+                <CheckCircle className="w-3 h-3" /> Conectado
+              </>
+            ) : connected && isExpired ? (
+              <>
+                <AlertCircle className="w-3 h-3" /> Expirado
+              </>
             ) : (
-              <><XCircle className="w-3 h-3" /> Disconnected</>
+              <>
+                <XCircle className="w-3 h-3" /> Desconectado
+              </>
             )}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {connected ? (
+        {connected && !isExpired ? (
           <div className="space-y-3">
             {connectedAt && (
               <p className="text-xs text-muted-foreground">
-                Connected on {new Date(connectedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+                Conectado em{" "}
+                {new Date(connectedAt).toLocaleDateString("pt-BR", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
+            )}
+            {expiresAt && (
+              <p className="text-xs text-muted-foreground">
+                Expira em{" "}
+                {new Date(expiresAt).toLocaleDateString("pt-BR", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
               </p>
             )}
             <Separator />
@@ -126,42 +157,32 @@ function PlatformConnectForm({
               size="sm"
               className="text-destructive border-destructive/30 hover:bg-destructive/5 w-full"
               onClick={handleDisconnect}
-              disabled={isDisconnecting}
+              disabled={disconnect.isPending}
             >
-              {isDisconnecting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Unlink className="w-4 h-4 mr-2" />}
-              Disconnect {label}
+              {disconnect.isPending ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Unlink className="w-4 h-4 mr-2" />
+              )}
+              Desconectar {label}
             </Button>
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Account name</Label>
-              <Input
-                placeholder={`Your ${label} handle or page name`}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="text-sm"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Access token</Label>
-              <Input
-                placeholder="Paste your OAuth2 access token"
-                value={token}
-                onChange={(e) => setToken(e.target.value)}
-                type="password"
-                className="text-sm font-mono"
-              />
-            </div>
+            {connected && isExpired && (
+              <p className="text-xs text-amber-500 flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5" />
+                Token expirado. Reconecte para continuar usando.
+              </p>
+            )}
             <Button
               size="sm"
-              className="w-full"
+              className="w-full font-medium"
               style={{ backgroundColor: color }}
               onClick={handleConnect}
-              disabled={isConnecting}
             >
-              {isConnecting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Link className="w-4 h-4 mr-2" />}
-              Connect {label}
+              <LogIn className="w-4 h-4 mr-2" />
+              Conectar com {label}
             </Button>
           </div>
         )}
@@ -175,6 +196,42 @@ export default function Connections() {
   const { data: authStatus, isLoading } = useGetAuthStatus({
     query: { queryKey: getGetAuthStatusQueryKey() },
   });
+  const { toast } = useToast();
+  const search = useSearch();
+  const notifiedRef = useRef(false);
+
+  useEffect(() => {
+    if (notifiedRef.current) return;
+    const params = new URLSearchParams(search);
+    const status = params.get("oauth_status");
+    const platform = params.get("platform");
+    const message = params.get("message");
+
+    if (!status || !platform) return;
+    notifiedRef.current = true;
+
+    const platformLabel = PLATFORM_LABELS[platform] ?? platform;
+
+    if (status === "success") {
+      toast({
+        title: `${platformLabel} conectado com sucesso!`,
+        description: `Sua conta foi vinculada ao SocialMetaCollector.`,
+      });
+      queryClient.invalidateQueries({ queryKey: getGetAuthStatusQueryKey() });
+    } else if (status === "error") {
+      toast({
+        title: `Erro ao conectar ${platformLabel}`,
+        description: message ?? "Ocorreu um erro durante a autenticação. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete("oauth_status");
+    url.searchParams.delete("platform");
+    url.searchParams.delete("message");
+    window.history.replaceState({}, "", url.toString());
+  }, [search, toast, queryClient]);
 
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: getGetAuthStatusQueryKey() });
@@ -205,8 +262,10 @@ export default function Connections() {
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-lg font-semibold">Platform Connections</h2>
-          <p className="text-sm text-muted-foreground mt-1">Connect your social media accounts to start collecting metadata.</p>
+          <h2 className="text-lg font-semibold">Conexões de Plataformas</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Conecte suas redes sociais para começar a coletar métricas.
+          </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
@@ -220,9 +279,10 @@ export default function Connections() {
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       <div>
-        <h2 className="text-lg font-semibold">Platform Connections</h2>
+        <h2 className="text-lg font-semibold">Conexões de Plataformas</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Connect your social media accounts with an OAuth2 access token to start collecting metadata.
+          Conecte suas redes sociais via OAuth 2.0 para começar a coletar
+          métricas automaticamente.
         </p>
       </div>
 
@@ -230,7 +290,7 @@ export default function Connections() {
         {platforms.map(({ platform, label, color, icon }) => {
           const status = authStatus?.[platform];
           return (
-            <PlatformConnectForm
+            <PlatformCard
               key={platform}
               platform={platform}
               label={label}
@@ -239,7 +299,8 @@ export default function Connections() {
               connected={status?.connected ?? false}
               accountName={status?.accountName}
               connectedAt={status?.connectedAt as string | undefined}
-              onConnected={refresh}
+              expiresAt={status?.expiresAt as string | null | undefined}
+              onDisconnected={refresh}
             />
           );
         })}
@@ -247,10 +308,46 @@ export default function Connections() {
 
       <Card className="bg-muted/30">
         <CardContent className="pt-4 pb-4">
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            <strong>How to get an access token:</strong> For YouTube, use the Google Cloud Console with the YouTube Data API v3 scope.
-            For Instagram and Facebook, use the Meta Developer Portal to generate a long-lived access token for your page or business account.
-          </p>
+          <div className="flex items-start gap-2">
+            <Info className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+            <div className="space-y-1">
+              <p className="text-xs font-medium text-muted-foreground">
+                Como configurar as credenciais OAuth:
+              </p>
+              <ul className="text-xs text-muted-foreground space-y-1 list-disc ml-4">
+                <li>
+                  <strong>YouTube:</strong> Crie um projeto no{" "}
+                  <a
+                    href="https://console.cloud.google.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    Google Cloud Console
+                  </a>{" "}
+                  e configure as credenciais OAuth 2.0 com a URI de redirecionamento{" "}
+                  <code className="bg-muted px-1 rounded">/api/auth/youtube/callback</code>.
+                </li>
+                <li>
+                  <strong>Instagram:</strong> Crie um app no{" "}
+                  <a
+                    href="https://developers.facebook.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    Meta Developer Portal
+                  </a>{" "}
+                  com a URI{" "}
+                  <code className="bg-muted px-1 rounded">/api/auth/instagram/callback</code>.
+                </li>
+                <li>
+                  <strong>Facebook:</strong> Use o mesmo app Meta com a URI{" "}
+                  <code className="bg-muted px-1 rounded">/api/auth/facebook/callback</code>.
+                </li>
+              </ul>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

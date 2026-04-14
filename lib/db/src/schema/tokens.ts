@@ -7,6 +7,7 @@ export const tokensTable = pgTable("tokens", {
   platform: text("platform").notNull(),
   accountName: text("account_name").notNull(),
   accessToken: text("access_token").notNull(),
+  refreshToken: text("refresh_token"),
   connected: boolean("connected").notNull().default(true),
   connectedAt: timestamp("connected_at").notNull().defaultNow(),
   expiresAt: timestamp("expires_at"),
