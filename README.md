@@ -74,31 +74,66 @@ Gerenciar múltiplas redes sociais significa alternar entre apps, planilhas e pa
 
 ---
 
-## Fluxo OAuth2
+## Fluxo OAuth 2.0 (Server-Side)
+
+O fluxo é inteiramente gerenciado pelo backend — o frontend apenas redireciona o navegador para `/api/auth/{plataforma}/connect`.
 
 ```
-Usuário               Backend                 Plataforma (ex: YouTube)
-   │                     │                              │
-   │─ Clica "Conectar" ─▶│                              │
-   │                     │── Authorization URL ────────▶│
-   │◀──────────────────── redirect para plataforma       │
-   │                                                     │
-   │─ Autoriza ──────────────────────────────────────── │
-   │◀─ Authorization Code ───────────────────────────── │
-   │                     │                              │
-   │─ POST /auth/*/connect ▶                            │
-   │   { code }          │─ troca code por tokens ─────▶│
-   │                     │◀─ { access_token,            │
-   │                     │     refresh_token,           │
-   │                     │     expires_in }             │
-   │                     │                              │
-   │                     │  encryptToken(access_token)  │
-   │                     │  ── AES-256-GCM (TOKEN_SECRET)│
-   │                     │  salva criptografado no banco │
-   │◀─ { success: true } │                              │
+Usuário               Frontend              Backend                    Plataforma (Google/Meta)
+   │                     │                     │                              │
+   │─ Clica "Conectar" ─▶│                     │                              │
+   │                     │── window.location ──▶│                              │
+   │                     │  /api/auth/*/connect │                              │
+   │                     │                     │── 302 redirect ─────────────▶│
+   │◀─────────────────────────────────────────── Tela de autorização          │
+   │                                                                          │
+   │─ Autoriza na plataforma ────────────────────────────────────────────────▶│
+   │                                           │◀─ GET /api/auth/*/callback   │
+   │                                           │   ?code=...&state=...        │
+   │                                           │                              │
+   │                                           │── POST troca code por token ▶│
+   │                                           │◀─ { access_token,            │
+   │                                           │     refresh_token,           │
+   │                                           │     expires_in }             │
+   │                                           │                              │
+   │                                           │  encryptToken(access_token)  │
+   │                                           │  salva criptografado no DB   │
+   │                                           │                              │
+   │◀────────── 302 redirect para /connections?oauth_status=success           │
 ```
 
-Quando o token expira, o refresh token é usado para obter um novo access token, que também é re-criptografado antes de persistir.
+### URIs de Redirecionamento (Callback)
+
+Cada plataforma precisa registrar a respectiva URI nas configurações do app OAuth:
+
+| Plataforma | URI de Callback |
+|------------|-----------------|
+| YouTube    | `https://{seu-dominio}/api/auth/youtube/callback` |
+| Instagram  | `https://{seu-dominio}/api/auth/instagram/callback` |
+| Facebook   | `https://{seu-dominio}/api/auth/facebook/callback` |
+
+Use o endpoint `GET /api/auth/config` para obter as URIs exatas com o domínio atual.
+
+### Configuração no Google Cloud Console (YouTube)
+
+1. Acesse [console.cloud.google.com](https://console.cloud.google.com)
+2. Crie um projeto (ou selecione um existente)
+3. Ative a **YouTube Data API v3** em "APIs e serviços" > "Biblioteca"
+4. Configure a **Tela de consentimento OAuth** em "APIs e serviços" > "Tela de consentimento"
+   - Tipo: Externo
+   - Adicione seu e-mail como **usuário de teste** se o app estiver em modo "Teste"
+5. Crie credenciais em "APIs e serviços" > "Credenciais" > "Criar credenciais" > "ID do cliente OAuth"
+   - Tipo: **Aplicativo da Web**
+   - Adicione a URI de redirecionamento autorizada: copie do endpoint `/api/auth/config`
+6. Copie o **Client ID** e **Client Secret** e salve como variáveis de ambiente
+
+### Configuração no Meta Developer Portal (Instagram/Facebook)
+
+1. Acesse [developers.facebook.com](https://developers.facebook.com)
+2. Crie um app do tipo "Consumidor" ou "Negócios"
+3. Adicione os produtos **Login do Instagram** e **Login do Facebook**
+4. Em cada produto, adicione a URI de redirecionamento correspondente
+5. Copie o **App ID** (Client ID) e a **Chave Secreta** (Client Secret)
 
 ---
 
@@ -124,13 +159,19 @@ Quando o token expira, o refresh token é usado para obter um novo access token,
 | `DATABASE_URL` | Sim | URL de conexão PostgreSQL |
 | `JWT_SECRET` | Sim | Segredo de assinatura JWT (mín. 32 chars) |
 | `TOKEN_SECRET` | Sim | Chave AES-256-GCM em hex (64 chars = 32 bytes) |
+| `YOUTUBE_CLIENT_ID` | Sim* | Client ID do Google OAuth 2.0 (YouTube) |
+| `YOUTUBE_CLIENT_SECRET` | Sim* | Client Secret do Google OAuth 2.0 (YouTube) |
+| `INSTAGRAM_CLIENT_ID` | Sim* | App ID do Meta (Instagram OAuth) |
+| `INSTAGRAM_CLIENT_SECRET` | Sim* | App Secret do Meta (Instagram OAuth) |
+| `FACEBOOK_CLIENT_ID` | Sim* | App ID do Meta (Facebook OAuth) |
+| `FACEBOOK_CLIENT_SECRET` | Sim* | App Secret do Meta (Facebook OAuth) |
 | `REDIS_URL` | Não | URL Redis para cache e fila (ex: `redis://localhost:6379`) |
 | `JWT_EXPIRES_IN` | Não | Expiração do JWT (padrão: `1h`) |
 | `CACHE_TTL_SECONDS` | Não | TTL do cache Redis em segundos (padrão: `60`) |
-| `YOUTUBE_API_KEY` | Não | Chave da YouTube Data API v3 |
 | `META_APP_SECRET` | Não | App Secret do Meta para validar assinatura de webhooks |
 | `META_WEBHOOK_VERIFY_TOKEN` | Não | Token de verificação do webhook Meta |
-| `INSTAGRAM_ACCESS_TOKEN` | Não | Token de acesso Instagram (Graph API) |
+
+\* Obrigatória para ativar o OAuth da plataforma correspondente. As plataformas sem credenciais ficam desabilitadas mas não afetam as demais.
 
 **Nota:** sem `REDIS_URL`, o cache e as filas ficam desabilitados — a sincronização ocorre de forma síncrona e o cache é pulado. O sistema opera normalmente.
 
@@ -191,9 +232,14 @@ pnpm --filter @workspace/social-meta-collector run dev  # Frontend
 | `POST` | `/api/auth/login` | Login e emissão de JWT | Não |
 | `GET` | `/api/auth/me` | Dados do usuário autenticado | JWT |
 | `GET` | `/api/auth/status` | Status de conexão por plataforma | Não |
-| `POST` | `/api/auth/youtube/connect` | Conectar conta YouTube | Não |
-| `POST` | `/api/auth/instagram/connect` | Conectar conta Instagram | Não |
-| `POST` | `/api/auth/facebook/connect` | Conectar conta Facebook | Não |
+| `GET` | `/api/auth/config` | URIs de callback OAuth e status de configuração | Não |
+| `GET` | `/api/auth/youtube/connect` | Inicia fluxo OAuth YouTube (redirect) | Não |
+| `GET` | `/api/auth/youtube/callback` | Callback OAuth YouTube (recebe code) | Não |
+| `GET` | `/api/auth/instagram/connect` | Inicia fluxo OAuth Instagram (redirect) | Não |
+| `GET` | `/api/auth/instagram/callback` | Callback OAuth Instagram (recebe code) | Não |
+| `GET` | `/api/auth/facebook/connect` | Inicia fluxo OAuth Facebook (redirect) | Não |
+| `GET` | `/api/auth/facebook/callback` | Callback OAuth Facebook (recebe code) | Não |
+| `POST` | `/api/auth/{platform}/disconnect` | Desconectar plataforma | Não |
 | `GET` | `/api/dashboard/summary` | Resumo agregado (com cache Redis) | Opcional |
 | `GET` | `/api/dashboard/recent-metadata` | Últimos metadados coletados | Opcional |
 | `GET` | `/api/dashboard/engagement-trends` | Tendências de engajamento | Opcional |

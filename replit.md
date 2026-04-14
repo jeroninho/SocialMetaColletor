@@ -37,7 +37,7 @@ Fullstack application for collecting and analyzing social media metadata from Yo
 artifacts/
   api-server/
     src/
-      routes/         # auth, users, youtube, instagram, facebook, dashboard, webhooks
+      routes/         # auth, oauth, users, youtube, instagram, facebook, dashboard, webhooks
       middleware/     # auth.ts — JWT bearer middleware (req.user)
       utils/          # crypto.ts (AES-256-GCM), jwt.ts (sign/verify)
       services/       # YouTubeProvider.ts, MetaProvider.ts, RedisClient.ts
@@ -57,7 +57,9 @@ lib/
 ## API Surface
 
 - `GET /api/auth/status` — connection status for all platforms
-- `POST /api/auth/{platform}/connect` — connect YouTube / Instagram / Facebook
+- `GET /api/auth/config` — OAuth callback URIs and configuration status
+- `GET /api/auth/{platform}/connect` — initiates OAuth 2.0 redirect flow (YouTube/Instagram/Facebook)
+- `GET /api/auth/{platform}/callback` — OAuth callback (receives code, exchanges for token, stores encrypted)
 - `POST /api/auth/{platform}/disconnect` — disconnect a platform
 - `GET /api/youtube/channel` — channel metadata
 - `GET /api/youtube/videos` — video list with metrics
@@ -75,7 +77,7 @@ lib/
 
 ## Database Schema
 
-- `tokens` — OAuth tokens per platform (accessToken stored AES-256-GCM encrypted)
+- `tokens` — OAuth tokens per platform (accessToken + refreshToken stored AES-256-GCM encrypted)
 - `metadata` — Normalized collected metadata (platform, contentType, contentId, views, likes, comments, engagementRate)
 - `fetch_history` — URL metadata fetch history
 - `users` — User accounts (id uuid, email unique, nome, senhaHash via bcrypt)

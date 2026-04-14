@@ -54,6 +54,24 @@ function safeEncrypt(token: string): string {
   }
 }
 
+router.get("/auth/config", (req, res) => {
+  const base = getBaseUrl();
+  res.json({
+    youtube: {
+      callbackUrl: `${base}/api/auth/youtube/callback`,
+      configured: !!(process.env.YOUTUBE_CLIENT_ID && process.env.YOUTUBE_CLIENT_SECRET),
+    },
+    instagram: {
+      callbackUrl: `${base}/api/auth/instagram/callback`,
+      configured: !!(process.env.INSTAGRAM_CLIENT_ID && process.env.INSTAGRAM_CLIENT_SECRET),
+    },
+    facebook: {
+      callbackUrl: `${base}/api/auth/facebook/callback`,
+      configured: !!(process.env.FACEBOOK_CLIENT_ID && process.env.FACEBOOK_CLIENT_SECRET),
+    },
+  });
+});
+
 // ─── YOUTUBE ────────────────────────────────────────────────────────────────
 
 router.get("/auth/youtube/connect", (req, res) => {
@@ -63,19 +81,22 @@ router.get("/auth/youtube/connect", (req, res) => {
     return;
   }
   const state = generateState("youtube");
-  const params = new URLSearchParams({
-    client_id: clientId,
-    redirect_uri: getCallbackUrl("youtube"),
-    response_type: "code",
-    scope: [
-      "https://www.googleapis.com/auth/youtube.readonly",
-      "https://www.googleapis.com/auth/userinfo.profile",
-    ].join(" "),
-    state,
-    access_type: "offline",
-    prompt: "consent",
-  });
-  res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params}`);
+  const redirectUri = getCallbackUrl("youtube");
+  const scopes = [
+    "https://www.googleapis.com/auth/youtube.readonly",
+    "https://www.googleapis.com/auth/userinfo.profile",
+  ];
+
+  const url = "https://accounts.google.com/o/oauth2/v2/auth"
+    + "?client_id=" + encodeURIComponent(clientId)
+    + "&redirect_uri=" + encodeURIComponent(redirectUri)
+    + "&response_type=code"
+    + "&scope=" + encodeURIComponent(scopes.join(" "))
+    + "&state=" + encodeURIComponent(state)
+    + "&access_type=offline"
+    + "&prompt=consent";
+
+  res.redirect(url);
 });
 
 router.get("/auth/youtube/callback", async (req, res) => {
