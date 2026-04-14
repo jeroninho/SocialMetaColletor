@@ -27,17 +27,19 @@ router.get("/dashboard/summary", async (req, res) => {
   }
 
   const summary = {
-    totalPlatforms: 3,
-    connectedPlatforms: 2,
-    totalFollowers: 184200 + 42800 + 31200,
-    totalContent: 5 + 5 + 5,
-    totalViews: 434400 + 237700 + 209600,
-    totalEngagements: 25180 + 18010 + 14230,
-    averageEngagementRate: 4.21,
+    totalPlatforms: 5,
+    connectedPlatforms: 3,
+    totalFollowers: 184200 + 42800 + 31200 + 324000 + 89400,
+    totalContent: 5 + 5 + 5 + 5 + 5,
+    totalViews: 434400 + 237700 + 209600 + 5491000 + 1440000,
+    totalEngagements: 25180 + 18010 + 14230 + 553320 + 44276,
+    averageEngagementRate: 6.47,
     platformBreakdown: [
       { platform: "youtube", connected: true, followers: 184200, content: 5, engagementRate: 5.82 },
       { platform: "instagram", connected: true, followers: 42800, content: 5, engagementRate: 7.59 },
       { platform: "facebook", connected: false, followers: 31200, content: 5, engagementRate: 6.81 },
+      { platform: "tiktok", connected: true, followers: 324000, content: 5, engagementRate: 10.07 },
+      { platform: "twitter", connected: false, followers: 89400, content: 5, engagementRate: 3.07 },
     ],
     lastSyncAt: new Date().toISOString(),
     _source: "db",
@@ -90,12 +92,12 @@ router.get("/dashboard/recent-metadata", async (req, res) => {
 
 router.get("/dashboard/engagement-trends", async (_req, res) => {
   const dataPoints = [
-    { date: "2024-11-01", youtube: 12400, instagram: 8200, facebook: 6100 },
-    { date: "2024-11-15", youtube: 15800, instagram: 9400, facebook: 7300 },
-    { date: "2024-12-01", youtube: 18200, instagram: 11200, facebook: 8600 },
-    { date: "2024-12-15", youtube: 22400, instagram: 13800, facebook: 9200 },
-    { date: "2025-01-01", youtube: 28600, instagram: 16400, facebook: 11400 },
-    { date: "2025-01-15", youtube: 34200, instagram: 19800, facebook: 13600 },
+    { date: "2024-11-01", youtube: 12400, instagram: 8200, facebook: 6100, tiktok: 45000, twitter: 18000 },
+    { date: "2024-11-15", youtube: 15800, instagram: 9400, facebook: 7300, tiktok: 62000, twitter: 22000 },
+    { date: "2024-12-01", youtube: 18200, instagram: 11200, facebook: 8600, tiktok: 78000, twitter: 28000 },
+    { date: "2024-12-15", youtube: 22400, instagram: 13800, facebook: 9200, tiktok: 95000, twitter: 34000 },
+    { date: "2025-01-01", youtube: 28600, instagram: 16400, facebook: 11400, tiktok: 124000, twitter: 42000 },
+    { date: "2025-01-15", youtube: 34200, instagram: 19800, facebook: 13600, tiktok: 156000, twitter: 52000 },
   ];
   res.json({ period: "last-90-days", dataPoints });
 });

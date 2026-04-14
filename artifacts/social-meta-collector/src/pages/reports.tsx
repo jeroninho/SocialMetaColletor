@@ -11,7 +11,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Youtube, Instagram, Facebook } from "lucide-react";
+import { RefreshCw, Youtube, Instagram, Facebook, Download, FileText, Music, Twitter } from "lucide-react";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import {
   Table,
   TableBody,
@@ -50,12 +52,16 @@ const PLATFORM_HEX: Record<string, string> = {
   youtube: "#FF4444",
   instagram: "#E1306C",
   facebook: "#2D88FF",
+  tiktok: "#00F2EA",
+  twitter: "#1DA1F2",
 };
 
 const platformBadge: Record<string, { hex: string; icon: React.ReactNode }> = {
   youtube: { hex: "#FF4444", icon: <Youtube className="w-3 h-3" /> },
   instagram: { hex: "#E1306C", icon: <Instagram className="w-3 h-3" /> },
   facebook: { hex: "#2D88FF", icon: <Facebook className="w-3 h-3" /> },
+  tiktok: { hex: "#00F2EA", icon: <Music className="w-3 h-3" /> },
+  twitter: { hex: "#1DA1F2", icon: <Twitter className="w-3 h-3" /> },
 };
 
 type ChartTab = "line" | "bar" | "pie";
@@ -120,17 +126,74 @@ export default function Reports() {
     }
   };
 
-  const chartData = trends?.dataPoints.map((dp) => ({
+  const handleExportCSV = () => {
+    const items = recentData?.items;
+    if (!items?.length) return;
+    const headers = ["Plataforma", "Conteúdo", "Tipo", "Views", "Likes", "Comentários", "Shares", "Data Coleta"];
+    const rows = items.map((e) => [
+      e.platform,
+      `"${(e.title ?? e.contentId ?? "").replace(/"/g, '""')}"`,
+      e.contentType,
+      e.views ?? 0,
+      e.likes ?? 0,
+      e.comments ?? 0,
+      e.shares ?? 0,
+      new Date(e.collectedAt).toLocaleDateString("pt-BR"),
+    ]);
+    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `relatorio_${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "CSV exportado!", description: "Arquivo baixado com sucesso." });
+  };
+
+  const handleExportPDF = () => {
+    const items = recentData?.items;
+    if (!items?.length) return;
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text("SocialMetaCollector - Relatório", 14, 20);
+    doc.setFontSize(10);
+    doc.text(`Gerado em: ${new Date().toLocaleString("pt-BR")}`, 14, 28);
+    autoTable(doc, {
+      startY: 35,
+      head: [["Plataforma", "Conteúdo", "Tipo", "Views", "Likes", "Comentários", "Shares", "Data"]],
+      body: items.map((e) => [
+        e.platform,
+        (e.title ?? e.contentId ?? "").slice(0, 40),
+        e.contentType,
+        fmt(e.views),
+        fmt(e.likes),
+        fmt(e.comments),
+        fmt(e.shares),
+        new Date(e.collectedAt).toLocaleDateString("pt-BR"),
+      ]),
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [108, 99, 255] },
+    });
+    doc.save(`relatorio_${new Date().toISOString().split("T")[0]}.pdf`);
+    toast({ title: "PDF exportado!", description: "Arquivo baixado com sucesso." });
+  };
+
+  const chartData = trends?.dataPoints.map((dp: any) => ({
     date: new Date(dp.date).toLocaleDateString("pt-BR", { month: "short", day: "numeric" }),
     YouTube: dp.youtube,
     Instagram: dp.instagram,
     Facebook: dp.facebook,
+    TikTok: dp.tiktok ?? 0,
+    Twitter: dp.twitter ?? 0,
   }));
 
   const pieData = [
-    { name: "YouTube", value: trends?.dataPoints.reduce((s, d) => s + d.youtube, 0) ?? 0, color: "#FF4444" },
-    { name: "Instagram", value: trends?.dataPoints.reduce((s, d) => s + d.instagram, 0) ?? 0, color: "#E1306C" },
-    { name: "Facebook", value: trends?.dataPoints.reduce((s, d) => s + d.facebook, 0) ?? 0, color: "#2D88FF" },
+    { name: "YouTube", value: trends?.dataPoints.reduce((s: number, d: any) => s + d.youtube, 0) ?? 0, color: "#FF4444" },
+    { name: "Instagram", value: trends?.dataPoints.reduce((s: number, d: any) => s + d.instagram, 0) ?? 0, color: "#E1306C" },
+    { name: "Facebook", value: trends?.dataPoints.reduce((s: number, d: any) => s + d.facebook, 0) ?? 0, color: "#2D88FF" },
+    { name: "TikTok", value: trends?.dataPoints.reduce((s: number, d: any) => s + (d.tiktok ?? 0), 0) ?? 0, color: "#00F2EA" },
+    { name: "Twitter", value: trends?.dataPoints.reduce((s: number, d: any) => s + (d.twitter ?? 0), 0) ?? 0, color: "#1DA1F2" },
   ].filter((d) => d.value > 0);
 
   const legendStyle = { fontSize: 12, color: dark ? "hsl(220 20% 70%)" : "hsl(220 10% 46%)" };
@@ -142,10 +205,20 @@ export default function Reports() {
           <h2 className="text-lg font-semibold">Reports</h2>
           <p className="text-sm text-muted-foreground mt-0.5">Tendencias de engajamento e metadata coletada</p>
         </div>
-        <Button size="sm" onClick={handleSync} disabled={sync.isPending} className="rounded-full h-9">
-          <RefreshCw className={`w-4 h-4 mr-2 ${sync.isPending ? "animate-spin" : ""}`} />
-          {sync.isPending ? "Syncing..." : "Sync Now"}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={handleExportCSV} disabled={!recentData?.items?.length} className="rounded-full h-9">
+            <Download className="w-4 h-4 mr-2" />
+            CSV
+          </Button>
+          <Button size="sm" variant="outline" onClick={handleExportPDF} disabled={!recentData?.items?.length} className="rounded-full h-9">
+            <FileText className="w-4 h-4 mr-2" />
+            PDF
+          </Button>
+          <Button size="sm" onClick={handleSync} disabled={sync.isPending} className="rounded-full h-9">
+            <RefreshCw className={`w-4 h-4 mr-2 ${sync.isPending ? "animate-spin" : ""}`} />
+            {sync.isPending ? "Syncing..." : "Sync Now"}
+          </Button>
+        </div>
       </div>
 
       {/* Engagement chart card */}
@@ -183,6 +256,8 @@ export default function Reports() {
                     <Line type="monotone" dataKey="YouTube" stroke="#FF4444" strokeWidth={2.5} dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
                     <Line type="monotone" dataKey="Instagram" stroke="#E1306C" strokeWidth={2.5} dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
                     <Line type="monotone" dataKey="Facebook" stroke="#2D88FF" strokeWidth={2.5} dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
+                    <Line type="monotone" dataKey="TikTok" stroke="#00F2EA" strokeWidth={2.5} dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
+                    <Line type="monotone" dataKey="Twitter" stroke="#1DA1F2" strokeWidth={2.5} dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
                   </LineChart>
                 </ResponsiveContainer>
               )}
@@ -198,6 +273,8 @@ export default function Reports() {
                     <Bar dataKey="YouTube" fill="#FF4444" fillOpacity={0.9} radius={[4, 4, 0, 0]} maxBarSize={20} />
                     <Bar dataKey="Instagram" fill="#E1306C" fillOpacity={0.9} radius={[4, 4, 0, 0]} maxBarSize={20} />
                     <Bar dataKey="Facebook" fill="#2D88FF" fillOpacity={0.9} radius={[4, 4, 0, 0]} maxBarSize={20} />
+                    <Bar dataKey="TikTok" fill="#00F2EA" fillOpacity={0.9} radius={[4, 4, 0, 0]} maxBarSize={20} />
+                    <Bar dataKey="Twitter" fill="#1DA1F2" fillOpacity={0.9} radius={[4, 4, 0, 0]} maxBarSize={20} />
                   </BarChart>
                 </ResponsiveContainer>
               )}

@@ -27,6 +27,8 @@ import {
   Unlink,
   AlertCircle,
   Info,
+  Music,
+  Twitter,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -34,10 +36,12 @@ const PLATFORM_LABELS: Record<string, string> = {
   youtube: "YouTube",
   instagram: "Instagram",
   facebook: "Facebook",
+  tiktok: "TikTok",
+  twitter: "X / Twitter",
 };
 
 interface PlatformCardProps {
-  platform: "youtube" | "instagram" | "facebook";
+  platform: "youtube" | "instagram" | "facebook" | "tiktok" | "twitter";
   connected: boolean;
   accountName?: string;
   connectedAt?: string;
@@ -256,6 +260,18 @@ export default function Connections() {
       color: "#1877F2",
       icon: <Facebook className="w-5 h-5" style={{ color: "#1877F2" }} />,
     },
+    {
+      platform: "tiktok" as const,
+      label: "TikTok",
+      color: "#00F2EA",
+      icon: <Music className="w-5 h-5" style={{ color: "#00F2EA" }} />,
+    },
+    {
+      platform: "twitter" as const,
+      label: "X / Twitter",
+      color: "#1DA1F2",
+      icon: <Twitter className="w-5 h-5" style={{ color: "#1DA1F2" }} />,
+    },
   ];
 
   if (isLoading) {
@@ -267,8 +283,8 @@ export default function Connections() {
             Conecte suas redes sociais para começar a coletar métricas.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[1, 2, 3].map((i) => (
+        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6">
+          {[1, 2, 3, 4, 5].map((i) => (
             <Card key={i} className="h-56 animate-pulse bg-muted/40" />
           ))}
         </div>
@@ -286,7 +302,7 @@ export default function Connections() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6">
         {platforms.map(({ platform, label, color, icon }) => {
           const status = authStatus?.[platform];
           return (
@@ -344,6 +360,22 @@ export default function Connections() {
                 <li>
                   <strong>Facebook:</strong> Use o mesmo app Meta com a URI{" "}
                   <code className="bg-muted px-1 rounded">/api/auth/facebook/callback</code>.
+                </li>
+                <li>
+                  <strong>TikTok:</strong> Registre um app no{" "}
+                  <a href="https://developers.tiktok.com" target="_blank" rel="noopener noreferrer" className="underline">
+                    TikTok for Developers
+                  </a>{" "}
+                  com a URI{" "}
+                  <code className="bg-muted px-1 rounded">/api/auth/tiktok/callback</code>.
+                </li>
+                <li>
+                  <strong>X/Twitter:</strong> Crie um app no{" "}
+                  <a href="https://developer.twitter.com" target="_blank" rel="noopener noreferrer" className="underline">
+                    Twitter Developer Portal
+                  </a>{" "}
+                  com a URI{" "}
+                  <code className="bg-muted px-1 rounded">/api/auth/twitter/callback</code>.
                 </li>
               </ul>
             </div>

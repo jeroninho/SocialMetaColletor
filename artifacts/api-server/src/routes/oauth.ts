@@ -69,6 +69,14 @@ router.get("/auth/config", (req, res) => {
       callbackUrl: `${base}/api/auth/facebook/callback`,
       configured: !!(process.env.FACEBOOK_CLIENT_ID && process.env.FACEBOOK_CLIENT_SECRET),
     },
+    tiktok: {
+      callbackUrl: `${base}/api/auth/tiktok/callback`,
+      configured: !!(process.env.TIKTOK_CLIENT_KEY && process.env.TIKTOK_CLIENT_SECRET),
+    },
+    twitter: {
+      callbackUrl: `${base}/api/auth/twitter/callback`,
+      configured: !!(process.env.TWITTER_CLIENT_ID && process.env.TWITTER_CLIENT_SECRET),
+    },
   });
 });
 
@@ -407,6 +415,224 @@ router.get("/auth/facebook/callback", async (req, res) => {
   }
 
   redirectToFrontend(res as never, "success", "facebook");
+});
+
+// ─── TIKTOK ─────────────────────────────────────────────────────────────────
+
+router.get("/auth/tiktok/connect", (req, res) => {
+  const clientKey = process.env.TIKTOK_CLIENT_KEY;
+  if (!clientKey) {
+    res.status(503).json({ error: "TikTok OAuth not configured. Set TIKTOK_CLIENT_KEY." });
+    return;
+  }
+  const state = generateState("tiktok");
+  const csrfState = state;
+  const redirectUri = getCallbackUrl("tiktok");
+  const scopes = ["user.info.basic", "video.list"];
+
+  const url = "https://www.tiktok.com/v2/auth/authorize/"
+    + "?client_key=" + encodeURIComponent(clientKey)
+    + "&redirect_uri=" + encodeURIComponent(redirectUri)
+    + "&response_type=code"
+    + "&scope=" + encodeURIComponent(scopes.join(","))
+    + "&state=" + encodeURIComponent(csrfState);
+
+  res.redirect(url);
+});
+
+router.get("/auth/tiktok/callback", async (req, res) => {
+  const { code, state, error } = req.query as Record<string, string>;
+
+  if (error || !code) {
+    redirectToFrontend(res as never, "error", "tiktok", "Authorization denied by user.");
+    return;
+  }
+  if (!state || !verifyState(state, "tiktok")) {
+    redirectToFrontend(res as never, "error", "tiktok", "Invalid or expired state. Please try again.");
+    return;
+  }
+
+  const clientKey = process.env.TIKTOK_CLIENT_KEY;
+  const clientSecret = process.env.TIKTOK_CLIENT_SECRET;
+  if (!clientKey || !clientSecret) {
+    redirectToFrontend(res as never, "error", "tiktok", "OAuth credentials not configured.");
+    return;
+  }
+
+  let accessToken: string;
+  let refreshToken: string | undefined;
+  let expiresIn: number | undefined;
+
+  try {
+    const tokenRes = await fetch("https://open.tiktokapis.com/v2/oauth/token/", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_key: clientKey,
+        client_secret: clientSecret,
+        code,
+        grant_type: "authorization_code",
+        redirect_uri: getCallbackUrl("tiktok"),
+      }),
+    });
+    if (!tokenRes.ok) {
+      redirectToFrontend(res as never, "error", "tiktok", "Failed to exchange code for token.");
+      return;
+    }
+    const tokenData = await tokenRes.json() as Record<string, unknown>;
+    accessToken = tokenData.access_token as string;
+    refreshToken = tokenData.refresh_token as string | undefined;
+    expiresIn = tokenData.expires_in as number | undefined;
+  } catch {
+    redirectToFrontend(res as never, "error", "tiktok", "Network error during token exchange.");
+    return;
+  }
+
+  let accountName = "TikTok Account";
+  try {
+    const profileRes = await fetch("https://open.tiktokapis.com/v2/user/info/?fields=display_name,username", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (profileRes.ok) {
+      const profileData = await profileRes.json() as { data?: { user?: { display_name?: string; username?: string } } };
+      accountName = profileData?.data?.user?.display_name ?? profileData?.data?.user?.username ?? "TikTok Account";
+    }
+  } catch {
+    // use default
+  }
+
+  try {
+    const encryptedAccess = safeEncrypt(accessToken);
+    const encryptedRefresh = refreshToken ? safeEncrypt(refreshToken) : null;
+    const expiresAt = expiresIn ? new Date(Date.now() + expiresIn * 1000) : null;
+
+    await db.delete(tokensTable).where(eq(tokensTable.platform, "tiktok"));
+    await db.insert(tokensTable).values({
+      platform: "tiktok",
+      accountName,
+      accessToken: encryptedAccess,
+      refreshToken: encryptedRefresh,
+      expiresAt,
+      connected: true,
+    });
+  } catch {
+    redirectToFrontend(res as never, "error", "tiktok", "Failed to save token.");
+    return;
+  }
+
+  redirectToFrontend(res as never, "success", "tiktok");
+});
+
+// ─── TWITTER (X) ────────────────────────────────────────────────────────────
+
+router.get("/auth/twitter/connect", (req, res) => {
+  const clientId = process.env.TWITTER_CLIENT_ID;
+  if (!clientId) {
+    res.status(503).json({ error: "Twitter/X OAuth not configured. Set TWITTER_CLIENT_ID." });
+    return;
+  }
+  const state = generateState("twitter");
+  const redirectUri = getCallbackUrl("twitter");
+  const scopes = ["tweet.read", "users.read", "offline.access"];
+  const codeChallenge = state;
+
+  const url = "https://twitter.com/i/oauth2/authorize"
+    + "?client_id=" + encodeURIComponent(clientId)
+    + "&redirect_uri=" + encodeURIComponent(redirectUri)
+    + "&response_type=code"
+    + "&scope=" + encodeURIComponent(scopes.join(" "))
+    + "&state=" + encodeURIComponent(state)
+    + "&code_challenge=" + encodeURIComponent(codeChallenge)
+    + "&code_challenge_method=plain";
+
+  res.redirect(url);
+});
+
+router.get("/auth/twitter/callback", async (req, res) => {
+  const { code, state, error } = req.query as Record<string, string>;
+
+  if (error || !code) {
+    redirectToFrontend(res as never, "error", "twitter", "Authorization denied by user.");
+    return;
+  }
+  if (!state || !verifyState(state, "twitter")) {
+    redirectToFrontend(res as never, "error", "twitter", "Invalid or expired state. Please try again.");
+    return;
+  }
+
+  const clientId = process.env.TWITTER_CLIENT_ID;
+  const clientSecret = process.env.TWITTER_CLIENT_SECRET;
+  if (!clientId || !clientSecret) {
+    redirectToFrontend(res as never, "error", "twitter", "OAuth credentials not configured.");
+    return;
+  }
+
+  let accessToken: string;
+  let refreshToken: string | undefined;
+  let expiresIn: number | undefined;
+
+  try {
+    const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+    const tokenRes = await fetch("https://api.twitter.com/2/oauth2/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Authorization: `Basic ${basicAuth}`,
+      },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        redirect_uri: getCallbackUrl("twitter"),
+        grant_type: "authorization_code",
+        code_verifier: state,
+      }),
+    });
+    if (!tokenRes.ok) {
+      redirectToFrontend(res as never, "error", "twitter", "Failed to exchange code for token.");
+      return;
+    }
+    const tokenData = await tokenRes.json() as Record<string, unknown>;
+    accessToken = tokenData.access_token as string;
+    refreshToken = tokenData.refresh_token as string | undefined;
+    expiresIn = tokenData.expires_in as number | undefined;
+  } catch {
+    redirectToFrontend(res as never, "error", "twitter", "Network error during token exchange.");
+    return;
+  }
+
+  let accountName = "Twitter Account";
+  try {
+    const profileRes = await fetch("https://api.twitter.com/2/users/me", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (profileRes.ok) {
+      const profileData = await profileRes.json() as { data?: { name?: string; username?: string } };
+      accountName = profileData?.data?.name ?? profileData?.data?.username ?? "Twitter Account";
+    }
+  } catch {
+    // use default
+  }
+
+  try {
+    const encryptedAccess = safeEncrypt(accessToken);
+    const encryptedRefresh = refreshToken ? safeEncrypt(refreshToken) : null;
+    const expiresAt = expiresIn ? new Date(Date.now() + expiresIn * 1000) : null;
+
+    await db.delete(tokensTable).where(eq(tokensTable.platform, "twitter"));
+    await db.insert(tokensTable).values({
+      platform: "twitter",
+      accountName,
+      accessToken: encryptedAccess,
+      refreshToken: encryptedRefresh,
+      expiresAt,
+      connected: true,
+    });
+  } catch {
+    redirectToFrontend(res as never, "error", "twitter", "Failed to save token.");
+    return;
+  }
+
+  redirectToFrontend(res as never, "success", "twitter");
 });
 
 export default router;

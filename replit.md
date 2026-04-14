@@ -2,7 +2,7 @@
 
 ## Overview
 
-Fullstack application for collecting and analyzing social media metadata from YouTube, Instagram, and Facebook. Built on a pnpm monorepo with OpenAPI-first API contracts.
+Fullstack application for collecting and analyzing social media metadata from YouTube, Instagram, Facebook, TikTok, and X/Twitter. Built on a pnpm monorepo with OpenAPI-first API contracts.
 
 ## Stack
 
@@ -19,6 +19,7 @@ Fullstack application for collecting and analyzing social media metadata from Yo
 - **Cache/Queue**: Redis (ioredis) + BullMQ — graceful fallback if Redis not available
 - **API codegen**: Orval (from OpenAPI spec)
 - **Charts**: Recharts
+- **PDF Export**: jsPDF + jspdf-autotable
 - **Build**: esbuild — `ioredis` and `bullmq` are marked external in `build.mjs`
 - **Design**: Space Grotesk (headings) + Inter (body), petroleum blue (#1E2A38) + deep purple (#6C63FF)
 
@@ -37,30 +38,30 @@ Fullstack application for collecting and analyzing social media metadata from Yo
 artifacts/
   api-server/
     src/
-      routes/         # auth, oauth, users, youtube, instagram, facebook, dashboard, webhooks
+      routes/         # auth, oauth, users, youtube, instagram, facebook, tiktok, twitter, dashboard, comparator, alerts, scheduler, webhooks
       middleware/     # auth.ts — JWT bearer middleware (req.user)
       utils/          # crypto.ts (AES-256-GCM), jwt.ts (sign/verify)
       services/       # YouTubeProvider.ts, MetaProvider.ts, RedisClient.ts
       queues/         # metadataSyncQueue.ts (BullMQ)
   social-meta-collector/ # React + Vite frontend
-    src/pages/        # Dashboard, YouTube, Instagram, Facebook, Reports, Login, Fetch
+    src/pages/        # Dashboard, YouTube, Instagram, Facebook, TikTok, Twitter, Reports, Comparator, Alerts, Scheduler, Login, Fetch
     src/pages/knowledge/ # Knowledge Hub: articles, videos, guide, glossary
     src/data/         # Static content: articles.ts, videos.ts, glossary.ts, guide-steps.ts
     src/components/   # layout.tsx (petroleum blue sidebar, Space Grotesk)
     src/context/      # theme.tsx (dark/light toggle)
-    src/lib/          # chart-theme.ts
+    src/lib/          # chart-theme.ts, api-url.ts
 lib/
   api-spec/openapi.yaml  # OpenAPI spec
   api-client-react/      # Generated React Query hooks
   api-zod/               # Generated Zod schemas
-  db/src/schema/         # tokens, metadata, fetch-history, users
+  db/src/schema/         # tokens, metadata, fetch-history, users, alert-rules, alert-history, sync-schedules
 ```
 
 ## API Surface
 
 - `GET /api/auth/status` — connection status for all platforms
 - `GET /api/auth/config` — OAuth callback URIs and configuration status
-- `GET /api/auth/{platform}/connect` — initiates OAuth 2.0 redirect flow (YouTube/Instagram/Facebook)
+- `GET /api/auth/{platform}/connect` — initiates OAuth 2.0 redirect flow (YouTube/Instagram/Facebook/TikTok/Twitter)
 - `GET /api/auth/{platform}/callback` — OAuth callback (receives code, exchanges for token, stores encrypted)
 - `POST /api/auth/{platform}/disconnect` — disconnect a platform
 - `GET /api/youtube/channel` — channel metadata
@@ -72,10 +73,27 @@ lib/
 - `GET /api/facebook/page` — page metadata
 - `GET /api/facebook/posts` — post list with metrics
 - `GET /api/facebook/analytics` — page analytics
-- `GET /api/dashboard/summary` — cross-platform aggregate summary
+- `GET /api/tiktok/profile` — TikTok profile metadata
+- `GET /api/tiktok/videos` — TikTok video list with metrics
+- `GET /api/tiktok/analytics` — TikTok analytics
+- `GET /api/twitter/profile` — X/Twitter profile metadata
+- `GET /api/twitter/tweets` — tweet list with metrics
+- `GET /api/twitter/analytics` — Twitter analytics
+- `GET /api/dashboard/summary` — cross-platform aggregate summary (5 platforms)
 - `GET /api/dashboard/recent-metadata` — recently collected entries
-- `GET /api/dashboard/engagement-trends` — engagement trend data
+- `GET /api/dashboard/engagement-trends` — engagement trend data (5 platforms)
 - `POST /api/metadata/sync` — trigger metadata sync
+- `GET /api/comparator` — compare metrics between platforms and periods (params: platforms, startDate, endDate)
+- `GET /api/alerts/rules` — list alert rules
+- `POST /api/alerts/rules` — create alert rule
+- `PATCH /api/alerts/rules/:id/toggle` — toggle alert rule on/off
+- `DELETE /api/alerts/rules/:id` — delete alert rule
+- `GET /api/alerts/history` — alert notification history
+- `POST /api/alerts/test` — send test notification (Slack webhook or email)
+- `GET /api/scheduler/schedules` — list sync schedules
+- `POST /api/scheduler/schedules` — create sync schedule
+- `PATCH /api/scheduler/schedules/:id/toggle` — toggle schedule on/off
+- `DELETE /api/scheduler/schedules/:id` — delete schedule
 
 ## Database Schema
 
@@ -83,6 +101,19 @@ lib/
 - `metadata` — Normalized collected metadata (platform, contentType, contentId, views, likes, comments, engagementRate)
 - `fetch_history` — URL metadata fetch history
 - `users` — User accounts (id uuid, email unique, nome, senhaHash via bcrypt)
+- `alert_rules` — Alert rules (name, platform, metric, condition, threshold, channel, webhookUrl, email, enabled)
+- `alert_history` — Alert notification history (ruleId, ruleName, platform, metric, currentValue, threshold, channel, status, sentAt)
+- `sync_schedules` — Auto-sync schedules (platforms, intervalMinutes, enabled, lastRunAt)
+
+## Features
+
+1. **5-Platform Integration**: YouTube, Instagram, Facebook, TikTok, X/Twitter — each with profile, content list, and analytics endpoints
+2. **OAuth 2.0**: Full server-side OAuth flow for all 5 platforms
+3. **Export Reports**: PDF and CSV export from the Reports page using jsPDF and jspdf-autotable
+4. **Campaign Comparator**: Compare metrics between platforms and date ranges with visual charts
+5. **Smart Alerts**: Configure alert rules based on engagement thresholds, notify via Slack webhook or email
+6. **Auto-Sync Scheduling**: Schedule automatic metadata synchronization at configurable intervals
+7. **Dashboard**: Aggregate metrics across all 5 platforms with charts and platform breakdown
 
 ## Security Notes
 

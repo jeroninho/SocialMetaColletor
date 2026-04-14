@@ -18,6 +18,11 @@ import {
   Play,
   Map,
   BookA,
+  Music,
+  Twitter,
+  GitCompare,
+  Bell,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/context/theme";
@@ -34,7 +39,12 @@ const navMain = [
   { href: "/youtube",     icon: Youtube,         label: "YouTube",         color: "#FF0000" },
   { href: "/instagram",   icon: Instagram,       label: "Instagram",       color: "#FF6F91" },
   { href: "/facebook",    icon: Facebook,        label: "Facebook",        color: "#1877F2" },
+  { href: "/tiktok",      icon: Music,           label: "TikTok",          color: "#00F2EA" },
+  { href: "/twitter",     icon: Twitter,         label: "X / Twitter",     color: "#1DA1F2" },
   { href: "/reports",     icon: TrendingUp,      label: "Relatórios" },
+  { href: "/comparator",  icon: GitCompare,      label: "Comparador" },
+  { href: "/alerts",      icon: Bell,            label: "Alertas" },
+  { href: "/scheduler",   icon: Clock,           label: "Agendamento" },
   { href: "/fetch",       icon: Link2,           label: "Buscar Metadados" },
 ];
 
@@ -54,7 +64,12 @@ const pageLabels: Record<string, string> = {
   "/youtube":     "YouTube",
   "/instagram":   "Instagram",
   "/facebook":    "Facebook",
+  "/tiktok":      "TikTok",
+  "/twitter":     "X / Twitter",
   "/reports":     "Relatórios",
+  "/comparator":  "Comparador de Campanhas",
+  "/alerts":      "Alertas Inteligentes",
+  "/scheduler":   "Agendamento",
   "/fetch":       "Buscar Metadados",
   "/connections": "Conexões",
   "/articles":    "Artigos Técnicos",

@@ -12,7 +12,12 @@ import Dashboard from "@/pages/dashboard";
 import YouTubePage from "@/pages/youtube";
 import InstagramPage from "@/pages/instagram";
 import FacebookPage from "@/pages/facebook";
+import TikTokPage from "@/pages/tiktok";
+import TwitterPage from "@/pages/twitter";
 import Reports from "@/pages/reports";
+import ComparatorPage from "@/pages/comparator";
+import AlertsPage from "@/pages/alerts";
+import SchedulerPage from "@/pages/scheduler";
 import Connections from "@/pages/connections";
 import FetchPage from "@/pages/fetch";
 import LoginPage from "@/pages/login";
@@ -44,7 +49,12 @@ function Router() {
               <Route path="/youtube" component={YouTubePage} />
               <Route path="/instagram" component={InstagramPage} />
               <Route path="/facebook" component={FacebookPage} />
+              <Route path="/tiktok" component={TikTokPage} />
+              <Route path="/twitter" component={TwitterPage} />
               <Route path="/reports" component={Reports} />
+              <Route path="/comparator" component={ComparatorPage} />
+              <Route path="/alerts" component={AlertsPage} />
+              <Route path="/scheduler" component={SchedulerPage} />
               <Route path="/connections" component={Connections} />
               <Route path="/fetch" component={FetchPage} />
               <Route path="/articles" component={ArticlesPage} />
