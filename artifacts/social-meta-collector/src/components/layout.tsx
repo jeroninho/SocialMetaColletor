@@ -21,13 +21,14 @@ import { useAuth } from "@/context/auth";
 
 /* ── Design tokens ─────────────────────────────────────── */
 const PETROLEUM = "#1E2A38";
-const BLUE      = "#4F6BF4";
+const PURPLE    = "#6C63FF";
+const ROSE      = "#FF6F91";
 
 /* ── Nav items ─────────────────────────────────────────── */
 const navMain = [
   { href: "/dashboard",   icon: LayoutDashboard, label: "Dashboard" },
   { href: "/youtube",     icon: Youtube,         label: "YouTube",         color: "#FF0000" },
-  { href: "/instagram",   icon: Instagram,       label: "Instagram",       color: "#E1306C" },
+  { href: "/instagram",   icon: Instagram,       label: "Instagram",       color: "#FF6F91" },
   { href: "/facebook",    icon: Facebook,        label: "Facebook",        color: "#1877F2" },
   { href: "/reports",     icon: TrendingUp,      label: "Relatórios" },
   { href: "/fetch",       icon: Link2,           label: "Buscar Metadados" },
@@ -67,32 +68,37 @@ function NavLink({
     <Link href={href} onClick={onClick}>
       <span
         className={cn(
-          "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium cursor-pointer",
-          "transition-colors duration-150",
+          "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer",
+          "transition-all duration-200 ease-in-out",
           active
             ? "font-semibold"
-            : "hover:bg-white/8 text-white/65 hover:text-white/90"
+            : "hover:bg-white/10 text-white/70 hover:text-white"
         )}
         style={
           active
             ? {
-                backgroundColor: "rgba(79,107,244,0.18)",
-                color: "#94AAFC",
-                borderLeft: `2px solid ${BLUE}`,
-                paddingLeft: 10,
+                backgroundColor: "rgba(108,99,255,0.22)",
+                color: PURPLE,
+                boxShadow: "inset 0 0 0 1px rgba(108,99,255,0.30)",
               }
-            : { borderLeft: "2px solid transparent", paddingLeft: 10 }
+            : undefined
         }
       >
         <Icon
           className="w-4 h-4 flex-shrink-0"
           style={
-            active ? { color: "#94AAFC" } : color ? { color } : { color: "rgba(255,255,255,0.50)" }
+            active ? { color: PURPLE } : color ? { color } : { color: "rgba(255,255,255,0.65)" }
           }
         />
-        <span style={active ? { color: "#94AAFC" } : { color: "rgba(255,255,255,0.78)" }}>
+        <span style={active ? { color: PURPLE } : { color: "rgba(255,255,255,0.85)" }}>
           {label}
         </span>
+        {active && (
+          <span
+            className="ml-auto w-1.5 h-1.5 rounded-full"
+            style={{ background: PURPLE }}
+          />
+        )}
       </span>
     </Link>
   );
@@ -114,21 +120,22 @@ function SidebarContent({
     <div className="flex flex-col h-full" style={{ backgroundColor: PETROLEUM }}>
       {/* Brand */}
       <div
-        className="h-14 flex items-center px-4 flex-shrink-0"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+        className="h-16 flex items-center px-5 flex-shrink-0"
+        style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
       >
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-3">
           <div
-            className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
-            style={{ background: BLUE }}
+            className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0"
+            style={{ background: `linear-gradient(135deg, ${PURPLE}, ${ROSE})` }}
           >
-            <BarChart2 className="w-4 h-4 text-white" />
+            <BarChart2 className="w-5 h-5 text-white" />
           </div>
           <span
-            className="text-white font-bold text-[16px] tracking-tight select-none"
+            className="text-white font-bold text-[17px] tracking-tight select-none"
             style={{ fontFamily: "var(--app-font-heading)", letterSpacing: "-0.025em" }}
           >
-            MetaCollector
+            <span style={{ color: PURPLE }}>Meta</span>
+            <span style={{ color: "rgba(255,255,255,0.90)" }}>Collector</span>
           </span>
         </div>
       </div>
@@ -136,8 +143,8 @@ function SidebarContent({
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
         <p
-          className="text-[10px] font-semibold uppercase tracking-widest mb-2 px-2"
-          style={{ color: "rgba(224,224,224,0.32)" }}
+          className="text-[10px] font-semibold uppercase tracking-widest mb-2 px-1"
+          style={{ color: "rgba(224,224,224,0.38)" }}
         >
           Navegação
         </p>
@@ -155,8 +162,8 @@ function SidebarContent({
 
         <div className="pt-5">
           <p
-            className="text-[10px] font-semibold uppercase tracking-widest mb-2 px-2"
-            style={{ color: "rgba(224,224,224,0.32)" }}
+            className="text-[10px] font-semibold uppercase tracking-widest mb-2 px-1"
+            style={{ color: "rgba(224,224,224,0.38)" }}
           >
             Configurações
           </p>
@@ -176,13 +183,13 @@ function SidebarContent({
       {/* User footer */}
       <div
         className="p-4 flex-shrink-0"
-        style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}
+        style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
       >
         {user ? (
           <div className="flex items-center gap-2.5 px-1">
             <div
-              className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 text-xs font-bold text-white uppercase"
-              style={{ background: BLUE }}
+              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold text-white uppercase"
+              style={{ background: `linear-gradient(135deg, ${PURPLE}, ${ROSE})` }}
             >
               {user.nome.charAt(0)}
             </div>
@@ -193,17 +200,17 @@ function SidebarContent({
               >
                 {user.nome}
               </p>
-              <p className="text-[10px] truncate" style={{ color: "rgba(224,224,224,0.48)" }}>
+              <p className="text-[10px] truncate" style={{ color: "rgba(224,224,224,0.55)" }}>
                 {user.email}
               </p>
             </div>
             <button
               onClick={onLogout}
               title="Sair"
-              className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 transition-colors duration-150 hover:bg-white/12"
-              style={{ color: "rgba(255,255,255,0.48)" }}
+              className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-200 hover:bg-white/15"
+              style={{ color: "rgba(255,255,255,0.55)" }}
             >
-              <LogOut className="w-3.5 h-3.5" />
+              <LogOut className="w-4 h-4" />
             </button>
           </div>
         ) : null}
@@ -228,10 +235,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
     navigate("/login");
   }
 
+  /* Close sidebar when route changes */
   useEffect(() => {
     setMobileOpen(false);
   }, [location]);
 
+  /* Prevent scroll when mobile sidebar is open */
   useEffect(() => {
     if (mobileOpen) {
       document.body.style.overflow = "hidden";
@@ -246,7 +255,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       {/* ── Desktop sidebar ─────────────────────────── */}
       <aside
-        className="hidden lg:flex flex-col w-56 xl:w-60 flex-shrink-0 sticky top-0 h-screen"
+        className="hidden lg:flex flex-col w-60 xl:w-64 flex-shrink-0 sticky top-0 h-screen"
         style={{ backgroundColor: PETROLEUM }}
       >
         <SidebarContent location={location} onLogout={handleLogout} />
@@ -263,19 +272,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* ── Mobile sidebar drawer ───────────────────── */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 flex flex-col lg:hidden",
-          "transition-transform duration-250 ease-in-out",
+          "fixed inset-y-0 left-0 z-50 w-72 flex flex-col lg:hidden",
+          "transition-transform duration-300 ease-in-out",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
         style={{ backgroundColor: PETROLEUM }}
       >
+        {/* Close button */}
         <button
           onClick={() => setMobileOpen(false)}
-          className="absolute top-3.5 right-3.5 w-7 h-7 rounded-md flex items-center justify-center z-50"
-          style={{ background: "rgba(255,255,255,0.10)" }}
+          className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center z-50"
+          style={{ background: "rgba(255,255,255,0.12)" }}
           aria-label="Fechar menu"
         >
-          <X className="w-4 h-4 text-white/70" />
+          <X className="w-4 h-4 text-white/80" />
         </button>
         <SidebarContent location={location} onNav={() => setMobileOpen(false)} onLogout={handleLogout} />
       </aside>
@@ -285,36 +295,36 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Top header */}
         <header
-          className="h-14 flex items-center justify-between px-4 md:px-6 sticky top-0 z-30"
+          className="h-16 flex items-center justify-between px-4 md:px-8 sticky top-0 z-30 backdrop-blur-md"
           style={{
             backgroundColor: dark
-              ? "rgba(25,25,38,0.88)"
-              : "rgba(255,255,255,0.90)",
-            borderBottom: `1px solid ${dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.08)"}`,
+              ? "rgba(44,44,44,0.88)"
+              : "rgba(245,247,250,0.90)",
+            borderBottom: `1px solid ${dark ? "rgba(255,255,255,0.07)" : "rgba(30,42,56,0.10)"}`,
           }}
         >
           <div className="flex items-center gap-3">
             {/* Hamburger — mobile only */}
             <button
-              className="lg:hidden w-8 h-8 rounded-md flex items-center justify-center transition-colors duration-150"
-              style={{ background: dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)" }}
+              className="lg:hidden w-9 h-9 rounded-xl flex items-center justify-center transition-colors duration-200"
+              style={{ background: "rgba(108,99,255,0.12)" }}
               onClick={() => setMobileOpen(true)}
               aria-label="Abrir menu"
             >
-              <Menu className="w-4 h-4" style={{ color: dark ? "rgba(255,255,255,0.75)" : PETROLEUM }} />
+              <Menu className="w-5 h-5" style={{ color: PURPLE }} />
             </button>
 
             <div className="flex items-center gap-2.5">
               <h1
-                className="text-lg font-bold tracking-tight"
-                style={{ fontFamily: "var(--app-font-heading)", letterSpacing: "-0.02em" }}
+                className="text-xl font-bold tracking-tight"
+                style={{ fontFamily: "var(--app-font-heading)", letterSpacing: "-0.025em" }}
               >
                 {pageTitle}
               </h1>
               <span
-                className="hidden sm:flex items-center gap-1.5 text-xs px-2 py-0.5 rounded-sm"
+                className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full"
                 style={{
-                  background: dark ? "rgba(74,207,80,0.12)" : "rgba(74,207,80,0.10)",
+                  background: dark ? "rgba(74,207,80,0.15)" : "rgba(74,207,80,0.12)",
                   color: "#4CAF50",
                 }}
               >
@@ -328,9 +338,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {/* Dark mode toggle */}
             <button
               onClick={toggleTheme}
-              className="w-8 h-8 rounded-md flex items-center justify-center transition-colors duration-150"
+              className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200"
               style={{
-                background: dark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.07)",
+                background: dark ? "rgba(255,255,255,0.10)" : "rgba(30,42,56,0.08)",
               }}
               title={dark ? "Modo claro" : "Modo escuro"}
             >
@@ -344,7 +354,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {/* Primary CTA */}
             <Link href="/connections">
               <span
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-semibold cursor-pointer text-white btn-primary"
+                className="btn-gradient hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold cursor-pointer"
                 style={{ fontFamily: "var(--app-font-heading)" }}
               >
                 Gerenciar Conexões
