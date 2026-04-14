@@ -73,7 +73,7 @@ function FloatingBubble({ style, animClass, children }: BubbleProps) {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        borderRadius: "16px",
+        borderRadius: "var(--radius)",
         padding: "12px",
         background: "rgba(255,255,255,0.08)",
         backdropFilter: "blur(12px)",
@@ -197,8 +197,8 @@ export default function LoginPage() {
         .login-input {
           width: 100%;
           padding: 11px 14px 11px 40px;
-          border-radius: 10px;
-          border: 1.5px solid rgba(30,42,56,0.15);
+          border-radius: var(--radius);
+          border: 1.5px solid rgba(0,0,0,0.10);
           background: #F8FAFC;
           font-size: 15px;
           color: #111;
@@ -215,7 +215,7 @@ export default function LoginPage() {
         .login-btn {
           width: 100%;
           padding: 12px;
-          border-radius: 10px;
+          border-radius: var(--radius);
           border: none;
           background: linear-gradient(135deg, #6C63FF 0%, #FF6F91 100%);
           color: white;
@@ -244,7 +244,7 @@ export default function LoginPage() {
           font-weight: 600;
           font-family: 'Space Grotesk', sans-serif;
           border: none;
-          border-radius: 8px;
+          border-radius: calc(var(--radius) - 2px);
           cursor: pointer;
           transition: all 0.2s;
           background: transparent;
@@ -257,7 +257,7 @@ export default function LoginPage() {
         }
       `}</style>
 
-      <div style={{ display: "flex", minHeight: "100dvh", background: "#F0F2F5" }}>
+      <div style={{ display: "flex", minHeight: "100dvh", background: "#FFFFFF" }}>
 
         {/* ── Left panel: animated branding ──────────────── */}
         <div
@@ -328,10 +328,10 @@ export default function LoginPage() {
           <div style={{ textAlign: "center", padding: "0 48px", position: "relative", zIndex: 1 }}>
             <div style={{
               display: "inline-flex", alignItems: "center", justifyContent: "center",
-              width: 64, height: 64, borderRadius: 20,
+              width: 64, height: 64, borderRadius: "var(--radius-xl)",
               background: `linear-gradient(135deg, ${PURPLE}, ${ROSE})`,
               marginBottom: 28,
-              boxShadow: "0 8px 32px rgba(108,99,255,0.4)",
+              boxShadow: "var(--shadow-lg)",
             }}>
               <BarChart2 size={32} color="white" />
             </div>
@@ -385,17 +385,17 @@ export default function LoginPage() {
           alignItems: "center",
           justifyContent: "center",
           padding: "32px 24px",
-          background: "#F0F2F5",
+          background: "#FFFFFF",
         }}>
 
           {/* Mobile logo (only on small screens) */}
           <div className="lg:hidden" style={{ marginBottom: 32, textAlign: "center" }}>
             <div style={{
               display: "inline-flex", alignItems: "center", justifyContent: "center",
-              width: 52, height: 52, borderRadius: 16,
+              width: 52, height: 52, borderRadius: "var(--radius-xl)",
               background: `linear-gradient(135deg, ${PURPLE}, ${ROSE})`,
               marginBottom: 12,
-              boxShadow: "0 6px 20px rgba(108,99,255,0.35)",
+              boxShadow: "var(--shadow-md)",
             }}>
               <BarChart2 size={26} color="white" />
             </div>
@@ -419,8 +419,8 @@ export default function LoginPage() {
             {[YouTubeLogo, InstagramLogo, FacebookLogo, TikTokLogo].map((Logo, i) => (
               <div key={i} style={{
                 padding: 10, borderRadius: 12,
-                background: "rgba(30,42,56,0.08)",
-                border: "1px solid rgba(30,42,56,0.10)",
+                background: "rgba(0,0,0,0.04)",
+                border: "1px solid rgba(0,0,0,0.10)",
                 animation: `floatA ${5 + i}s ease-in-out infinite ${i * 0.4}s`,
               }}>
                 <Logo size={28} />
@@ -434,9 +434,9 @@ export default function LoginPage() {
             style={{
               width: "100%", maxWidth: 400,
               background: "white",
-              borderRadius: 20,
+              borderRadius: "var(--radius-xl)",
               padding: "36px 32px",
-              boxShadow: "0 4px 24px rgba(30,42,56,0.10), 0 1px 4px rgba(30,42,56,0.06)",
+              boxShadow: "var(--shadow-md)",
             }}
           >
             {/* Heading */}
@@ -462,7 +462,7 @@ export default function LoginPage() {
             {/* Tab switcher */}
             <div className="fade-slide-2" style={{
               display: "flex", gap: 4, padding: 4,
-              background: "#F3F4F6", borderRadius: 12,
+              background: "#F3F4F6", borderRadius: "var(--radius)",
               marginBottom: 24,
             }}>
               {(["login", "register"] as Mode[]).map((m) => (

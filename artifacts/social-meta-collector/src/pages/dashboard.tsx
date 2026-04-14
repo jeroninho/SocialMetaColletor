@@ -420,7 +420,7 @@ export default function Dashboard() {
                         key={label}
                         className="rounded-xl py-2.5 px-1"
                         style={{
-                          background: dark ? "rgba(255,255,255,0.05)" : "rgba(30,42,56,0.05)",
+                          background: dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
                         }}
                       >
                         <p

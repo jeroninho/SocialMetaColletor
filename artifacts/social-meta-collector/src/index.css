@@ -74,15 +74,15 @@
   --elevate-1: rgba(0,0,0,.03);
   --elevate-2: rgba(0,0,0,.08);
 
-  /* Light content background */
-  --background: 220 22% 96%;
-  --foreground: 215 28% 14%;
+  /* Light content background — pure white */
+  --background: 0 0% 100%;
+  --foreground: 243 73% 4%;
 
-  --border: 220 18% 88%;
+  --border: 0 0% 90%;
 
   --card: 0 0% 100%;
-  --card-foreground: 215 28% 14%;
-  --card-border: 220 18% 88%;
+  --card-foreground: 243 73% 4%;
+  --card-border: 0 0% 90%;
 
   /* Sidebar always petroleum blue #1E2A38 */
   --sidebar: 212 32% 17%;
@@ -95,27 +95,27 @@
   --sidebar-ring: 244 100% 69%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 215 28% 14%;
-  --popover-border: 220 18% 88%;
+  --popover-foreground: 243 73% 4%;
+  --popover-border: 0 0% 90%;
 
-  /* Primary: deep purple #6C63FF */
-  --primary: 244 100% 69%;
+  /* Primary: neutral dark #030213 — purple kept as accent/chart */
+  --primary: 243 73% 4%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 220 16% 92%;
-  --secondary-foreground: 215 28% 14%;
+  --secondary: 0 0% 95%;
+  --secondary-foreground: 243 73% 4%;
 
-  --muted: 220 16% 92%;
-  --muted-foreground: 220 10% 48%;
+  --muted: 0 0% 95%;
+  --muted-foreground: 0 0% 42%;
 
-  --accent: 220 16% 92%;
-  --accent-foreground: 215 28% 14%;
+  --accent: 0 0% 95%;
+  --accent-foreground: 243 73% 4%;
 
   /* Destructive: #F44336 */
   --destructive: 4 90% 58%;
   --destructive-foreground: 0 0% 100%;
 
-  --input: 220 18% 88%;
+  --input: 0 0% 90%;
   --ring: 244 100% 69%;
 
   --chart-1: 244 100% 69%;
@@ -128,7 +128,7 @@
   --app-font-heading: 'Space Grotesk', 'Inter', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: 'JetBrains Mono', Menlo, monospace;
-  --radius: 0.75rem;
+  --radius: 0.625rem;
 
   --shadow-2xs: 0px 1px 2px rgba(0,0,0,0.04);
   --shadow-xs:  0px 1px 4px rgba(0,0,0,0.06), 0px 0px 0px 1px rgba(0,0,0,0.03);
@@ -180,9 +180,9 @@
   --popover-foreground: 0 0% 88%;
   --popover-border: 212 16% 26%;
 
-  /* Primary: deep purple #6C63FF */
-  --primary: 244 100% 69%;
-  --primary-foreground: 0 0% 100%;
+  /* Primary: near-white for dark mode — purple kept as accent/chart only */
+  --primary: 0 0% 96%;
+  --primary-foreground: 243 73% 4%;
 
   --secondary: 212 20% 24%;
   --secondary-foreground: 0 0% 82%;
@@ -215,7 +215,7 @@
 
   html {
     @apply scroll-smooth;
-    font-size: 16px;
+    font-size: 14px;
   }
 
   body {

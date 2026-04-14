@@ -299,8 +299,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           style={{
             backgroundColor: dark
               ? "rgba(44,44,44,0.88)"
-              : "rgba(245,247,250,0.90)",
-            borderBottom: `1px solid ${dark ? "rgba(255,255,255,0.07)" : "rgba(30,42,56,0.10)"}`,
+              : "rgba(255,255,255,0.92)",
+            borderBottom: `1px solid ${dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.10)"}`,
           }}
         >
           <div className="flex items-center gap-3">

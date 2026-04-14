@@ -147,10 +147,10 @@ function Navbar({ dark, toggleTheme }: { dark: boolean; toggleTheme: () => void 
         <Link href="/">
           <span style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", textDecoration: "none" }}>
             <span style={{
-              width: 36, height: 36, borderRadius: 10,
+              width: 36, height: 36, borderRadius: "var(--radius)",
               background: `linear-gradient(135deg, ${PURPLE}, ${ROSE})`,
               display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 4px 12px rgba(108,99,255,0.35)",
+              boxShadow: "var(--shadow-sm)",
               flexShrink: 0,
             }}>
               <BarChart2 size={18} color="white" />
@@ -288,11 +288,11 @@ function HeroChart({ dark }: { dark: boolean }) {
   return (
     <div style={{
       background: dark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.12)",
-      borderRadius: 20,
+      borderRadius: "var(--radius-xl)",
       border: `1px solid ${dark ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.25)"}`,
       backdropFilter: "blur(12px)",
       padding: "24px 20px 16px",
-      boxShadow: "0 24px 64px rgba(0,0,0,0.25)",
+      boxShadow: "var(--shadow-lg)",
     }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
         <div>
@@ -354,11 +354,11 @@ export default function LandingPage() {
   const dark = theme === "dark";
   useScrollReveal();
 
-  const bg       = dark ? "#0F1923"  : "#F0F2F5";
+  const bg       = dark ? "#0F1923"  : "#FFFFFF";
   const text      = dark ? "#E0E0E0"  : PETROLEUM;
   const textMuted = dark ? "rgba(224,224,224,0.6)" : "rgba(30,42,56,0.55)";
   const cardBg    = dark ? "#1A2535"  : "white";
-  const cardBorder = dark ? "rgba(255,255,255,0.07)" : "rgba(30,42,56,0.09)";
+  const cardBorder = dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.10)";
 
   return (
     <>
@@ -570,17 +570,17 @@ export default function LandingPage() {
                   style={{
                     background: cardBg,
                     border: `1px solid ${cardBorder}`,
-                    borderRadius: 20, padding: "32px 28px",
+                    borderRadius: "var(--radius-xl)", padding: "32px 28px",
                     boxShadow: dark
-                      ? "0 4px 20px rgba(0,0,0,0.3)"
-                      : "0 4px 20px rgba(30,42,56,0.07)",
+                      ? "var(--shadow-lg)"
+                      : "var(--shadow-sm)",
                     cursor: "default",
                     transition: "transform 0.25s ease, box-shadow 0.25s ease",
                     animationDelay: `${i * 0.08}s`,
                   }}
                 >
                   <div style={{
-                    width: 48, height: 48, borderRadius: 14,
+                    width: 48, height: 48, borderRadius: "var(--radius)",
                     background: `${color}18`,
                     display: "flex", alignItems: "center", justifyContent: "center",
                     marginBottom: 20,
@@ -616,7 +616,7 @@ export default function LandingPage() {
         {/* ── 3. DEMO SECTION ──────────────────────────────── */}
         <section id="demo" style={{
           padding: "96px clamp(20px, 6vw, 100px)",
-          background: dark ? "rgba(255,255,255,0.025)" : "rgba(30,42,56,0.03)",
+          background: dark ? "rgba(255,255,255,0.025)" : "rgba(0,0,0,0.02)",
         }}>
           <div style={{ maxWidth: 1280, margin: "0 auto" }}>
             <div className="demo-grid" style={{ display: "flex", alignItems: "center", gap: 64 }}>
@@ -626,10 +626,10 @@ export default function LandingPage() {
                 <div style={{
                   background: cardBg,
                   border: `1px solid ${cardBorder}`,
-                  borderRadius: 20, padding: "28px 24px",
+                  borderRadius: "var(--radius-xl)", padding: "28px 24px",
                   boxShadow: dark
-                    ? "0 8px 32px rgba(0,0,0,0.3)"
-                    : "0 8px 32px rgba(30,42,56,0.09)",
+                    ? "var(--shadow-lg)"
+                    : "var(--shadow-md)",
                 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
                     <h3 style={{
@@ -660,23 +660,23 @@ export default function LandingPage() {
                       </defs>
                       <CartesianGrid
                         strokeDasharray="3 3"
-                        stroke={dark ? "rgba(255,255,255,0.06)" : "rgba(30,42,56,0.07)"}
+                        stroke={dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}
                         vertical={false}
                       />
                       <XAxis
                         dataKey="mes"
-                        tick={{ fontSize: 11, fill: dark ? "rgba(255,255,255,0.40)" : "rgba(30,42,56,0.45)" }}
+                        tick={{ fontSize: 11, fill: dark ? "rgba(255,255,255,0.40)" : "rgba(0,0,0,0.40)" }}
                         axisLine={false} tickLine={false}
                       />
                       <YAxis
-                        tick={{ fontSize: 11, fill: dark ? "rgba(255,255,255,0.40)" : "rgba(30,42,56,0.45)" }}
+                        tick={{ fontSize: 11, fill: dark ? "rgba(255,255,255,0.40)" : "rgba(0,0,0,0.40)" }}
                         axisLine={false} tickLine={false}
                         tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v}
                       />
                       <Tooltip
                         contentStyle={{
                           background: dark ? "rgba(30,42,56,0.95)" : "white",
-                          border: `1px solid ${dark ? "rgba(255,255,255,0.10)" : "rgba(30,42,56,0.10)"}`,
+                          border: `1px solid ${dark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.10)"}`,
                           borderRadius: 10, fontSize: 12,
                           color: dark ? "white" : PETROLEUM,
                           boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
@@ -777,8 +777,8 @@ export default function LandingPage() {
             }}>
               {clients.map((name) => (
                 <div key={name} style={{
-                  padding: "14px 32px", borderRadius: 12,
-                  background: dark ? "rgba(255,255,255,0.04)" : "rgba(30,42,56,0.05)",
+                  padding: "14px 32px", borderRadius: "var(--radius)",
+                  background: dark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
                   border: `1px solid ${cardBorder}`,
                   transition: "all 0.2s",
                 }}
@@ -787,7 +787,7 @@ export default function LandingPage() {
                     (e.currentTarget as HTMLElement).style.borderColor = `${PURPLE}40`;
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = dark ? "rgba(255,255,255,0.04)" : "rgba(30,42,56,0.05)";
+                    (e.currentTarget as HTMLElement).style.background = dark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)";
                     (e.currentTarget as HTMLElement).style.borderColor = cardBorder;
                   }}
                 >
