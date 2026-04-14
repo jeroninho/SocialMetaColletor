@@ -14,6 +14,10 @@ import {
   LogOut,
   Menu,
   X,
+  BookOpen,
+  Play,
+  Map,
+  BookA,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/context/theme";
@@ -34,6 +38,13 @@ const navMain = [
   { href: "/fetch",       icon: Link2,           label: "Buscar Metadados" },
 ];
 
+const navLearn = [
+  { href: "/articles",  icon: BookOpen, label: "Artigos" },
+  { href: "/videos",    icon: Play,     label: "Vídeos" },
+  { href: "/guide",     icon: Map,      label: "Guia Interativo" },
+  { href: "/glossary",  icon: BookA,    label: "Glossário" },
+];
+
 const navSettings = [
   { href: "/connections", icon: Settings, label: "Conexões" },
 ];
@@ -46,6 +57,10 @@ const pageLabels: Record<string, string> = {
   "/reports":     "Relatórios",
   "/fetch":       "Buscar Metadados",
   "/connections": "Conexões",
+  "/articles":    "Artigos Técnicos",
+  "/videos":      "Tutoriais em Vídeo",
+  "/guide":       "Guia Interativo",
+  "/glossary":    "Glossário",
 };
 
 /* ── NavLink ────────────────────────────────────────────── */
@@ -165,6 +180,25 @@ function SidebarContent({
             className="text-[10px] font-semibold uppercase tracking-widest mb-2 px-1"
             style={{ color: "rgba(224,224,224,0.38)" }}
           >
+            Aprender
+          </p>
+          {navLearn.map(({ href, icon, label }) => (
+            <NavLink
+              key={href}
+              href={href}
+              icon={icon}
+              label={label}
+              active={location === href || location.startsWith(href + "/")}
+              onClick={onNav}
+            />
+          ))}
+        </div>
+
+        <div className="pt-5">
+          <p
+            className="text-[10px] font-semibold uppercase tracking-widest mb-2 px-1"
+            style={{ color: "rgba(224,224,224,0.38)" }}
+          >
             Configurações
           </p>
           {navSettings.map(({ href, icon, label }) => (
@@ -228,7 +262,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [, navigate] = useLocation();
 
   const dark = theme === "dark";
-  const pageTitle = pageLabels[location] ?? location.replace("/", "");
+  const pageTitle = pageLabels[location] ?? (location.startsWith("/articles/") ? "Artigo" : location.replace("/", ""));
 
   function handleLogout() {
     logout();

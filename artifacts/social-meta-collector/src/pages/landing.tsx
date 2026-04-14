@@ -805,6 +805,145 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ── CENTRAL DE CONHECIMENTO ──────────────────────── */}
+        <section style={{
+          padding: "100px clamp(20px, 6vw, 100px)",
+          background: dark ? "#0F1923" : "#FAFBFC",
+          position: "relative",
+        }}>
+          <div data-reveal style={{ maxWidth: 1100, margin: "0 auto" }}>
+            <div style={{ textAlign: "center", marginBottom: 60 }}>
+              <p style={{
+                fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 600,
+                color: PURPLE, textTransform: "uppercase",
+                letterSpacing: "0.12em", marginBottom: 14,
+              }}>
+                Central de Conhecimento
+              </p>
+              <h2 style={{
+                fontFamily: "'Space Grotesk', sans-serif",
+                fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 700,
+                color: dark ? "white" : PETROLEUM,
+                letterSpacing: "-0.035em", lineHeight: 1.15,
+                marginBottom: 16,
+              }}>
+                Aprenda enquanto{" "}
+                <span style={{
+                  background: `linear-gradient(135deg, ${PURPLE}, ${ROSE})`,
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}>
+                  constrói
+                </span>
+              </h2>
+              <p style={{
+                fontFamily: "'Inter', sans-serif", fontSize: 16,
+                color: dark ? "rgba(224,224,224,0.55)" : "rgba(30,42,56,0.55)",
+                lineHeight: 1.6, maxWidth: 560, margin: "0 auto",
+              }}>
+                Artigos, vídeos, guias interativos e glossário técnico para dominar APIs sociais, OAuth 2.0 e segurança.
+              </p>
+            </div>
+
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+              gap: 20,
+            }}>
+              {[
+                {
+                  icon: "📚",
+                  title: "Artigos Técnicos",
+                  desc: "OAuth 2.0, segurança de tokens e boas práticas explicados em profundidade.",
+                  color: PURPLE,
+                },
+                {
+                  icon: "🎬",
+                  title: "Tutoriais em Vídeo",
+                  desc: "Assista passo-a-passo como integrar APIs do YouTube, Instagram e Facebook.",
+                  color: ROSE,
+                },
+                {
+                  icon: "🧭",
+                  title: "Guia Interativo",
+                  desc: "Exemplos de código em JavaScript, Python e cURL prontos para copiar e usar.",
+                  color: "#4CAF50",
+                },
+                {
+                  icon: "📖",
+                  title: "Glossário",
+                  desc: "Termos técnicos como API, Token, Webhook e Rate Limit explicados de forma clara.",
+                  color: "#F59E0B",
+                },
+              ].map((card) => (
+                <div
+                  key={card.title}
+                  style={{
+                    padding: 28,
+                    borderRadius: 20,
+                    background: dark ? "rgba(255,255,255,0.04)" : "white",
+                    border: `1px solid ${dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)"}`,
+                    transition: "all 0.25s",
+                    cursor: "default",
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.transform = "translateY(-4px)";
+                    (e.currentTarget as HTMLElement).style.boxShadow = `0 12px 40px ${card.color}15`;
+                    (e.currentTarget as HTMLElement).style.borderColor = `${card.color}30`;
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
+                    (e.currentTarget as HTMLElement).style.boxShadow = "none";
+                    (e.currentTarget as HTMLElement).style.borderColor = dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
+                  }}
+                >
+                  <div style={{
+                    width: 48, height: 48, borderRadius: 14,
+                    background: `${card.color}15`,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 22, marginBottom: 18,
+                  }}>
+                    {card.icon}
+                  </div>
+                  <h3 style={{
+                    fontFamily: "'Space Grotesk', sans-serif",
+                    fontSize: 18, fontWeight: 700,
+                    color: dark ? "white" : PETROLEUM,
+                    marginBottom: 8, letterSpacing: "-0.02em",
+                  }}>
+                    {card.title}
+                  </h3>
+                  <p style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 14,
+                    color: dark ? "rgba(224,224,224,0.55)" : "rgba(30,42,56,0.55)",
+                    lineHeight: 1.6,
+                  }}>
+                    {card.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ textAlign: "center", marginTop: 40 }}>
+              <Link href="/login">
+                <span className="landing-cta-btn" style={{
+                  display: "inline-flex", alignItems: "center", gap: 8,
+                  padding: "13px 28px", borderRadius: 999,
+                  background: `linear-gradient(135deg, ${PURPLE}, ${PURPLE})`,
+                  color: "white",
+                  fontFamily: "'Space Grotesk', sans-serif",
+                  fontSize: 15, fontWeight: 600, cursor: "pointer",
+                  boxShadow: "0 6px 24px rgba(108,99,255,0.35)",
+                  transition: "all 0.25s", textDecoration: "none",
+                }}>
+                  Acessar conteúdo completo <ArrowRight size={15} />
+                </span>
+              </Link>
+            </div>
+          </div>
+        </section>
+
         {/* ── 5. FINAL CTA ─────────────────────────────────── */}
         <section id="contato" style={{
           padding: "100px clamp(20px, 6vw, 100px)",

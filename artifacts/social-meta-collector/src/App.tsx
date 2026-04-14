@@ -16,6 +16,11 @@ import Reports from "@/pages/reports";
 import Connections from "@/pages/connections";
 import FetchPage from "@/pages/fetch";
 import LoginPage from "@/pages/login";
+import ArticlesPage from "@/pages/knowledge/articles";
+import { ArticleDetailPage } from "@/pages/knowledge/articles";
+import VideosPage from "@/pages/knowledge/videos";
+import GuidePage from "@/pages/knowledge/guide";
+import GlossaryPage from "@/pages/knowledge/glossary";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +47,13 @@ function Router() {
               <Route path="/reports" component={Reports} />
               <Route path="/connections" component={Connections} />
               <Route path="/fetch" component={FetchPage} />
+              <Route path="/articles" component={ArticlesPage} />
+              <Route path="/articles/:id">
+                {(params) => <ArticleDetailPage articleId={params.id} />}
+              </Route>
+              <Route path="/videos" component={VideosPage} />
+              <Route path="/guide" component={GuidePage} />
+              <Route path="/glossary" component={GlossaryPage} />
               <Route component={NotFound} />
             </Switch>
           </Layout>

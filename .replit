@@ -33,3 +33,6 @@ TOKEN_SECRET = "0ec13726054c6f6b4afe856afded2b40aec3ac792e026fdb2dc01e48dfa85f49
 REDIS_URL = "redis://localhost:6379"
 JWT_EXPIRES_IN = "1h"
 CACHE_TTL_SECONDS = "60"
+
+[nix]
+channel = "stable-25_05"

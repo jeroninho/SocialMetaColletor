@@ -44,6 +44,8 @@ artifacts/
       queues/         # metadataSyncQueue.ts (BullMQ)
   social-meta-collector/ # React + Vite frontend
     src/pages/        # Dashboard, YouTube, Instagram, Facebook, Reports, Login, Fetch
+    src/pages/knowledge/ # Knowledge Hub: articles, videos, guide, glossary
+    src/data/         # Static content: articles.ts, videos.ts, glossary.ts, guide-steps.ts
     src/components/   # layout.tsx (petroleum blue sidebar, Space Grotesk)
     src/context/      # theme.tsx (dark/light toggle)
     src/lib/          # chart-theme.ts
