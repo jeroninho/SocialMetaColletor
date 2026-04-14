@@ -1,0 +1,36 @@
+#4 - Aplicar Design System de Referência
+What & Why
+Adaptar o visual do projeto para seguir o design system de referência fornecido, que define uma estética SaaS moderna, limpa e minimalista. Isso inclui atualização das CSS variables (paleta de cores, tipografia, border radius, espaçamento), ajuste nos componentes de UI e refinamento visual geral das páginas (landing, login, dashboard, layout).
+
+Done looks like
+Fundo claro usa branco puro (ou muito próximo), não cinza azulado
+Tipografia base em 14px com escala clara de h1–h4
+Border radius global ajustado para 0.625rem (e variantes sm/md/lg/xl derivadas)
+Cor primária muda de roxo (#6C63FF) para um tom neutro-escuro próximo de #030213, mantendo o roxo como accent secundário onde faz sentido (gráficos, badges de plataforma)
+Bordas usam rgba(0,0,0,0.1) no modo claro — visual mais leve, sem contraste excessivo
+Componentes de formulário (inputs, selects, botões) seguem o mesmo token de radius e border
+Dark mode mantém coerência com os mesmos tokens adaptados
+Sidebar preserva a identidade petroleum, mas com tokens revisados
+Gradient accent e cores de plataforma (YouTube, Instagram, Facebook) são preservados como exceções semânticas
+Out of scope
+Mudanças de estrutura ou lógica de componentes
+Alterações nas APIs ou no backend
+Criação de novos componentes ou páginas
+Animações novas
+Tasks
+Atualizar CSS variables no index.css — Substituir a paleta de cores, tipografia (base 14px), border radius (0.625rem) e tokens de sombra para seguir o design system de referência. Manter sidebar petroleum, cores de plataforma e os tokens de chart como exceções semânticas.
+
+Revisar landing page e login — Ajustar classes inline que sobrescrevem tokens (gradients hardcoded, tamanhos de fonte fixos, backgrounds inline) para usar os tokens atualizados. Garantir que o visual fique coerente com o design system aplicado.
+
+Revisar dashboard e páginas internas — Garantir que stat cards, charts e tabelas usem os tokens revisados. Ajustar qualquer estilo hardcoded que conflite com os novos tokens.
+
+Relevant files
+artifacts/social-meta-collector/src/index.css
+artifacts/social-meta-collector/src/pages/landing.tsx
+artifacts/social-meta-collector/src/pages/login.tsx
+artifacts/social-meta-collector/src/pages/dashboard.tsx
+artifacts/social-meta-collector/src/components/layout.tsx
+artifacts/social-meta-collector/src/components/ui/button.tsx
+artifacts/social-meta-collector/src/components/ui/card.tsx
+artifacts/social-meta-collector/src/components/ui/input.tsx
+artifacts/social-meta-collector/src/components/ui/badge.tsx
