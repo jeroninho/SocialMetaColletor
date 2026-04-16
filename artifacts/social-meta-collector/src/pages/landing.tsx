@@ -348,6 +348,353 @@ function HeroChart({ dark }: { dark: boolean }) {
   );
 }
 
+/* ─── Showcase images ────────────────────────────────────── */
+const showcaseImages = [
+  { src: "screenshots/dashboard.png", label: "Dashboard", desc: "Visão geral unificada" },
+  { src: "screenshots/reports.png", label: "Relatórios", desc: "Análises detalhadas" },
+  { src: "screenshots/tutorials.png", label: "Tutoriais", desc: "Aprenda passo a passo" },
+  { src: "screenshots/connections.png", label: "Conexões", desc: "Integre suas contas" },
+];
+
+/* ─── Image showcase component ───────────────────────────── */
+function ImageShowcase({
+  dark,
+  text,
+  textMuted,
+  cardBg,
+  cardBorder,
+}: {
+  dark: boolean;
+  text: string;
+  textMuted: string;
+  cardBg: string;
+  cardBorder: string;
+}) {
+  const [active, setActive] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mountedRef = useRef(true);
+  const base = import.meta.env.BASE_URL;
+  const prefersReducedMotion = useRef(
+    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+
+  const clearTimers = () => {
+    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+    if (timeoutRef.current) { clearTimeout(timeoutRef.current); timeoutRef.current = null; }
+  };
+
+  const startAutoplay = () => {
+    clearTimers();
+    if (prefersReducedMotion.current || paused) return;
+    intervalRef.current = setInterval(() => {
+      if (!mountedRef.current) return;
+      setIsTransitioning(true);
+      timeoutRef.current = setTimeout(() => {
+        if (!mountedRef.current) return;
+        setActive((prev) => (prev + 1) % showcaseImages.length);
+        setIsTransitioning(false);
+      }, 300);
+    }, 4000);
+  };
+
+  useEffect(() => {
+    mountedRef.current = true;
+    startAutoplay();
+    return () => {
+      mountedRef.current = false;
+      clearTimers();
+    };
+  }, [paused]);
+
+  const goTo = (idx: number) => {
+    if (idx === active) return;
+    clearTimers();
+    setIsTransitioning(true);
+    timeoutRef.current = setTimeout(() => {
+      if (!mountedRef.current) return;
+      setActive(idx);
+      setIsTransitioning(false);
+      startAutoplay();
+    }, 300);
+  };
+
+  return (
+    <section
+      aria-label="Showcase da plataforma"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+      style={{
+        padding: "100px clamp(20px, 6vw, 100px) 80px",
+        background: dark ? "#0F1923" : "#FAFBFC",
+        position: "relative",
+        overflow: "hidden",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          top: "20%",
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: 800,
+          height: 500,
+          background: `radial-gradient(ellipse, ${dark ? "rgba(108,99,255,0.08)" : "rgba(108,99,255,0.05)"} 0%, transparent 70%)`,
+          pointerEvents: "none",
+        }}
+      />
+
+      <div style={{ maxWidth: 1280, margin: "0 auto", position: "relative" }}>
+        <div data-reveal style={{ textAlign: "center", marginBottom: 56 }}>
+          <p
+            style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 13,
+              fontWeight: 600,
+              color: PURPLE,
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              marginBottom: 12,
+            }}
+          >
+            Veja em ação
+          </p>
+          <h2
+            style={{
+              fontFamily: "'Space Grotesk', sans-serif",
+              fontSize: "clamp(28px, 4vw, 44px)",
+              fontWeight: 700,
+              color: text,
+              letterSpacing: "-0.03em",
+              marginBottom: 16,
+            }}
+          >
+            Conheça a{" "}
+            <span
+              style={{
+                background: `linear-gradient(135deg, ${PURPLE}, ${ROSE})`,
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}
+            >
+              plataforma
+            </span>
+          </h2>
+          <p
+            style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 17,
+              color: textMuted,
+              maxWidth: 540,
+              margin: "0 auto",
+              lineHeight: 1.65,
+            }}
+          >
+            Explore as principais telas do MetaCollector e descubra como simplificamos sua análise social.
+          </p>
+        </div>
+
+        <div
+          data-reveal
+          style={{
+            display: "flex",
+            gap: 32,
+            alignItems: "stretch",
+          }}
+          className="showcase-grid"
+        >
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              borderRadius: 20,
+              overflow: "hidden",
+              background: cardBg,
+              border: `1px solid ${cardBorder}`,
+              boxShadow: dark
+                ? "0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05)"
+                : "0 20px 60px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)",
+              position: "relative",
+            }}
+          >
+            <div
+              style={{
+                padding: "12px 16px",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                borderBottom: `1px solid ${cardBorder}`,
+                background: dark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)",
+              }}
+            >
+              <span style={{ width: 12, height: 12, borderRadius: "50%", background: "#FF5F57", display: "inline-block" }} />
+              <span style={{ width: 12, height: 12, borderRadius: "50%", background: "#FFBD2E", display: "inline-block" }} />
+              <span style={{ width: 12, height: 12, borderRadius: "50%", background: "#28CA42", display: "inline-block" }} />
+              <span
+                style={{
+                  marginLeft: "auto",
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: 12,
+                  color: textMuted,
+                  fontWeight: 500,
+                }}
+              >
+                {showcaseImages[active].label}
+              </span>
+            </div>
+            <div style={{ position: "relative", overflow: "hidden" }}>
+              <img
+                src={`${base}${showcaseImages[active].src}`}
+                alt={showcaseImages[active].label}
+                style={{
+                  width: "100%",
+                  display: "block",
+                  opacity: isTransitioning ? 0 : 1,
+                  transform: isTransitioning ? "scale(0.98)" : "scale(1)",
+                  transition: "opacity 0.3s ease, transform 0.3s ease",
+                }}
+              />
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+              flexShrink: 0,
+              width: 220,
+            }}
+            className="showcase-thumbs"
+          >
+            {showcaseImages.map((img, i) => (
+              <button
+                key={img.label}
+                onClick={() => goTo(i)}
+                aria-label={`Ver ${img.label}`}
+                aria-pressed={i === active}
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  gap: 8,
+                  padding: 16,
+                  borderRadius: 16,
+                  border: `1.5px solid ${i === active
+                    ? (dark ? "rgba(108,99,255,0.5)" : "rgba(108,99,255,0.4)")
+                    : cardBorder}`,
+                  background: i === active
+                    ? (dark ? "rgba(108,99,255,0.1)" : "rgba(108,99,255,0.05)")
+                    : cardBg,
+                  cursor: "pointer",
+                  transition: "all 0.25s ease",
+                  textAlign: "left",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+              >
+                {i === active && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: 3,
+                      height: "100%",
+                      background: `linear-gradient(180deg, ${PURPLE}, ${ROSE})`,
+                      borderRadius: "0 2px 2px 0",
+                    }}
+                  />
+                )}
+                <span
+                  style={{
+                    fontFamily: "'Space Grotesk', sans-serif",
+                    fontSize: 15,
+                    fontWeight: 600,
+                    color: i === active ? (dark ? "white" : PETROLEUM) : textMuted,
+                    transition: "color 0.2s",
+                  }}
+                >
+                  {img.label}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 13,
+                    color: textMuted,
+                    lineHeight: 1.4,
+                  }}
+                >
+                  {img.desc}
+                </span>
+                {i === active && (
+                  <div
+                    style={{
+                      width: "100%",
+                      height: 3,
+                      borderRadius: 2,
+                      background: dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+                      marginTop: 4,
+                      overflow: "hidden",
+                    }}
+                  >
+                    <div
+                      style={{
+                        height: "100%",
+                        background: `linear-gradient(90deg, ${PURPLE}, ${ROSE})`,
+                        borderRadius: 2,
+                        animation: "showcase-progress 4s linear",
+                      }}
+                    />
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div
+          data-reveal
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            gap: 8,
+            marginTop: 32,
+          }}
+          className="showcase-dots"
+        >
+          {showcaseImages.map((img, i) => (
+            <button
+              key={i}
+              onClick={() => goTo(i)}
+              aria-label={`Ir para ${img.label}`}
+              aria-current={i === active ? "true" : undefined}
+              style={{
+                width: i === active ? 28 : 8,
+                height: 8,
+                borderRadius: 4,
+                border: "none",
+                background: i === active
+                  ? `linear-gradient(90deg, ${PURPLE}, ${ROSE})`
+                  : (dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)"),
+                cursor: "pointer",
+                transition: "all 0.3s ease",
+                padding: 0,
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* ─── Landing page ───────────────────────────────────────── */
 export default function LandingPage() {
   const { theme, toggleTheme } = useTheme();
@@ -390,6 +737,10 @@ export default function LandingPage() {
           border-color: ${PURPLE} !important;
           color: ${PURPLE} !important;
         }
+        @keyframes showcase-progress {
+          from { width: 0%; }
+          to   { width: 100%; }
+        }
         @media (max-width: 900px) {
           .landing-desktop-nav { display: none !important; }
           .landing-hamburger { display: flex !important; }
@@ -398,6 +749,12 @@ export default function LandingPage() {
           .problems-grid { grid-template-columns: 1fr !important; }
           .demo-grid { flex-direction: column !important; }
           .clients-row { gap: 20px !important; }
+          .showcase-grid { flex-direction: column !important; }
+          .showcase-thumbs { flex-direction: row !important; width: 100% !important; overflow-x: auto !important; }
+          .showcase-thumbs button { min-width: 140px !important; flex: 0 0 auto !important; }
+        }
+        @media (min-width: 901px) {
+          .showcase-dots { display: none !important; }
         }
       `}</style>
 
@@ -612,6 +969,9 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        {/* ── 2.5. IMAGE SHOWCASE ────────────────────────────── */}
+        <ImageShowcase dark={dark} text={text} textMuted={textMuted} cardBg={cardBg} cardBorder={cardBorder} />
 
         {/* ── 3. DEMO SECTION ──────────────────────────────── */}
         <section id="demo" style={{
