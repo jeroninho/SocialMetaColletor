@@ -658,10 +658,19 @@ export default function LandingPage() {
   useScrollReveal();
 
   useEffect(() => {
+    const root = document.documentElement;
+    const hadDark = root.classList.contains("dark");
+    root.classList.remove("dark");
     const prevBg = document.body.style.background;
     document.body.style.background = "#FFFFFF";
+    const observer = new MutationObserver(() => {
+      if (root.classList.contains("dark")) root.classList.remove("dark");
+    });
+    observer.observe(root, { attributes: true, attributeFilter: ["class"] });
     return () => {
+      observer.disconnect();
       document.body.style.background = prevBg;
+      if (hadDark) root.classList.add("dark");
     };
   }, []);
 
