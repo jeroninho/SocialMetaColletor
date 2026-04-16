@@ -8,8 +8,6 @@ import {
   Shield,
   Menu,
   X,
-  Sun,
-  Moon,
   ArrowRight,
   TrendingUp,
   ChevronRight,
@@ -27,7 +25,6 @@ import {
   Area,
   AreaChart,
 } from "recharts";
-import { useTheme } from "@/context/theme";
 
 /* ─── Design tokens ──────────────────────────────────────── */
 const PETROLEUM  = "#1E2A38";
@@ -102,7 +99,7 @@ const problems = [
 const clients = ["Nexio", "Brandify", "Cortex", "Lumora"];
 
 /* ─── Navbar ─────────────────────────────────────────────── */
-function Navbar({ dark, toggleTheme }: { dark: boolean; toggleTheme: () => void }) {
+function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -112,20 +109,9 @@ function Navbar({ dark, toggleTheme }: { dark: boolean; toggleTheme: () => void 
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
-  const navBg = scrolled
-    ? dark
-      ? "rgba(30,42,56,0.97)"
-      : "rgba(255,255,255,0.97)"
-    : "transparent";
-
-  /* Navbar is always over the dark hero section when transparent,
-     so force white text until the user scrolls and the solid bg appears */
-  const linkColor = scrolled
-    ? (dark ? "rgba(255,255,255,0.80)" : "rgba(30,42,56,0.78)")
-    : "rgba(255,255,255,0.80)";
-  const logoTextColor = scrolled
-    ? (dark ? "white" : PETROLEUM)
-    : "white";
+  const navBg = scrolled ? "rgba(255,255,255,0.97)" : "transparent";
+  const linkColor = scrolled ? "rgba(30,42,56,0.78)" : "rgba(255,255,255,0.80)";
+  const logoTextColor = scrolled ? PETROLEUM : "white";
 
   return (
     <>
@@ -134,7 +120,7 @@ function Navbar({ dark, toggleTheme }: { dark: boolean; toggleTheme: () => void 
           position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
           background: navBg,
           borderBottom: scrolled
-            ? `1px solid ${dark ? "rgba(255,255,255,0.08)" : "rgba(30,42,56,0.08)"}`
+            ? "1px solid rgba(30,42,56,0.08)"
             : "none",
           backdropFilter: scrolled ? "blur(14px)" : "none",
           transition: "background 0.3s, border-color 0.3s, backdrop-filter 0.3s",
@@ -143,7 +129,6 @@ function Navbar({ dark, toggleTheme }: { dark: boolean; toggleTheme: () => void 
           display: "flex", alignItems: "center", justifyContent: "space-between",
         }}
       >
-        {/* Logo */}
         <Link href="/">
           <span style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer", textDecoration: "none" }}>
             <span style={{
@@ -166,7 +151,6 @@ function Navbar({ dark, toggleTheme }: { dark: boolean; toggleTheme: () => void 
           </span>
         </Link>
 
-        {/* Desktop links */}
         <div style={{ display: "flex", alignItems: "center", gap: 36 }} className="landing-desktop-nav">
           {["Soluções", "Clientes", "Contato"].map((l) => (
             <a key={l} href={`#${l.toLowerCase()}`} style={{
@@ -183,27 +167,7 @@ function Navbar({ dark, toggleTheme }: { dark: boolean; toggleTheme: () => void 
           ))}
         </div>
 
-        {/* Right controls */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {/* Dark mode toggle */}
-          <button
-            onClick={toggleTheme}
-            style={{
-              width: 36, height: 36, borderRadius: "50%",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              background: dark ? "rgba(255,255,255,0.10)" : "rgba(30,42,56,0.08)",
-              border: "none", cursor: "pointer",
-              transition: "background 0.2s",
-            }}
-            title={dark ? "Modo claro" : "Modo escuro"}
-          >
-            {dark
-              ? <Sun size={16} style={{ color: "#FBBF24" }} />
-              : <Moon size={16} style={{ color: PETROLEUM }} />
-            }
-          </button>
-
-          {/* CTA */}
           <Link href="/login">
             <span className="landing-cta-btn" style={{
               display: "inline-flex", alignItems: "center", gap: 6,
@@ -220,31 +184,29 @@ function Navbar({ dark, toggleTheme }: { dark: boolean; toggleTheme: () => void 
             </span>
           </Link>
 
-          {/* Mobile hamburger */}
           <button
             onClick={() => setOpen((v) => !v)}
             className="landing-hamburger"
             style={{
               display: "none", width: 36, height: 36, borderRadius: 8,
               alignItems: "center", justifyContent: "center",
-              background: dark ? "rgba(255,255,255,0.10)" : "rgba(30,42,56,0.08)",
+              background: "rgba(30,42,56,0.08)",
               border: "none", cursor: "pointer",
             }}
           >
             {open
-              ? <X size={18} style={{ color: dark ? "white" : PETROLEUM }} />
-              : <Menu size={18} style={{ color: dark ? "white" : PETROLEUM }} />
+              ? <X size={18} style={{ color: PETROLEUM }} />
+              : <Menu size={18} style={{ color: PETROLEUM }} />
             }
           </button>
         </div>
       </nav>
 
-      {/* Mobile menu */}
       {open && (
         <div style={{
           position: "fixed", top: 68, left: 0, right: 0, zIndex: 99,
-          background: dark ? PETROLEUM : "white",
-          borderBottom: `1px solid ${dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`,
+          background: "white",
+          borderBottom: "1px solid rgba(0,0,0,0.08)",
           padding: "20px clamp(20px, 5vw, 40px)",
           display: "flex", flexDirection: "column", gap: 4,
           boxShadow: "0 12px 40px rgba(0,0,0,0.15)",
@@ -256,9 +218,9 @@ function Navbar({ dark, toggleTheme }: { dark: boolean; toggleTheme: () => void 
                 padding: "12px 0",
                 fontFamily: "'Inter', sans-serif",
                 fontSize: 16, fontWeight: 500,
-                color: dark ? "rgba(255,255,255,0.85)" : PETROLEUM,
+                color: PETROLEUM,
                 textDecoration: "none",
-                borderBottom: `1px solid ${dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}`,
+                borderBottom: "1px solid rgba(0,0,0,0.06)",
               }}
             >
               {l}
@@ -284,12 +246,12 @@ function Navbar({ dark, toggleTheme }: { dark: boolean; toggleTheme: () => void 
 }
 
 /* ─── Hero chart (mini, decorative) ─────────────────────── */
-function HeroChart({ dark }: { dark: boolean }) {
+function HeroChart() {
   return (
     <div style={{
-      background: dark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.12)",
+      background: "rgba(255,255,255,0.12)",
       borderRadius: "var(--radius-xl)",
-      border: `1px solid ${dark ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.25)"}`,
+      border: "1px solid rgba(255,255,255,0.25)",
       backdropFilter: "blur(12px)",
       padding: "24px 20px 16px",
       boxShadow: "var(--shadow-lg)",
@@ -358,13 +320,11 @@ const showcaseImages = [
 
 /* ─── Image showcase component ───────────────────────────── */
 function ImageShowcase({
-  dark,
   text,
   textMuted,
   cardBg,
   cardBorder,
 }: {
-  dark: boolean;
   text: string;
   textMuted: string;
   cardBg: string;
@@ -430,7 +390,7 @@ function ImageShowcase({
       onBlur={() => setPaused(false)}
       style={{
         padding: "100px clamp(20px, 6vw, 100px) 80px",
-        background: dark ? "#0F1923" : "#FAFBFC",
+        background: "#FAFBFC",
         position: "relative",
         overflow: "hidden",
       }}
@@ -443,7 +403,7 @@ function ImageShowcase({
           transform: "translateX(-50%)",
           width: 800,
           height: 500,
-          background: `radial-gradient(ellipse, ${dark ? "rgba(108,99,255,0.08)" : "rgba(108,99,255,0.05)"} 0%, transparent 70%)`,
+          background: "radial-gradient(ellipse, rgba(108,99,255,0.05) 0%, transparent 70%)",
           pointerEvents: "none",
         }}
       />
@@ -516,9 +476,7 @@ function ImageShowcase({
               overflow: "hidden",
               background: cardBg,
               border: `1px solid ${cardBorder}`,
-              boxShadow: dark
-                ? "0 20px 60px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05)"
-                : "0 20px 60px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)",
               position: "relative",
             }}
           >
@@ -529,7 +487,7 @@ function ImageShowcase({
                 alignItems: "center",
                 gap: 8,
                 borderBottom: `1px solid ${cardBorder}`,
-                background: dark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)",
+                background: "rgba(0,0,0,0.02)",
               }}
             >
               <span style={{ width: 12, height: 12, borderRadius: "50%", background: "#FF5F57", display: "inline-block" }} />
@@ -587,10 +545,10 @@ function ImageShowcase({
                   padding: 16,
                   borderRadius: 16,
                   border: `1.5px solid ${i === active
-                    ? (dark ? "rgba(108,99,255,0.5)" : "rgba(108,99,255,0.4)")
+                    ? "rgba(108,99,255,0.4)"
                     : cardBorder}`,
                   background: i === active
-                    ? (dark ? "rgba(108,99,255,0.1)" : "rgba(108,99,255,0.05)")
+                    ? "rgba(108,99,255,0.05)"
                     : cardBg,
                   cursor: "pointer",
                   transition: "all 0.25s ease",
@@ -617,7 +575,7 @@ function ImageShowcase({
                     fontFamily: "'Space Grotesk', sans-serif",
                     fontSize: 15,
                     fontWeight: 600,
-                    color: i === active ? (dark ? "white" : PETROLEUM) : textMuted,
+                    color: i === active ? PETROLEUM : textMuted,
                     transition: "color 0.2s",
                   }}
                 >
@@ -639,7 +597,7 @@ function ImageShowcase({
                       width: "100%",
                       height: 3,
                       borderRadius: 2,
-                      background: dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
+                      background: "rgba(0,0,0,0.06)",
                       marginTop: 4,
                       overflow: "hidden",
                     }}
@@ -682,7 +640,7 @@ function ImageShowcase({
                 border: "none",
                 background: i === active
                   ? `linear-gradient(90deg, ${PURPLE}, ${ROSE})`
-                  : (dark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)"),
+                  : "rgba(0,0,0,0.12)",
                 cursor: "pointer",
                 transition: "all 0.3s ease",
                 padding: 0,
@@ -697,15 +655,21 @@ function ImageShowcase({
 
 /* ─── Landing page ───────────────────────────────────────── */
 export default function LandingPage() {
-  const { theme, toggleTheme } = useTheme();
-  const dark = theme === "dark";
   useScrollReveal();
 
-  const bg       = dark ? "#0F1923"  : "#FFFFFF";
-  const text      = dark ? "#E0E0E0"  : PETROLEUM;
-  const textMuted = dark ? "rgba(224,224,224,0.6)" : "rgba(30,42,56,0.55)";
-  const cardBg    = dark ? "#1A2535"  : "white";
-  const cardBorder = dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.10)";
+  useEffect(() => {
+    const prevBg = document.body.style.background;
+    document.body.style.background = "#FFFFFF";
+    return () => {
+      document.body.style.background = prevBg;
+    };
+  }, []);
+
+  const bg       = "#FFFFFF";
+  const text      = PETROLEUM;
+  const textMuted = "rgba(30,42,56,0.55)";
+  const cardBg    = "white";
+  const cardBorder = "rgba(0,0,0,0.10)";
 
   return (
     <>
@@ -759,7 +723,7 @@ export default function LandingPage() {
       `}</style>
 
       <div style={{ background: bg, color: text, minHeight: "100vh", fontFamily: "'Inter', sans-serif" }}>
-        <Navbar dark={dark} toggleTheme={toggleTheme} />
+        <Navbar />
 
         {/* ── 1. HERO ──────────────────────────────────────── */}
         <section
@@ -884,7 +848,7 @@ export default function LandingPage() {
 
             {/* Right chart */}
             <div className="hero-chart-col" style={{ flex: "0 0 440px", animation: "floatHero 5s ease-in-out infinite" }}>
-              <HeroChart dark={dark} />
+              <HeroChart />
             </div>
           </div>
         </section>
@@ -928,9 +892,7 @@ export default function LandingPage() {
                     background: cardBg,
                     border: `1px solid ${cardBorder}`,
                     borderRadius: "var(--radius-xl)", padding: "32px 28px",
-                    boxShadow: dark
-                      ? "var(--shadow-lg)"
-                      : "var(--shadow-sm)",
+                    boxShadow: "var(--shadow-sm)",
                     cursor: "default",
                     transition: "transform 0.25s ease, box-shadow 0.25s ease",
                     animationDelay: `${i * 0.08}s`,
@@ -971,12 +933,12 @@ export default function LandingPage() {
         </section>
 
         {/* ── 2.5. IMAGE SHOWCASE ────────────────────────────── */}
-        <ImageShowcase dark={dark} text={text} textMuted={textMuted} cardBg={cardBg} cardBorder={cardBorder} />
+        <ImageShowcase text={text} textMuted={textMuted} cardBg={cardBg} cardBorder={cardBorder} />
 
         {/* ── 3. DEMO SECTION ──────────────────────────────── */}
         <section id="demo" style={{
           padding: "96px clamp(20px, 6vw, 100px)",
-          background: dark ? "rgba(255,255,255,0.025)" : "rgba(0,0,0,0.02)",
+          background: "rgba(0,0,0,0.02)",
         }}>
           <div style={{ maxWidth: 1280, margin: "0 auto" }}>
             <div className="demo-grid" style={{ display: "flex", alignItems: "center", gap: 64 }}>
@@ -987,9 +949,7 @@ export default function LandingPage() {
                   background: cardBg,
                   border: `1px solid ${cardBorder}`,
                   borderRadius: "var(--radius-xl)", padding: "28px 24px",
-                  boxShadow: dark
-                    ? "var(--shadow-lg)"
-                    : "var(--shadow-md)",
+                  boxShadow: "var(--shadow-md)",
                 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
                     <h3 style={{
@@ -1020,25 +980,25 @@ export default function LandingPage() {
                       </defs>
                       <CartesianGrid
                         strokeDasharray="3 3"
-                        stroke={dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}
+                        stroke="rgba(0,0,0,0.06)"
                         vertical={false}
                       />
                       <XAxis
                         dataKey="mes"
-                        tick={{ fontSize: 11, fill: dark ? "rgba(255,255,255,0.40)" : "rgba(0,0,0,0.40)" }}
+                        tick={{ fontSize: 11, fill: "rgba(0,0,0,0.40)" }}
                         axisLine={false} tickLine={false}
                       />
                       <YAxis
-                        tick={{ fontSize: 11, fill: dark ? "rgba(255,255,255,0.40)" : "rgba(0,0,0,0.40)" }}
+                        tick={{ fontSize: 11, fill: "rgba(0,0,0,0.40)" }}
                         axisLine={false} tickLine={false}
                         tickFormatter={(v) => v >= 1000 ? `${(v / 1000).toFixed(0)}K` : v}
                       />
                       <Tooltip
                         contentStyle={{
-                          background: dark ? "rgba(30,42,56,0.95)" : "white",
-                          border: `1px solid ${dark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.10)"}`,
+                          background: "white",
+                          border: "1px solid rgba(0,0,0,0.10)",
                           borderRadius: 10, fontSize: 12,
-                          color: dark ? "white" : PETROLEUM,
+                          color: PETROLEUM,
                           boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
                         }}
                         formatter={(v: number) => [`${(v / 1000).toFixed(1)}K`, "Engajamento"]}
@@ -1138,23 +1098,23 @@ export default function LandingPage() {
               {clients.map((name) => (
                 <div key={name} style={{
                   padding: "14px 32px", borderRadius: "var(--radius)",
-                  background: dark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)",
+                  background: "rgba(0,0,0,0.04)",
                   border: `1px solid ${cardBorder}`,
                   transition: "all 0.2s",
                 }}
                   onMouseEnter={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = dark ? "rgba(255,255,255,0.08)" : "rgba(108,99,255,0.07)";
+                    (e.currentTarget as HTMLElement).style.background = "rgba(108,99,255,0.07)";
                     (e.currentTarget as HTMLElement).style.borderColor = `${PURPLE}40`;
                   }}
                   onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLElement).style.background = dark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)";
+                    (e.currentTarget as HTMLElement).style.background = "rgba(0,0,0,0.04)";
                     (e.currentTarget as HTMLElement).style.borderColor = cardBorder;
                   }}
                 >
                   <span style={{
                     fontFamily: "'Space Grotesk', sans-serif",
                     fontSize: 20, fontWeight: 700,
-                    color: dark ? "rgba(255,255,255,0.35)" : "rgba(30,42,56,0.30)",
+                    color: "rgba(30,42,56,0.30)",
                     letterSpacing: "-0.02em",
                   }}>
                     {name}
@@ -1168,7 +1128,7 @@ export default function LandingPage() {
         {/* ── CENTRAL DE CONHECIMENTO ──────────────────────── */}
         <section style={{
           padding: "100px clamp(20px, 6vw, 100px)",
-          background: dark ? "#0F1923" : "#FAFBFC",
+          background: "#FAFBFC",
           position: "relative",
         }}>
           <div data-reveal style={{ maxWidth: 1100, margin: "0 auto" }}>
@@ -1183,7 +1143,7 @@ export default function LandingPage() {
               <h2 style={{
                 fontFamily: "'Space Grotesk', sans-serif",
                 fontSize: "clamp(28px, 4vw, 44px)", fontWeight: 700,
-                color: dark ? "white" : PETROLEUM,
+                color: PETROLEUM,
                 letterSpacing: "-0.035em", lineHeight: 1.15,
                 marginBottom: 16,
               }}>
@@ -1198,7 +1158,7 @@ export default function LandingPage() {
               </h2>
               <p style={{
                 fontFamily: "'Inter', sans-serif", fontSize: 16,
-                color: dark ? "rgba(224,224,224,0.55)" : "rgba(30,42,56,0.55)",
+                color: "rgba(30,42,56,0.55)",
                 lineHeight: 1.6, maxWidth: 560, margin: "0 auto",
               }}>
                 Artigos, vídeos, guias interativos e glossário técnico para dominar APIs sociais, OAuth 2.0 e segurança.
@@ -1241,8 +1201,8 @@ export default function LandingPage() {
                   style={{
                     padding: 28,
                     borderRadius: 20,
-                    background: dark ? "rgba(255,255,255,0.04)" : "white",
-                    border: `1px solid ${dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)"}`,
+                    background: "white",
+                    border: "1px solid rgba(0,0,0,0.06)",
                     transition: "all 0.25s",
                     cursor: "default",
                   }}
@@ -1254,7 +1214,7 @@ export default function LandingPage() {
                   onMouseLeave={(e) => {
                     (e.currentTarget as HTMLElement).style.transform = "translateY(0)";
                     (e.currentTarget as HTMLElement).style.boxShadow = "none";
-                    (e.currentTarget as HTMLElement).style.borderColor = dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)";
+                    (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,0,0,0.06)";
                   }}
                 >
                   <div style={{
@@ -1268,7 +1228,7 @@ export default function LandingPage() {
                   <h3 style={{
                     fontFamily: "'Space Grotesk', sans-serif",
                     fontSize: 18, fontWeight: 700,
-                    color: dark ? "white" : PETROLEUM,
+                    color: PETROLEUM,
                     marginBottom: 8, letterSpacing: "-0.02em",
                   }}>
                     {card.title}
@@ -1276,7 +1236,7 @@ export default function LandingPage() {
                   <p style={{
                     fontFamily: "'Inter', sans-serif",
                     fontSize: 14,
-                    color: dark ? "rgba(224,224,224,0.55)" : "rgba(30,42,56,0.55)",
+                    color: "rgba(30,42,56,0.55)",
                     lineHeight: 1.6,
                   }}>
                     {card.desc}
