@@ -21,7 +21,6 @@ import SchedulerPage from "@/pages/scheduler";
 import Connections from "@/pages/connections";
 import FetchPage from "@/pages/fetch";
 import LoginPage from "@/pages/login";
-import VerifyCodePage from "@/pages/verify-code";
 import ArticlesPage from "@/pages/knowledge/articles";
 import { ArticleDetailPage } from "@/pages/knowledge/articles";
 import VideosPage from "@/pages/knowledge/videos";
@@ -39,9 +38,6 @@ function Router() {
         <PublicOnlyRoute redirectTo="/dashboard">
           <LoginPage />
         </PublicOnlyRoute>
-      </Route>
-      <Route path="/verify">
-        <VerifyCodePage />
       </Route>
 
       {/* Protected app routes */}

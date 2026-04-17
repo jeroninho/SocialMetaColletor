@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
 export const usersTable = pgTable("users", {
@@ -6,7 +6,6 @@ export const usersTable = pgTable("users", {
   email: text("email").notNull().unique(),
   nome: text("nome").notNull(),
   senhaHash: text("senha_hash").notNull(),
-  emailVerificado: boolean("email_verificado").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

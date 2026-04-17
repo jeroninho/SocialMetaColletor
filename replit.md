@@ -14,7 +14,7 @@ Fullstack application for collecting and analyzing social media metadata from Yo
 - **Backend**: Express 5 (artifacts/api-server)
 - **Database**: PostgreSQL + Drizzle ORM
 - **Validation**: Zod v3 (api-server uses `zod` directly; lib/db uses `zod/v4` subpath)
-- **Auth**: JWT (jsonwebtoken) + bcrypt (password hashing) + email verification codes (6-digit, 10min expiry)
+- **Auth**: JWT (jsonwebtoken) + bcrypt (password hashing)
 - **Token security**: AES-256-GCM via `src/utils/crypto.ts` (TOKEN_SECRET env var)
 - **Cache/Queue**: Redis (ioredis) + BullMQ — graceful fallback if Redis not available
 - **API codegen**: Orval (from OpenAPI spec)
@@ -44,7 +44,7 @@ artifacts/
       services/       # YouTubeProvider.ts, MetaProvider.ts, RedisClient.ts
       queues/         # metadataSyncQueue.ts (BullMQ)
   social-meta-collector/ # React + Vite frontend
-    src/pages/        # Dashboard, YouTube, Instagram, Facebook, TikTok, Twitter, Reports, Comparator, Alerts, Scheduler, Login, Fetch, VerifyCode
+    src/pages/        # Dashboard, YouTube, Instagram, Facebook, TikTok, Twitter, Reports, Comparator, Alerts, Scheduler, Login, Fetch
     src/pages/knowledge/ # Knowledge Hub: articles, videos, guide, glossary
     src/data/         # Static content: articles.ts, videos.ts, glossary.ts, guide-steps.ts
     src/components/   # layout.tsx (petroleum blue sidebar, Space Grotesk)

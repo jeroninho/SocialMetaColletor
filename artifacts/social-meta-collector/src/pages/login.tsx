@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { useLocation } from "wouter";
-import { Mail, Lock, User, Eye, EyeOff, Loader2, BarChart2, ArrowRight, KeyRound } from "lucide-react";
+import { Mail, Lock, User, Eye, EyeOff, Loader2, BarChart2, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth";
 
+/* ─── Design tokens ─────────────────────────────────────── */
 const PETROLEUM = "#1E2A38";
 const PURPLE    = "#6C63FF";
 const ROSE      = "#FF6F91";
@@ -86,7 +87,7 @@ function FloatingBubble({ style, animClass, children }: BubbleProps) {
   );
 }
 
-type Mode = "login" | "register" | "email-code";
+type Mode = "login" | "register";
 
 function getApiBase() {
   const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
@@ -111,22 +112,6 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      if (mode === "email-code") {
-        const res = await fetch(`${getApiBase()}/auth/send-code`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, type: "login" }),
-        });
-        const data = await res.json() as { message?: string; error?: string };
-        if (!res.ok) {
-          setError(data.message ?? "Erro ao enviar código.");
-          return;
-        }
-        toast({ title: "Código enviado!", description: "Verifique seu e-mail." });
-        navigate(`/verify?email=${encodeURIComponent(email)}&type=login`);
-        return;
-      }
-
       const endpoint = mode === "login" ? "/auth/login" : "/auth/register";
       const body: Record<string, string> = { email, senha };
       if (mode === "register") body["nome"] = nome;
@@ -141,27 +126,13 @@ export default function LoginPage() {
         token?: string;
         message?: string;
         error?: string;
-        requiresVerification?: boolean;
-        email?: string;
         issues?: Array<{ message: string }>;
       };
 
       if (!res.ok) {
-        if (data.requiresVerification && data.email) {
-          toast({ title: "Verificação necessária", description: data.message ?? "Verifique seu e-mail." });
-          navigate(`/verify?email=${encodeURIComponent(data.email)}&type=register`);
-          return;
-        }
         setError(data.issues?.[0]?.message ?? data.message ?? "Ocorreu um erro. Tente novamente.");
         return;
       }
-
-      if (data.requiresVerification && data.email) {
-        toast({ title: "Verifique seu e-mail", description: data.message ?? "Enviamos um código de verificação." });
-        navigate(`/verify?email=${encodeURIComponent(data.email)}&type=register`);
-        return;
-      }
-
       if (data.token) {
         localStorage.setItem("smc_token", data.token);
         await refetch();
@@ -476,17 +447,15 @@ export default function LoginPage() {
                 color: PETROLEUM, letterSpacing: "-0.03em",
                 marginBottom: 6,
               }}>
-                {mode === "email-code" ? "Entrar com código" : mode === "login" ? "Bem-vindo de volta" : "Criar conta"}
+                {mode === "login" ? "Bem-vindo de volta" : "Criar conta"}
               </h1>
               <p style={{
                 fontFamily: "'Inter', sans-serif",
                 fontSize: 14, color: "#6B7280", lineHeight: 1.5,
               }}>
-                {mode === "email-code"
-                  ? "Receba um código de acesso no seu e-mail"
-                  : mode === "login"
-                    ? "Entre para acessar seu painel"
-                    : "Centralize suas redes sociais"}
+                {mode === "login"
+                  ? "Entre para acessar seu painel"
+                  : "Centralize suas redes sociais"}
               </p>
             </div>
 
@@ -500,7 +469,7 @@ export default function LoginPage() {
                 <button
                   key={m}
                   type="button"
-                  className={`tab-btn${(mode === "email-code" ? "login" : mode) === m ? " active" : ""}`}
+                  className={`tab-btn${mode === m ? " active" : ""}`}
                   onClick={() => { setMode(m); setError(null); }}
                 >
                   {m === "login" ? "Entrar" : "Cadastrar"}
@@ -573,7 +542,6 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {mode !== "email-code" && (
                 <div>
                   <label style={{
                     display: "block", marginBottom: 6,
@@ -620,9 +588,9 @@ export default function LoginPage() {
                     </button>
                   </div>
                 </div>
-                )}
               </div>
 
+              {/* Error */}
               {error && (
                 <div style={{
                   marginBottom: 16, padding: "10px 14px",
@@ -640,71 +608,24 @@ export default function LoginPage() {
                   {loading
                     ? <Loader2 size={18} className="animate-spin" />
                     : <>
-                        {mode === "email-code" ? "Enviar código" : mode === "login" ? "Entrar" : "Criar conta"}
+                        {mode === "login" ? "Entrar" : "Criar conta"}
                         <ArrowRight size={16} />
                       </>
                   }
                 </button>
               </div>
-
-              {mode === "login" && (
-                <div style={{ marginTop: 16 }}>
-                  <button
-                    type="button"
-                    onClick={() => { setMode("email-code"); setError(null); }}
-                    style={{
-                      width: "100%",
-                      padding: "11px 12px",
-                      borderRadius: "var(--radius)",
-                      border: `1.5px solid ${PURPLE}30`,
-                      background: `${PURPLE}08`,
-                      color: PURPLE,
-                      fontSize: 14,
-                      fontWeight: 600,
-                      fontFamily: "'Space Grotesk', sans-serif",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: 8,
-                      transition: "all 0.2s",
-                    }}
-                  >
-                    <KeyRound size={16} />
-                    Entrar com código por e-mail
-                  </button>
-                </div>
-              )}
-
-              {mode === "email-code" && (
-                <div style={{ marginTop: 12, textAlign: "center" }}>
-                  <button
-                    type="button"
-                    onClick={() => { setMode("login"); setError(null); }}
-                    style={{
-                      background: "none", border: "none",
-                      color: "#6B7280", fontSize: 13,
-                      fontFamily: "'Inter', sans-serif",
-                      cursor: "pointer",
-                      textDecoration: "underline",
-                      textUnderlineOffset: 2,
-                    }}
-                  >
-                    Voltar ao login com senha
-                  </button>
-                </div>
-              )}
             </form>
 
+            {/* Switch mode */}
             <p style={{
               marginTop: 20, textAlign: "center",
               fontSize: 13, color: "#6B7280",
               fontFamily: "'Inter', sans-serif",
             }}>
-              {(mode === "login" || mode === "email-code") ? "Ainda não tem conta? " : "Já tem uma conta? "}
+              {mode === "login" ? "Ainda não tem conta? " : "Já tem uma conta? "}
               <button
                 type="button"
-                onClick={() => { setMode((mode === "login" || mode === "email-code") ? "register" : "login"); setError(null); }}
+                onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(null); }}
                 style={{
                   background: "none", border: "none",
                   color: PURPLE, fontWeight: 600,
@@ -714,7 +635,7 @@ export default function LoginPage() {
                   textUnderlineOffset: 2,
                 }}
               >
-                {(mode === "login" || mode === "email-code") ? "Cadastre-se" : "Entrar"}
+                {mode === "login" ? "Cadastre-se" : "Entrar"}
               </button>
             </p>
           </div>
