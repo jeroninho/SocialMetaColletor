@@ -2,6 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import { eq } from "drizzle-orm";
+import { OAuth2Client } from "google-auth-library";
 import { db, usersTable } from "@workspace/db";
 import { signToken } from "../utils/jwt.js";
 import { z } from "zod";
@@ -9,6 +10,9 @@ import { z } from "zod";
 const router = Router();
 
 const SALT_ROUNDS = 12;
+
+const GOOGLE_CLIENT_ID = process.env.YOUTUBE_CLIENT_ID ?? "";
+const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 
 const RegisterBody = z.object({
   email: z.string().email("E-mail inválido").max(254),
@@ -94,6 +98,74 @@ router.post("/auth/login", async (req, res) => {
   } catch (err) {
     req.log.error({ err }, "Error during login");
     res.status(500).json({ error: "internal_error" });
+  }
+});
+
+router.get("/auth/google/config", (_req, res) => {
+  res.json({ clientId: GOOGLE_CLIENT_ID, enabled: Boolean(googleClient) });
+});
+
+const GoogleBody = z.object({
+  credential: z.string().min(10).max(8192),
+});
+
+router.post("/auth/google", async (req, res) => {
+  if (!googleClient) {
+    res.status(503).json({ error: "google_not_configured", message: "Login com Google não está disponível." });
+    return;
+  }
+
+  const parsed = GoogleBody.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "validation_error", issues: parsed.error.issues });
+    return;
+  }
+
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: parsed.data.credential,
+      audience: GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+
+    if (!payload?.email || !payload.email_verified) {
+      res.status(401).json({ error: "invalid_google_token", message: "Não foi possível validar a conta Google." });
+      return;
+    }
+
+    const email = payload.email.toLowerCase();
+    const nome = payload.name || payload.given_name || email.split("@")[0];
+
+    const [existing] = await db
+      .select()
+      .from(usersTable)
+      .where(eq(usersTable.email, email))
+      .limit(1);
+
+    let user = existing;
+    if (!user) {
+      const id = uuidv4();
+      const randomPass = uuidv4() + uuidv4();
+      const senhaHash = await bcrypt.hash(randomPass, SALT_ROUNDS);
+      await db.insert(usersTable).values({ id, email, nome, senhaHash });
+      const [created] = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
+      user = created;
+    }
+
+    if (!user) {
+      res.status(500).json({ error: "user_creation_failed" });
+      return;
+    }
+
+    const token = signToken({ sub: user.id, email: user.email, nome: user.nome });
+    res.json({
+      message: "Login realizado com sucesso.",
+      token,
+      user: { id: user.id, email: user.email, nome: user.nome },
+    });
+  } catch (err) {
+    req.log.error({ err }, "Error during Google auth");
+    res.status(401).json({ error: "invalid_google_token", message: "Não foi possível validar a conta Google." });
   }
 });
 

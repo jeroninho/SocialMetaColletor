@@ -1,8 +1,34 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { Mail, Lock, User, Eye, EyeOff, Loader2, BarChart2, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth";
+
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: {
+            client_id: string;
+            callback: (response: { credential: string }) => void;
+          }) => void;
+          renderButton: (
+            parent: HTMLElement,
+            options: {
+              theme?: "outline" | "filled_blue" | "filled_black";
+              size?: "large" | "medium" | "small";
+              text?: "signin_with" | "signup_with" | "continue_with" | "signin";
+              shape?: "rectangular" | "pill" | "circle" | "square";
+              logo_alignment?: "left" | "center";
+              width?: number;
+            },
+          ) => void;
+        };
+      };
+    };
+  }
+}
 
 /* ─── Design tokens ─────────────────────────────────────── */
 const PETROLEUM = "#1E2A38";
@@ -106,6 +132,78 @@ export default function LoginPage() {
   const [showSenha, setShowSenha] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const googleBtnRef = useRef<HTMLDivElement>(null);
+  const [googleClientId, setGoogleClientId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch(`${getApiBase()}/auth/google/config`)
+      .then((r) => r.json())
+      .then((data: { clientId: string; enabled: boolean }) => {
+        if (!cancelled && data.enabled && data.clientId) setGoogleClientId(data.clientId);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!googleClientId) return;
+    const SCRIPT_ID = "google-gsi-script";
+    const setup = () => {
+      const g = window.google;
+      if (!g || !googleBtnRef.current) return;
+      g.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleGoogleResponse,
+      });
+      googleBtnRef.current.innerHTML = "";
+      g.accounts.id.renderButton(googleBtnRef.current, {
+        theme: "outline",
+        size: "large",
+        text: "continue_with",
+        shape: "pill",
+        logo_alignment: "left",
+        width: 336,
+      });
+    };
+
+    if (document.getElementById(SCRIPT_ID)) {
+      setup();
+      return;
+    }
+    const s = document.createElement("script");
+    s.src = "https://accounts.google.com/gsi/client";
+    s.async = true;
+    s.defer = true;
+    s.id = SCRIPT_ID;
+    s.onload = setup;
+    document.head.appendChild(s);
+  }, [googleClientId]);
+
+  async function handleGoogleResponse(response: { credential: string }) {
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch(`${getApiBase()}/auth/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: response.credential }),
+      });
+      const data = (await res.json()) as { token?: string; message?: string; error?: string };
+      if (!res.ok || !data.token) {
+        setError(data.message ?? "Não foi possível entrar com Google.");
+        return;
+      }
+      localStorage.setItem("smc_token", data.token);
+      await refetch();
+      toast({ title: "Bem-vindo!", description: "Login com Google realizado com sucesso." });
+      navigate("/dashboard");
+    } catch {
+      setError("Erro de conexão ao autenticar com Google.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -458,6 +556,30 @@ export default function LoginPage() {
                   : "Centralize suas redes sociais"}
               </p>
             </div>
+
+            {/* Google sign-in */}
+            {googleClientId && (
+              <div className="fade-slide-2" style={{ marginBottom: 18 }}>
+                <div
+                  ref={googleBtnRef}
+                  style={{ display: "flex", justifyContent: "center", minHeight: 44 }}
+                />
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 12,
+                  marginTop: 18,
+                }}>
+                  <div style={{ flex: 1, height: 1, background: "rgba(0,0,0,0.08)" }} />
+                  <span style={{
+                    fontSize: 12, color: "#9CA3AF",
+                    fontFamily: "'Inter', sans-serif", textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                  }}>
+                    ou
+                  </span>
+                  <div style={{ flex: 1, height: 1, background: "rgba(0,0,0,0.08)" }} />
+                </div>
+              </div>
+            )}
 
             {/* Tab switcher */}
             <div className="fade-slide-2" style={{
