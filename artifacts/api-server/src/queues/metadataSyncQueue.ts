@@ -72,7 +72,10 @@ async function processSyncJob(job: Job<SyncJobData, SyncJobResult>): Promise<Syn
       }> = [];
 
       if (platform === "youtube") {
-        const engagement = await youtube.getRecentEngagement(token.accessToken);
+        const [engagement, analytics] = await Promise.all([
+          youtube.getRecentEngagement(token.accessToken),
+          youtube.getChannelAnalytics(token.accessToken, token.scope, 28),
+        ]);
         entries = engagement.videos.map((v) => ({
           platform: "youtube",
           contentType: "video",
@@ -86,6 +89,25 @@ async function processSyncJob(job: Job<SyncJobData, SyncJobResult>): Promise<Syn
           reach: 0,
           engagementRate: v.views > 0 ? ((v.likes + v.comments) / v.views) * 100 : 0,
         }));
+
+        if (analytics.available) {
+          entries.push({
+            platform: "youtube",
+            contentType: "channel-analytics",
+            contentId: `channel-period-${analytics.periodDays}d`,
+            title: `Channel analytics — last ${analytics.periodDays} days`,
+            views: analytics.views,
+            likes: analytics.likes,
+            comments: analytics.comments,
+            shares: analytics.shares,
+            impressions: analytics.thumbnailImpressions,
+            reach: analytics.views,
+            engagementRate:
+              analytics.views > 0
+                ? ((analytics.likes + analytics.comments + analytics.shares) / analytics.views) * 100
+                : 0,
+          });
+        }
       } else if (platform === "instagram") {
         const engagement = await meta.getInstagramRecentEngagement(token.accessToken);
         entries = engagement.posts.map((p) => ({

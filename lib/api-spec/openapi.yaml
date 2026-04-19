@@ -498,6 +498,42 @@ components:
         publishedAt:
           type: string
           format: date-time
+        analyticsAvailable:
+          type: boolean
+          description: Whether YouTube Analytics API data is available (requires yt-analytics.readonly scope)
+        periodDays:
+          type: integer
+          description: Period in days the analytics metrics cover
+        watchTimeMinutes:
+          type: integer
+          description: Total minutes watched in period (Analytics API)
+        averageViewDuration:
+          type: number
+          description: Average view duration in seconds (Analytics API)
+        thumbnailImpressions:
+          type: integer
+          description: Total thumbnail impressions in period (Analytics API)
+        thumbnailCtr:
+          type: number
+          description: Click-through rate on thumbnails (0..1) in period (Analytics API)
+        subscribersGained:
+          type: integer
+          description: Subscribers gained in period (Analytics API)
+        subscribersLost:
+          type: integer
+          description: Subscribers lost in period (Analytics API)
+        viewsInPeriod:
+          type: integer
+          description: Views accumulated within the period (Analytics API)
+        likesInPeriod:
+          type: integer
+          description: Likes within the period (Analytics API)
+        commentsInPeriod:
+          type: integer
+          description: Comments within the period (Analytics API)
+        sharesInPeriod:
+          type: integer
+          description: Shares within the period (Analytics API)
       required:
         - id
         - title
@@ -738,6 +774,23 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TopContentItem"
+        normalized:
+          $ref: "#/components/schemas/NormalizedPlatformMetrics"
+        analyticsAvailable:
+          type: boolean
+          description: Whether real analytics data is available (vs metadata-only or mock)
+        watchTimeMinutes:
+          type: integer
+        thumbnailImpressions:
+          type: integer
+        thumbnailCtr:
+          type: number
+        subscribersGained:
+          type: integer
+        subscribersLost:
+          type: integer
+        periodDays:
+          type: integer
       required:
         - platform
         - totalContent
@@ -746,6 +799,46 @@ components:
         - totalComments
         - averageEngagementRate
         - followerCount
+
+    NormalizedPlatformMetrics:
+      type: object
+      description: Unified metrics contract that all platforms must satisfy
+      properties:
+        platform:
+          type: string
+        followers:
+          type: integer
+        totalViews:
+          type: integer
+        engagementRate:
+          type: number
+        reach:
+          type: integer
+        impressions:
+          type: integer
+        ctr:
+          type: number
+        watchTimeMinutes:
+          type: integer
+        postsCount:
+          type: integer
+        periodDays:
+          type: integer
+        lastUpdated:
+          type: string
+          format: date-time
+      required:
+        - platform
+        - followers
+        - totalViews
+        - engagementRate
+        - reach
+        - impressions
+        - ctr
+        - watchTimeMinutes
+        - postsCount
+        - periodDays
+        - lastUpdated
 
     TopContentItem:
       type: object
@@ -791,6 +884,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/PlatformBreakdown"
+        normalizedBreakdown:
+          type: array
+          description: Unified normalized metrics across all platforms
+          items:
+            $ref: "#/components/schemas/NormalizedPlatformMetrics"
         lastSyncAt:
           type: string
           format: date-time
@@ -817,6 +915,16 @@ components:
           type: integer
         engagementRate:
           type: number
+        totalViews:
+          type: integer
+        reach:
+          type: integer
+        impressions:
+          type: integer
+        watchTimeMinutes:
+          type: integer
+        analyticsAvailable:
+          type: boolean
       required:
         - platform
         - connected

@@ -5,6 +5,7 @@
  * SocialMetaCollector API - Collect metadata from YouTube, Instagram, and Facebook
  * OpenAPI spec version: 0.1.0
  */
+import type { NormalizedPlatformMetrics } from "./normalizedPlatformMetrics";
 import type { TopContentItem } from "./topContentItem";
 
 export interface PlatformAnalytics {
@@ -18,4 +19,13 @@ export interface PlatformAnalytics {
   followerCount: number;
   growthRate?: number;
   topContent?: TopContentItem[];
+  normalized?: NormalizedPlatformMetrics;
+  /** Whether real analytics data is available (vs metadata-only or mock) */
+  analyticsAvailable?: boolean;
+  watchTimeMinutes?: number;
+  thumbnailImpressions?: number;
+  thumbnailCtr?: number;
+  subscribersGained?: number;
+  subscribersLost?: number;
+  periodDays?: number;
 }

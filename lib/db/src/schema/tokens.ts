@@ -11,6 +11,7 @@ export const tokensTable = pgTable("tokens", {
   connected: boolean("connected").notNull().default(true),
   connectedAt: timestamp("connected_at").notNull().defaultNow(),
   expiresAt: timestamp("expires_at"),
+  scope: text("scope"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

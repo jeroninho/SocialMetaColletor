@@ -12,4 +12,9 @@ export interface PlatformBreakdown {
   followers: number;
   content: number;
   engagementRate: number;
+  totalViews?: number;
+  reach?: number;
+  impressions?: number;
+  watchTimeMinutes?: number;
+  analyticsAvailable?: boolean;
 }

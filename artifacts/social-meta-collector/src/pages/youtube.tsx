@@ -10,7 +10,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Users, Eye, Video, ThumbsUp, MessageCircle, TrendingUp } from "lucide-react";
+import { Users, Eye, Video, ThumbsUp, MessageCircle, TrendingUp, Clock, MousePointerClick, UserPlus, UserMinus, Image as ImageIcon, AlertTriangle } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -41,8 +41,27 @@ export default function YouTubePage() {
 
   const isLoading = loadingChannel || loadingVideos || loadingAnalytics;
 
+  const analyticsAvailable = channel?.analyticsAvailable ?? analytics?.analyticsAvailable ?? false;
+  const periodDays = channel?.periodDays ?? analytics?.periodDays ?? 28;
+  const watchTimeMinutes = channel?.watchTimeMinutes ?? analytics?.watchTimeMinutes ?? 0;
+  const thumbnailImpressions = channel?.thumbnailImpressions ?? analytics?.thumbnailImpressions ?? 0;
+  const thumbnailCtr = channel?.thumbnailCtr ?? analytics?.thumbnailCtr ?? 0;
+  const subscribersGained = channel?.subscribersGained ?? analytics?.subscribersGained ?? 0;
+  const subscribersLost = channel?.subscribersLost ?? analytics?.subscribersLost ?? 0;
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
+      {!isLoading && !analyticsAvailable && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300 flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+          <span>
+            YouTube Analytics não está disponível. Reconecte sua conta YouTube para conceder o escopo
+            <code className="mx-1 px-1.5 py-0.5 rounded bg-amber-500/20 font-mono text-xs">yt-analytics.readonly</code>
+            e ver métricas reais (Watch Time, CTR, Impressões etc.).
+          </span>
+        </div>
+      )}
+
       {/* Channel header */}
       <Card>
         <CardContent className="pt-6">
@@ -85,6 +104,31 @@ export default function YouTubePage() {
           { label: "Total Views", value: fmt(channel?.viewCount), icon: Eye },
           { label: "Videos", value: fmt(channel?.videoCount), icon: Video },
           { label: "Avg Engagement", value: analytics ? `${analytics.averageEngagementRate.toFixed(2)}%` : "—", icon: TrendingUp },
+          {
+            label: `Watch Time (${periodDays}d)`,
+            value: analyticsAvailable ? `${fmt(watchTimeMinutes)} min` : "—",
+            icon: Clock,
+          },
+          {
+            label: `Thumbnail Impressions (${periodDays}d)`,
+            value: analyticsAvailable ? fmt(thumbnailImpressions) : "—",
+            icon: ImageIcon,
+          },
+          {
+            label: `Thumbnail CTR (${periodDays}d)`,
+            value: analyticsAvailable ? `${(thumbnailCtr * 100).toFixed(2)}%` : "—",
+            icon: MousePointerClick,
+          },
+          {
+            label: `Subscribers Gained (${periodDays}d)`,
+            value: analyticsAvailable ? fmt(subscribersGained) : "—",
+            icon: UserPlus,
+          },
+          {
+            label: `Subscribers Lost (${periodDays}d)`,
+            value: analyticsAvailable ? fmt(subscribersLost) : "—",
+            icon: UserMinus,
+          },
         ].map(({ label, value, icon: Icon }) => (
           <Card key={label}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { desc } from "drizzle-orm";
-import { db, metadataTable } from "@workspace/db";
+import { desc, eq } from "drizzle-orm";
+import { db, metadataTable, tokensTable } from "@workspace/db";
 import { ListRecentMetadataQueryParams } from "@workspace/api-zod";
 import { cacheGet, cacheSet } from "../services/RedisClient.js";
 import { getMetadataSyncQueue, startSyncWorker, type SyncJobData } from "../queues/metadataSyncQueue.js";
@@ -26,21 +26,126 @@ router.get("/dashboard/summary", async (req, res) => {
     return;
   }
 
+  // Try to enrich YouTube breakdown with real Analytics API data
+  const [ytToken] = await db
+    .select()
+    .from(tokensTable)
+    .where(eq(tokensTable.platform, "youtube"))
+    .limit(1);
+
+  let ytNormalized = {
+    platform: "youtube",
+    followers: 184200,
+    totalViews: 434400,
+    engagementRate: 5.82,
+    reach: 434400,
+    impressions: 0,
+    ctr: 0,
+    watchTimeMinutes: 0,
+    postsCount: 5,
+    periodDays: 28,
+    lastUpdated: new Date().toISOString(),
+  };
+  let ytAnalyticsAvailable = false;
+
+  if (ytToken?.connected && ytToken.accessToken) {
+    try {
+      const normalized = await youtube.getNormalizedMetrics(ytToken.accessToken, ytToken.scope, 28);
+      ytNormalized = normalized;
+      ytAnalyticsAvailable = youtube.hasAnalyticsScope(ytToken.scope);
+    } catch (err) {
+      // Authenticated but provider call failed — do NOT silently return mock
+      // numbers. Surface zeros + analyticsAvailable=false so the UI can prompt
+      // the user. The error is logged for observability.
+      console.error("[dashboard] YouTube normalized metrics failed", err);
+      ytNormalized = {
+        platform: "youtube",
+        followers: 0,
+        totalViews: 0,
+        engagementRate: 0,
+        reach: 0,
+        impressions: 0,
+        ctr: 0,
+        watchTimeMinutes: 0,
+        postsCount: 0,
+        periodDays: 28,
+        lastUpdated: new Date().toISOString(),
+      };
+      ytAnalyticsAvailable = false;
+    }
+  }
+
+  const otherBreakdowns = [
+    { platform: "instagram", followers: 42800, content: 5, engagementRate: 7.59, totalViews: 237700, reach: 237700, impressions: 237700, watchTimeMinutes: 0 },
+    { platform: "facebook", followers: 31200, content: 5, engagementRate: 6.81, totalViews: 209600, reach: 209600, impressions: 209600, watchTimeMinutes: 0 },
+    { platform: "tiktok", followers: 324000, content: 5, engagementRate: 10.07, totalViews: 5491000, reach: 5491000, impressions: 5491000, watchTimeMinutes: 0 },
+    { platform: "twitter", followers: 89400, content: 5, engagementRate: 3.07, totalViews: 1440000, reach: 1440000, impressions: 1440000, watchTimeMinutes: 0 },
+  ];
+
+  const platformBreakdown = [
+    {
+      platform: "youtube",
+      connected: !!ytToken?.connected,
+      followers: ytNormalized.followers,
+      content: ytNormalized.postsCount,
+      engagementRate: parseFloat(ytNormalized.engagementRate.toFixed(2)),
+      totalViews: ytNormalized.totalViews,
+      reach: ytNormalized.reach,
+      impressions: ytNormalized.impressions,
+      watchTimeMinutes: ytNormalized.watchTimeMinutes,
+      analyticsAvailable: ytAnalyticsAvailable,
+    },
+    ...otherBreakdowns.map((p) => ({
+      platform: p.platform,
+      connected: p.platform === "instagram" || p.platform === "tiktok",
+      followers: p.followers,
+      content: p.content,
+      engagementRate: p.engagementRate,
+      totalViews: p.totalViews,
+      reach: p.reach,
+      impressions: p.impressions,
+      watchTimeMinutes: p.watchTimeMinutes,
+      analyticsAvailable: false,
+    })),
+  ];
+
+  const normalizedBreakdown = [
+    ytNormalized,
+    ...otherBreakdowns.map((p) => ({
+      platform: p.platform,
+      followers: p.followers,
+      totalViews: p.totalViews,
+      engagementRate: p.engagementRate,
+      reach: p.reach,
+      impressions: p.impressions,
+      ctr: 0,
+      watchTimeMinutes: p.watchTimeMinutes,
+      postsCount: p.content,
+      periodDays: 28,
+      lastUpdated: new Date().toISOString(),
+    })),
+  ];
+
+  const totalFollowers = normalizedBreakdown.reduce((s, p) => s + p.followers, 0);
+  const totalViews = normalizedBreakdown.reduce((s, p) => s + p.totalViews, 0);
+  const totalContent = normalizedBreakdown.reduce((s, p) => s + p.postsCount, 0);
+  const totalEngagements = normalizedBreakdown.reduce(
+    (s, p) => s + Math.round((p.engagementRate / 100) * p.totalViews),
+    0,
+  );
+  const averageEngagementRate =
+    normalizedBreakdown.reduce((s, p) => s + p.engagementRate, 0) / normalizedBreakdown.length;
+
   const summary = {
     totalPlatforms: 5,
-    connectedPlatforms: 3,
-    totalFollowers: 184200 + 42800 + 31200 + 324000 + 89400,
-    totalContent: 5 + 5 + 5 + 5 + 5,
-    totalViews: 434400 + 237700 + 209600 + 5491000 + 1440000,
-    totalEngagements: 25180 + 18010 + 14230 + 553320 + 44276,
-    averageEngagementRate: 6.47,
-    platformBreakdown: [
-      { platform: "youtube", connected: true, followers: 184200, content: 5, engagementRate: 5.82 },
-      { platform: "instagram", connected: true, followers: 42800, content: 5, engagementRate: 7.59 },
-      { platform: "facebook", connected: false, followers: 31200, content: 5, engagementRate: 6.81 },
-      { platform: "tiktok", connected: true, followers: 324000, content: 5, engagementRate: 10.07 },
-      { platform: "twitter", connected: false, followers: 89400, content: 5, engagementRate: 3.07 },
-    ],
+    connectedPlatforms: platformBreakdown.filter((p) => p.connected).length,
+    totalFollowers,
+    totalContent,
+    totalViews,
+    totalEngagements,
+    averageEngagementRate: parseFloat(averageEngagementRate.toFixed(2)),
+    platformBreakdown,
+    normalizedBreakdown,
     lastSyncAt: new Date().toISOString(),
     _source: "db",
   };

@@ -47,6 +47,30 @@ export interface YoutubeChannel {
   viewCount: number;
   thumbnailUrl?: string;
   publishedAt?: string;
+  /** Whether YouTube Analytics API data is available (requires yt-analytics.readonly scope) */
+  analyticsAvailable?: boolean;
+  /** Period in days the analytics metrics cover */
+  periodDays?: number;
+  /** Total minutes watched in period (Analytics API) */
+  watchTimeMinutes?: number;
+  /** Average view duration in seconds (Analytics API) */
+  averageViewDuration?: number;
+  /** Total thumbnail impressions in period (Analytics API) */
+  thumbnailImpressions?: number;
+  /** Click-through rate on thumbnails (0..1) in period (Analytics API) */
+  thumbnailCtr?: number;
+  /** Subscribers gained in period (Analytics API) */
+  subscribersGained?: number;
+  /** Subscribers lost in period (Analytics API) */
+  subscribersLost?: number;
+  /** Views accumulated within the period (Analytics API) */
+  viewsInPeriod?: number;
+  /** Likes within the period (Analytics API) */
+  likesInPeriod?: number;
+  /** Comments within the period (Analytics API) */
+  commentsInPeriod?: number;
+  /** Shares within the period (Analytics API) */
+  sharesInPeriod?: number;
 }
 
 export interface YoutubeVideo {
@@ -153,6 +177,23 @@ export interface TopContentItem {
   platform: string;
 }
 
+/**
+ * Unified metrics contract that all platforms must satisfy
+ */
+export interface NormalizedPlatformMetrics {
+  platform: string;
+  followers: number;
+  totalViews: number;
+  engagementRate: number;
+  reach: number;
+  impressions: number;
+  ctr: number;
+  watchTimeMinutes: number;
+  postsCount: number;
+  periodDays: number;
+  lastUpdated: string;
+}
+
 export interface PlatformAnalytics {
   platform: string;
   totalContent: number;
@@ -164,6 +205,15 @@ export interface PlatformAnalytics {
   followerCount: number;
   growthRate?: number;
   topContent?: TopContentItem[];
+  normalized?: NormalizedPlatformMetrics;
+  /** Whether real analytics data is available (vs metadata-only or mock) */
+  analyticsAvailable?: boolean;
+  watchTimeMinutes?: number;
+  thumbnailImpressions?: number;
+  thumbnailCtr?: number;
+  subscribersGained?: number;
+  subscribersLost?: number;
+  periodDays?: number;
 }
 
 export interface PlatformBreakdown {
@@ -172,6 +222,11 @@ export interface PlatformBreakdown {
   followers: number;
   content: number;
   engagementRate: number;
+  totalViews?: number;
+  reach?: number;
+  impressions?: number;
+  watchTimeMinutes?: number;
+  analyticsAvailable?: boolean;
 }
 
 export interface DashboardSummary {
@@ -183,6 +238,8 @@ export interface DashboardSummary {
   totalEngagements: number;
   averageEngagementRate: number;
   platformBreakdown: PlatformBreakdown[];
+  /** Unified normalized metrics across all platforms */
+  normalizedBreakdown?: NormalizedPlatformMetrics[];
   lastSyncAt?: string;
 }
 

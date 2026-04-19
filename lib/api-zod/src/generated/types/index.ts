@@ -29,6 +29,7 @@ export * from "./listInstagramMediaParams";
 export * from "./listRecentMetadataParams";
 export * from "./listYoutubeVideosParams";
 export * from "./metadataEntry";
+export * from "./normalizedPlatformMetrics";
 export * from "./oAuthConnectBody";
 export * from "./oAuthConnectResponse";
 export * from "./platformAnalytics";

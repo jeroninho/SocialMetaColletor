@@ -105,6 +105,58 @@ export const GetYoutubeChannelResponse = zod.object({
   viewCount: zod.number(),
   thumbnailUrl: zod.string().optional(),
   publishedAt: zod.coerce.date().optional(),
+  analyticsAvailable: zod
+    .boolean()
+    .optional()
+    .describe(
+      "Whether YouTube Analytics API data is available (requires yt-analytics.readonly scope)",
+    ),
+  periodDays: zod
+    .number()
+    .optional()
+    .describe("Period in days the analytics metrics cover"),
+  watchTimeMinutes: zod
+    .number()
+    .optional()
+    .describe("Total minutes watched in period (Analytics API)"),
+  averageViewDuration: zod
+    .number()
+    .optional()
+    .describe("Average view duration in seconds (Analytics API)"),
+  thumbnailImpressions: zod
+    .number()
+    .optional()
+    .describe("Total thumbnail impressions in period (Analytics API)"),
+  thumbnailCtr: zod
+    .number()
+    .optional()
+    .describe(
+      "Click-through rate on thumbnails (0..1) in period (Analytics API)",
+    ),
+  subscribersGained: zod
+    .number()
+    .optional()
+    .describe("Subscribers gained in period (Analytics API)"),
+  subscribersLost: zod
+    .number()
+    .optional()
+    .describe("Subscribers lost in period (Analytics API)"),
+  viewsInPeriod: zod
+    .number()
+    .optional()
+    .describe("Views accumulated within the period (Analytics API)"),
+  likesInPeriod: zod
+    .number()
+    .optional()
+    .describe("Likes within the period (Analytics API)"),
+  commentsInPeriod: zod
+    .number()
+    .optional()
+    .describe("Comments within the period (Analytics API)"),
+  sharesInPeriod: zod
+    .number()
+    .optional()
+    .describe("Shares within the period (Analytics API)"),
 });
 
 /**
@@ -183,6 +235,34 @@ export const GetYoutubeAnalyticsResponse = zod.object({
       }),
     )
     .optional(),
+  normalized: zod
+    .object({
+      platform: zod.string(),
+      followers: zod.number(),
+      totalViews: zod.number(),
+      engagementRate: zod.number(),
+      reach: zod.number(),
+      impressions: zod.number(),
+      ctr: zod.number(),
+      watchTimeMinutes: zod.number(),
+      postsCount: zod.number(),
+      periodDays: zod.number(),
+      lastUpdated: zod.coerce.date(),
+    })
+    .optional()
+    .describe("Unified metrics contract that all platforms must satisfy"),
+  analyticsAvailable: zod
+    .boolean()
+    .optional()
+    .describe(
+      "Whether real analytics data is available (vs metadata-only or mock)",
+    ),
+  watchTimeMinutes: zod.number().optional(),
+  thumbnailImpressions: zod.number().optional(),
+  thumbnailCtr: zod.number().optional(),
+  subscribersGained: zod.number().optional(),
+  subscribersLost: zod.number().optional(),
+  periodDays: zod.number().optional(),
 });
 
 /**
@@ -257,6 +337,34 @@ export const GetInstagramAnalyticsResponse = zod.object({
       }),
     )
     .optional(),
+  normalized: zod
+    .object({
+      platform: zod.string(),
+      followers: zod.number(),
+      totalViews: zod.number(),
+      engagementRate: zod.number(),
+      reach: zod.number(),
+      impressions: zod.number(),
+      ctr: zod.number(),
+      watchTimeMinutes: zod.number(),
+      postsCount: zod.number(),
+      periodDays: zod.number(),
+      lastUpdated: zod.coerce.date(),
+    })
+    .optional()
+    .describe("Unified metrics contract that all platforms must satisfy"),
+  analyticsAvailable: zod
+    .boolean()
+    .optional()
+    .describe(
+      "Whether real analytics data is available (vs metadata-only or mock)",
+    ),
+  watchTimeMinutes: zod.number().optional(),
+  thumbnailImpressions: zod.number().optional(),
+  thumbnailCtr: zod.number().optional(),
+  subscribersGained: zod.number().optional(),
+  subscribersLost: zod.number().optional(),
+  periodDays: zod.number().optional(),
 });
 
 /**
@@ -331,6 +439,34 @@ export const GetFacebookAnalyticsResponse = zod.object({
       }),
     )
     .optional(),
+  normalized: zod
+    .object({
+      platform: zod.string(),
+      followers: zod.number(),
+      totalViews: zod.number(),
+      engagementRate: zod.number(),
+      reach: zod.number(),
+      impressions: zod.number(),
+      ctr: zod.number(),
+      watchTimeMinutes: zod.number(),
+      postsCount: zod.number(),
+      periodDays: zod.number(),
+      lastUpdated: zod.coerce.date(),
+    })
+    .optional()
+    .describe("Unified metrics contract that all platforms must satisfy"),
+  analyticsAvailable: zod
+    .boolean()
+    .optional()
+    .describe(
+      "Whether real analytics data is available (vs metadata-only or mock)",
+    ),
+  watchTimeMinutes: zod.number().optional(),
+  thumbnailImpressions: zod.number().optional(),
+  thumbnailCtr: zod.number().optional(),
+  subscribersGained: zod.number().optional(),
+  subscribersLost: zod.number().optional(),
+  periodDays: zod.number().optional(),
 });
 
 /**
@@ -351,8 +487,33 @@ export const GetDashboardSummaryResponse = zod.object({
       followers: zod.number(),
       content: zod.number(),
       engagementRate: zod.number(),
+      totalViews: zod.number().optional(),
+      reach: zod.number().optional(),
+      impressions: zod.number().optional(),
+      watchTimeMinutes: zod.number().optional(),
+      analyticsAvailable: zod.boolean().optional(),
     }),
   ),
+  normalizedBreakdown: zod
+    .array(
+      zod
+        .object({
+          platform: zod.string(),
+          followers: zod.number(),
+          totalViews: zod.number(),
+          engagementRate: zod.number(),
+          reach: zod.number(),
+          impressions: zod.number(),
+          ctr: zod.number(),
+          watchTimeMinutes: zod.number(),
+          postsCount: zod.number(),
+          periodDays: zod.number(),
+          lastUpdated: zod.coerce.date(),
+        })
+        .describe("Unified metrics contract that all platforms must satisfy"),
+    )
+    .optional()
+    .describe("Unified normalized metrics across all platforms"),
   lastSyncAt: zod.coerce.date().optional(),
 });
 

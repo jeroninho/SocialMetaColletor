@@ -15,4 +15,28 @@ export interface YoutubeChannel {
   viewCount: number;
   thumbnailUrl?: string;
   publishedAt?: Date;
+  /** Whether YouTube Analytics API data is available (requires yt-analytics.readonly scope) */
+  analyticsAvailable?: boolean;
+  /** Period in days the analytics metrics cover */
+  periodDays?: number;
+  /** Total minutes watched in period (Analytics API) */
+  watchTimeMinutes?: number;
+  /** Average view duration in seconds (Analytics API) */
+  averageViewDuration?: number;
+  /** Total thumbnail impressions in period (Analytics API) */
+  thumbnailImpressions?: number;
+  /** Click-through rate on thumbnails (0..1) in period (Analytics API) */
+  thumbnailCtr?: number;
+  /** Subscribers gained in period (Analytics API) */
+  subscribersGained?: number;
+  /** Subscribers lost in period (Analytics API) */
+  subscribersLost?: number;
+  /** Views accumulated within the period (Analytics API) */
+  viewsInPeriod?: number;
+  /** Likes within the period (Analytics API) */
+  likesInPeriod?: number;
+  /** Comments within the period (Analytics API) */
+  commentsInPeriod?: number;
+  /** Shares within the period (Analytics API) */
+  sharesInPeriod?: number;
 }

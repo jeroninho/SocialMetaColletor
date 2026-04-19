@@ -92,6 +92,7 @@ router.get("/auth/youtube/connect", (req, res) => {
   const redirectUri = getCallbackUrl("youtube");
   const scopes = [
     "https://www.googleapis.com/auth/youtube.readonly",
+    "https://www.googleapis.com/auth/yt-analytics.readonly",
     "https://www.googleapis.com/auth/userinfo.profile",
   ];
 
@@ -129,6 +130,7 @@ router.get("/auth/youtube/callback", async (req, res) => {
   let accessToken: string;
   let refreshToken: string | undefined;
   let expiresIn: number | undefined;
+  let grantedScope: string | undefined;
 
   try {
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
@@ -150,6 +152,7 @@ router.get("/auth/youtube/callback", async (req, res) => {
     accessToken = tokenData.access_token as string;
     refreshToken = tokenData.refresh_token as string | undefined;
     expiresIn = tokenData.expires_in as number | undefined;
+    grantedScope = tokenData.scope as string | undefined;
   } catch {
     redirectToFrontend(res as never, "error", "youtube", "Network error during token exchange.");
     return;
@@ -183,6 +186,7 @@ router.get("/auth/youtube/callback", async (req, res) => {
       refreshToken: encryptedRefresh,
       expiresAt,
       connected: true,
+      scope: grantedScope ?? null,
     });
   } catch {
     redirectToFrontend(res as never, "error", "youtube", "Failed to save token.");

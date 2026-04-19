@@ -5,6 +5,7 @@
  * SocialMetaCollector API - Collect metadata from YouTube, Instagram, and Facebook
  * OpenAPI spec version: 0.1.0
  */
+import type { NormalizedPlatformMetrics } from "./normalizedPlatformMetrics";
 import type { PlatformBreakdown } from "./platformBreakdown";
 
 export interface DashboardSummary {
@@ -16,5 +17,7 @@ export interface DashboardSummary {
   totalEngagements: number;
   averageEngagementRate: number;
   platformBreakdown: PlatformBreakdown[];
+  /** Unified normalized metrics across all platforms */
+  normalizedBreakdown?: NormalizedPlatformMetrics[];
   lastSyncAt?: Date;
 }
