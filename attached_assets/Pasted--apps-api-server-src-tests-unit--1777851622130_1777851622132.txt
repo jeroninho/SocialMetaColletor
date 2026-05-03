@@ -1,0 +1,88 @@
+│
+├── apps/
+│   ├── api-server/
+│   │   ├── src/
+│   │   └── tests/
+│   │       ├── unit/
+│   │       │   ├── auth/
+│   │       │   │   ├── jwt.test.ts
+│   │       │   │   ├── bcrypt.test.ts
+│   │       │   │   └── encryption.test.ts
+│   │       │   │
+│   │       │   ├── providers/
+│   │       │   │   ├── youtube.provider.test.ts
+│   │       │   │   └── meta.provider.test.ts
+│   │       │   │
+│   │       │   ├── cache/
+│   │       │   │   └── redis-cache.test.ts
+│   │       │   │
+│   │       │   └── validation/
+│   │       │       └── schemas.test.ts
+│   │       │
+│   │       ├── integration/
+│   │       │   ├── auth/
+│   │       │   │   ├── login.test.ts
+│   │       │   │   ├── register.test.ts
+│   │       │   │   └── oauth/
+│   │       │   │       ├── youtube-oauth.test.ts
+│   │       │   │       ├── instagram-oauth.test.ts
+│   │       │   │       └── facebook-oauth.test.ts
+│   │       │   │
+│   │       │   ├── dashboard/
+│   │       │   │   ├── summary.test.ts
+│   │       │   │   ├── engagement.test.ts
+│   │       │   │   └── cache-behavior.test.ts
+│   │       │   │
+│   │       │   ├── metadata/
+│   │       │   │   └── fetch-metadata.test.ts
+│   │       │   │
+│   │       │   ├── queue/
+│   │       │   │   ├── job-processing.test.ts
+│   │       │   │   └── retry.test.ts
+│   │       │   │
+│   │       │   └── webhooks/
+│   │       │       └── meta-webhook.test.ts
+│   │       │
+│   │       ├── e2e/
+│   │       │   ├── auth.flow.test.ts
+│   │       │   ├── connect-platform.flow.test.ts
+│   │       │   ├── dashboard.flow.test.ts
+│   │       │   └── metadata.flow.test.ts
+│   │       │
+│   │       ├── fixtures/
+│   │       │   ├── users.fixture.ts
+│   │       │   ├── tokens.fixture.ts
+│   │       │   └── providers/
+│   │       │       ├── youtube.fixture.ts
+│   │       │       └── meta.fixture.ts
+│   │       │
+│   │       ├── mocks/
+│   │       │   ├── redis.mock.ts
+│   │       │   ├── bullmq.mock.ts
+│   │       │   └── external-apis.mock.ts
+│   │       │
+│   │       ├── setup/
+│   │       │   ├── test-env.ts
+│   │       │   ├── db.ts
+│   │       │   ├── redis.ts
+│   │       │   └── server.ts
+│   │       │
+│   │       └── utils/
+│   │           ├── create-test-user.ts
+│   │           ├── auth-headers.ts
+│   │           └── test-app.ts
+│
+├── packages/
+│   └── db/
+│       └── tests/
+│           ├── schema.test.ts
+│           └── migrations.test.ts
+│
+└── playwright/
+    ├── tests/
+    │   ├── auth.spec.ts
+    │   ├── dashboard.spec.ts
+    │   └── connections.spec.ts
+    │
+    └── fixtures/
+        └── test-user.ts
