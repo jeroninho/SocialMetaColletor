@@ -2,7 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import { eq } from "drizzle-orm";
-import { OAuth2Client } from "google-auth-library";
+import type { OAuth2Client } from "google-auth-library";
 import { db, usersTable } from "@workspace/db";
 import { signToken } from "../utils/jwt.js";
 import { z } from "zod";
@@ -12,7 +12,17 @@ const router = Router();
 const SALT_ROUNDS = 12;
 
 const GOOGLE_CLIENT_ID = process.env.YOUTUBE_CLIENT_ID ?? "";
-const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
+
+let googleClientPromise: Promise<OAuth2Client | null> | null = null;
+function getGoogleClient(): Promise<OAuth2Client | null> {
+  if (!GOOGLE_CLIENT_ID) return Promise.resolve(null);
+  if (!googleClientPromise) {
+    googleClientPromise = import("google-auth-library").then(
+      ({ OAuth2Client }) => new OAuth2Client(GOOGLE_CLIENT_ID),
+    );
+  }
+  return googleClientPromise;
+}
 
 const RegisterBody = z.object({
   email: z.string().email("E-mail inválido").max(254),
@@ -102,7 +112,7 @@ router.post("/auth/login", async (req, res) => {
 });
 
 router.get("/auth/google/config", (_req, res) => {
-  res.json({ clientId: GOOGLE_CLIENT_ID, enabled: Boolean(googleClient) });
+  res.json({ clientId: GOOGLE_CLIENT_ID, enabled: Boolean(GOOGLE_CLIENT_ID) });
 });
 
 const GoogleBody = z.object({
@@ -110,6 +120,7 @@ const GoogleBody = z.object({
 });
 
 router.post("/auth/google", async (req, res) => {
+  const googleClient = await getGoogleClient();
   if (!googleClient) {
     res.status(503).json({ error: "google_not_configured", message: "Login com Google não está disponível." });
     return;

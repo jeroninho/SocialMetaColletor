@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "../utils/http.js";
 import { decryptToken } from "../utils/crypto.js";
 
 export interface ChannelStats {
@@ -86,10 +86,10 @@ export class YouTubeProvider {
     // Authenticated path — propagate real failures so callers can return
     // explicit errors rather than silently serving mock data.
     const token = this.decrypt(encryptedToken);
-    const response = await axios.get(`${this.apiBase}/channels`, {
+    const response = await httpGet<{ items?: Array<{ id: string; snippet: { title: string; description: string; publishedAt: string; thumbnails?: { default?: { url: string }; medium?: { url: string } } }; statistics: { subscriberCount?: string; viewCount?: string; videoCount?: string } }> }>(`${this.apiBase}/channels`, {
       params: { part: "snippet,statistics", mine: true },
       headers: { Authorization: `Bearer ${token}` },
-      timeout: 8000,
+      timeoutMs: 8000,
     });
     const channel = response.data.items?.[0];
     if (!channel) {
@@ -115,25 +115,25 @@ export class YouTubeProvider {
     }
     // Authenticated path — propagate real failures.
     const token = this.decrypt(encryptedToken);
-    const searchRes = await axios.get(`${this.apiBase}/search`, {
+    const searchRes = await httpGet<{ items?: Array<{ id: { videoId: string } }> }>(`${this.apiBase}/search`, {
       params: { part: "snippet", forMine: true, type: "video", maxResults, order: "date" },
       headers: { Authorization: `Bearer ${token}` },
-      timeout: 8000,
+      timeoutMs: 8000,
     });
-    const ids = searchRes.data.items?.map((i: { id: { videoId: string } }) => i.id.videoId).join(",");
+    const ids = searchRes.data.items?.map((i) => i.id.videoId).join(",");
     if (!ids) {
       return { videos: [], totalEngagement: 0, averageEngagementRate: 0 };
     }
-    const statsRes = await axios.get(`${this.apiBase}/videos`, {
-      params: { part: "snippet,statistics", id: ids },
-      headers: { Authorization: `Bearer ${token}` },
-      timeout: 8000,
-    });
-    const videos: VideoEngagement[] = statsRes.data.items?.map((v: {
+    const statsRes = await httpGet<{ items?: Array<{
       id: string;
       snippet: { title: string; publishedAt: string; thumbnails?: { medium?: { url: string }; default?: { url: string } } };
       statistics: { viewCount?: string; likeCount?: string; commentCount?: string };
-    }) => ({
+    }> }>(`${this.apiBase}/videos`, {
+      params: { part: "snippet,statistics", id: ids },
+      headers: { Authorization: `Bearer ${token}` },
+      timeoutMs: 8000,
+    });
+    const videos: VideoEngagement[] = statsRes.data.items?.map((v) => ({
       videoId: v.id,
       title: v.snippet.title,
       views: parseInt(v.statistics.viewCount ?? "0", 10),
@@ -177,7 +177,7 @@ export class YouTubeProvider {
         "subscribersLost",
       ];
 
-      const baseRes = await axios.get(`${this.analyticsBase}/reports`, {
+      const baseRes = await httpGet<{ rows?: number[][] }>(`${this.analyticsBase}/reports`, {
         params: {
           ids: "channel==MINE",
           startDate: fmt(startDate),
@@ -185,7 +185,7 @@ export class YouTubeProvider {
           metrics: metrics.join(","),
         },
         headers: { Authorization: `Bearer ${token}` },
-        timeout: 10000,
+        timeoutMs: 10000,
       });
 
       const row: number[] = baseRes.data.rows?.[0] ?? new Array(metrics.length).fill(0);
@@ -197,7 +197,7 @@ export class YouTubeProvider {
       let thumbnailImpressions = 0;
       let thumbnailCtr = 0;
       try {
-        const ctrRes = await axios.get(`${this.analyticsBase}/reports`, {
+        const ctrRes = await httpGet<{ rows?: number[][] }>(`${this.analyticsBase}/reports`, {
           params: {
             ids: "channel==MINE",
             startDate: fmt(startDate),
@@ -205,7 +205,7 @@ export class YouTubeProvider {
             metrics: "videoThumbnailImpressions,videoThumbnailImpressionsCtr",
           },
           headers: { Authorization: `Bearer ${token}` },
-          timeout: 10000,
+          timeoutMs: 10000,
         });
         const r2: number[] = ctrRes.data.rows?.[0] ?? [0, 0];
         thumbnailImpressions = Number(r2[0] ?? 0);

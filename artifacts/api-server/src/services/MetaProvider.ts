@@ -1,4 +1,4 @@
-import axios from "axios";
+import { httpGet } from "../utils/http.js";
 import { decryptToken } from "../utils/crypto.js";
 
 export interface FacebookPageStats {
@@ -46,9 +46,9 @@ export class MetaProvider {
   async getFacebookPageStats(encryptedToken: string): Promise<FacebookPageStats> {
     try {
       const token = this.getAccessToken(encryptedToken);
-      const response = await axios.get(`${this.graphBase}/me/accounts`, {
+      const response = await httpGet<{ data?: Array<{ id: string; name: string; fan_count?: number; followers_count?: number }> }>(`${this.graphBase}/me/accounts`, {
         params: { access_token: token, fields: "id,name,fan_count,followers_count" },
-        timeout: 8000,
+        timeoutMs: 8000,
       });
       const page = response.data.data?.[0];
       if (page) {
@@ -71,9 +71,9 @@ export class MetaProvider {
     const instagramToken = process.env["INSTAGRAM_ACCESS_TOKEN"];
     if (instagramToken) {
       try {
-        const response = await axios.get(`${this.graphBase}/me`, {
+        const response = await httpGet<{ id?: string; username?: string; followers_count?: number; follows_count?: number; media_count?: number }>(`${this.graphBase}/me`, {
           params: { access_token: instagramToken, fields: "id,username,followers_count,follows_count,media_count" },
-          timeout: 8000,
+          timeoutMs: 8000,
         });
         const d = response.data;
         if (d?.id) {
@@ -96,13 +96,13 @@ export class MetaProvider {
   async getFacebookRecentEngagement(encryptedToken: string, limit = 5): Promise<RecentEngagement> {
     try {
       const token = this.getAccessToken(encryptedToken);
-      const response = await axios.get(`${this.graphBase}/me/posts`, {
+      const response = await httpGet<{ data?: unknown[] }>(`${this.graphBase}/me/posts`, {
         params: {
           access_token: token,
           fields: "id,message,created_time,likes.summary(true),comments.summary(true),shares",
           limit,
         },
-        timeout: 8000,
+        timeoutMs: 8000,
       });
       const posts = response.data.data ?? [];
       const mapped: PostEngagement[] = posts.map((p: {
@@ -132,13 +132,13 @@ export class MetaProvider {
   async getInstagramRecentEngagement(encryptedToken: string, limit = 5): Promise<RecentEngagement> {
     try {
       const token = this.getAccessToken(encryptedToken);
-      const response = await axios.get(`${this.graphBase}/me/media`, {
+      const response = await httpGet<{ data?: unknown[] }>(`${this.graphBase}/me/media`, {
         params: {
           access_token: token,
           fields: "id,caption,timestamp,like_count,comments_count",
           limit,
         },
-        timeout: 8000,
+        timeoutMs: 8000,
       });
       const media = response.data.data ?? [];
       const mapped: PostEngagement[] = media.map((m: {

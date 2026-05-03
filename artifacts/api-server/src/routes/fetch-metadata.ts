@@ -1,6 +1,6 @@
 import { Router } from "express";
-import axios from "axios";
-import * as cheerio from "cheerio";
+import { httpGet } from "../utils/http.js";
+import { extractMetaTags } from "../utils/meta-tags.js";
 import { desc } from "drizzle-orm";
 import { db, fetchHistoryTable } from "@workspace/db";
 import {
@@ -65,38 +65,32 @@ function parseNumber(val: string | undefined): number | undefined {
 }
 
 async function fetchViaOpenGraph(url: string, platform: Platform): Promise<NormalizedMetadata> {
-  const response = await axios.get(url, {
+  const response = await httpGet<string>(url, {
     headers: {
       "User-Agent":
         "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
       Accept: "text/html,application/xhtml+xml",
     },
-    timeout: 10000,
-    maxRedirects: 5,
+    timeoutMs: 10000,
   });
 
-  const $ = cheerio.load(response.data as string);
+  const html = response.data;
+  const tags = extractMetaTags(html);
 
-  const og = (prop: string) =>
-    $(`meta[property="og:${prop}"]`).attr("content") ||
-    $(`meta[name="og:${prop}"]`).attr("content");
-  const tw = (name: string) =>
-    $(`meta[name="twitter:${name}"]`).attr("content");
-  const meta = (name: string) =>
-    $(`meta[name="${name}"]`).attr("content") ||
-    $(`meta[itemprop="${name}"]`).attr("content");
+  const og = (prop: string) => tags.og.get(prop);
+  const tw = (name: string) => tags.twitter.get(name);
+  const meta = (name: string) => tags.meta.get(name) ?? tags.itemprop.get(name);
 
-  const title =
-    og("title") || tw("title") || $("title").text() || "Untitled";
+  const title = og("title") || tw("title") || tags.title || "Untitled";
   const author =
     og("site_name") ||
     tw("site") ||
     meta("author") ||
-    $('[itemprop="author"]').text() ||
     platform;
   const description = og("description") || tw("description") || meta("description") || "";
   const thumbnailUrl = og("image") || tw("image") || "";
-  const publishedAt = meta("datePublished") || meta("publishedTime") || og("article:published_time") || undefined;
+  const publishedAt =
+    meta("datePublished") || meta("publishedTime") || og("article:published_time") || undefined;
 
   return {
     platform,
@@ -116,7 +110,7 @@ async function fetchYoutubeMetadata(url: string): Promise<NormalizedMetadata> {
   if (videoId && apiKey) {
     try {
       const apiUrl = `https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics,contentDetails&id=${videoId}&key=${apiKey}`;
-      const response = await axios.get(apiUrl, { timeout: 8000 });
+      const response = await httpGet<{ items?: Array<{ snippet: { title: string; channelTitle: string; description: string; thumbnails?: { maxres?: { url: string }; high?: { url: string } }; publishedAt: string; tags?: string[] }; statistics: { viewCount?: string; likeCount?: string; commentCount?: string }; contentDetails: { duration: string } }> }>(apiUrl, { timeoutMs: 8000 });
       const item = response.data?.items?.[0];
       if (item) {
         const snippet = item.snippet;
@@ -144,11 +138,11 @@ async function fetchYoutubeMetadata(url: string): Promise<NormalizedMetadata> {
 
   // Fallback: oembed
   try {
-    const oembed = await axios.get(
+    const oembed = await httpGet<{ title?: string; author_name?: string; thumbnail_url?: string }>(
       `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`,
-      { timeout: 8000 }
+      { timeoutMs: 8000 }
     );
-    const data = oembed.data as { title?: string; author_name?: string; thumbnail_url?: string };
+    const data = oembed.data;
     return {
       platform: "youtube",
       url,
@@ -163,16 +157,13 @@ async function fetchYoutubeMetadata(url: string): Promise<NormalizedMetadata> {
 
 async function fetchTikTokMetadata(url: string): Promise<NormalizedMetadata> {
   try {
-    const oembed = await axios.get(
-      `https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`,
-      { timeout: 10000 }
-    );
-    const data = oembed.data as {
+    const oembed = await httpGet<{
       title?: string;
       author_name?: string;
       author_url?: string;
       thumbnail_url?: string;
-    };
+    }>(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`, { timeoutMs: 10000 });
+    const data = oembed.data;
     return {
       platform: "tiktok",
       url,
@@ -187,11 +178,11 @@ async function fetchTikTokMetadata(url: string): Promise<NormalizedMetadata> {
 
 async function fetchInstagramMetadata(url: string): Promise<NormalizedMetadata> {
   try {
-    const oembed = await axios.get(
+    const oembed = await httpGet<{ title?: string; author_name?: string; thumbnail_url?: string }>(
       `https://graph.facebook.com/v18.0/instagram_oembed?url=${encodeURIComponent(url)}&access_token=${process.env["INSTAGRAM_ACCESS_TOKEN"] ?? ""}`,
-      { timeout: 8000 }
+      { timeoutMs: 8000 }
     );
-    const data = oembed.data as { title?: string; author_name?: string; thumbnail_url?: string };
+    const data = oembed.data;
     return {
       platform: "instagram",
       url,
@@ -210,11 +201,11 @@ async function fetchFacebookMetadata(url: string): Promise<NormalizedMetadata> {
 
 async function fetchTwitterMetadata(url: string): Promise<NormalizedMetadata> {
   try {
-    const oembed = await axios.get(
+    const oembed = await httpGet<{ html?: string; author_name?: string; url?: string }>(
       `https://publish.twitter.com/oembed?url=${encodeURIComponent(url)}&format=json`,
-      { timeout: 8000 }
+      { timeoutMs: 8000 }
     );
-    const data = oembed.data as { html?: string; author_name?: string; url?: string };
+    const data = oembed.data;
     const match = data.html?.match(/<p[^>]*>(.*?)<\/p>/s);
     const title = match ? match[1].replace(/<[^>]+>/g, "").trim() : "Tweet";
     return {
