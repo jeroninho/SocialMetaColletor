@@ -17,13 +17,14 @@ export interface SyncJobResult {
 }
 
 const QUEUE_NAME = "metadata-sync";
-const REDIS_URL = process.env["REDIS_URL"] ?? "redis://localhost:6379";
+const REDIS_URL = process.env["REDIS_URL"];
 
 let queue: Queue<SyncJobData, SyncJobResult> | null = null;
 let workerStarted = false;
 
 export function getMetadataSyncQueue(): Queue<SyncJobData, SyncJobResult> | null {
   if (queue) return queue;
+  if (!REDIS_URL) return null;
   try {
     queue = new Queue<SyncJobData, SyncJobResult>(QUEUE_NAME, {
       connection: { url: REDIS_URL },
@@ -156,6 +157,7 @@ async function processSyncJob(job: Job<SyncJobData, SyncJobResult>): Promise<Syn
 
 export function startSyncWorker(): void {
   if (workerStarted) return;
+  if (!REDIS_URL) return;
   try {
     const worker = new Worker<SyncJobData, SyncJobResult>(QUEUE_NAME, processSyncJob, {
       connection: { url: REDIS_URL },
