@@ -11,4 +11,8 @@ export interface PlatformAuthStatus {
   accountName?: string;
   connectedAt?: Date;
   expiresAt?: Date;
+  /** True when the stored credentials are missing required scopes (e.g. yt-analytics.readonly for YouTube) and the user must re-authorize. */
+  needsReconnect?: boolean;
+  /** List of OAuth scopes that are required but missing from the stored grant. */
+  missingScopes?: string[];
 }

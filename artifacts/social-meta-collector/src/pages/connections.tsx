@@ -46,6 +46,8 @@ interface PlatformCardProps {
   accountName?: string;
   connectedAt?: string;
   expiresAt?: string | null;
+  needsReconnect?: boolean;
+  missingScopes?: string[];
   icon: React.ReactNode;
   color: string;
   label: string;
@@ -58,6 +60,8 @@ function PlatformCard({
   accountName,
   connectedAt,
   expiresAt,
+  needsReconnect,
+  missingScopes,
   icon,
   color,
   label,
@@ -90,6 +94,11 @@ function PlatformCard({
   };
 
   const isExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
+  const requiresReconnect = connected && !isExpired && !!needsReconnect;
+  const missingAnalytics =
+    platform === "youtube" &&
+    requiresReconnect &&
+    (missingScopes ?? []).some((s) => s.includes("yt-analytics.readonly"));
 
   return (
     <Card className="overflow-hidden">
@@ -113,10 +122,21 @@ function PlatformCard({
             </div>
           </div>
           <Badge
-            variant={connected && !isExpired ? "default" : "secondary"}
+            variant={
+              requiresReconnect
+                ? "destructive"
+                : connected && !isExpired
+                  ? "default"
+                  : "secondary"
+            }
             className="flex items-center gap-1"
+            data-testid={`badge-${platform}-status`}
           >
-            {connected && !isExpired ? (
+            {requiresReconnect ? (
+              <>
+                <AlertCircle className="w-3 h-3" /> Reconexão necessária
+              </>
+            ) : connected && !isExpired ? (
               <>
                 <CheckCircle className="w-3 h-3" /> Conectado
               </>
@@ -135,6 +155,31 @@ function PlatformCard({
       <CardContent className="space-y-4">
         {connected && !isExpired ? (
           <div className="space-y-3">
+            {requiresReconnect && (
+              <div
+                className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 space-y-2"
+                data-testid={`alert-${platform}-reconnect`}
+              >
+                <p className="text-xs text-amber-600 dark:text-amber-400 flex items-start gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                  <span>
+                    {missingAnalytics
+                      ? "Esta conexão foi feita antes da inclusão de YouTube Analytics. Reconecte para liberar as métricas avançadas (visualizações, watch time, CTR)."
+                      : "Permissões adicionais são necessárias. Reconecte para continuar usando esta integração."}
+                  </span>
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full border-amber-500/50 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10"
+                  onClick={handleConnect}
+                  data-testid={`button-${platform}-reconnect`}
+                >
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Reconectar {label}
+                </Button>
+              </div>
+            )}
             {connectedAt && (
               <p className="text-xs text-muted-foreground">
                 Conectado em{" "}
@@ -316,6 +361,8 @@ export default function Connections() {
               accountName={status?.accountName}
               connectedAt={status?.connectedAt as string | undefined}
               expiresAt={status?.expiresAt as string | null | undefined}
+              needsReconnect={status?.needsReconnect}
+              missingScopes={status?.missingScopes}
               onDisconnected={refresh}
             />
           );

@@ -8,6 +8,18 @@ import {
   DisconnectPlatformParams,
 } from "@workspace/api-zod";
 import { encryptToken } from "../utils/crypto.js";
+import { YOUTUBE_ANALYTICS_SCOPE } from "../services/YouTubeProvider.js";
+
+const REQUIRED_SCOPES: Record<string, string[]> = {
+  youtube: [YOUTUBE_ANALYTICS_SCOPE],
+};
+
+function computeMissingScopes(platform: string, grantedScope: string | null | undefined): string[] {
+  const required = REQUIRED_SCOPES[platform];
+  if (!required || required.length === 0) return [];
+  const granted = new Set((grantedScope ?? "").split(/\s+/).filter(Boolean));
+  return required.filter((s) => !granted.has(s));
+}
 
 const router = Router();
 
@@ -116,6 +128,8 @@ router.get("/auth/status", async (req, res) => {
       accountName?: string;
       connectedAt?: Date;
       expiresAt?: Date | null;
+      needsReconnect?: boolean;
+      missingScopes?: string[];
     }> = {
       youtube: { connected: false },
       instagram: { connected: false },
@@ -123,11 +137,14 @@ router.get("/auth/status", async (req, res) => {
     };
 
     for (const token of tokens) {
+      const missingScopes = computeMissingScopes(token.platform, token.scope);
       statusMap[token.platform] = {
         connected: token.connected,
         accountName: token.accountName,
         connectedAt: token.connectedAt,
         expiresAt: token.expiresAt,
+        needsReconnect: missingScopes.length > 0,
+        missingScopes,
       };
     }
 

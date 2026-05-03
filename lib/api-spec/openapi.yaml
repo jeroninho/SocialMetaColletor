@@ -439,6 +439,14 @@ components:
         expiresAt:
           type: string
           format: date-time
+        needsReconnect:
+          type: boolean
+          description: True when the stored credentials are missing required scopes (e.g. yt-analytics.readonly for YouTube) and the user must re-authorize.
+        missingScopes:
+          type: array
+          items:
+            type: string
+          description: List of OAuth scopes that are required but missing from the stored grant.
       required:
         - connected
 

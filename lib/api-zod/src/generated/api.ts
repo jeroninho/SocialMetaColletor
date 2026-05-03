@@ -24,18 +24,54 @@ export const GetAuthStatusResponse = zod.object({
     accountName: zod.string().optional(),
     connectedAt: zod.coerce.date().optional(),
     expiresAt: zod.coerce.date().optional(),
+    needsReconnect: zod
+      .boolean()
+      .optional()
+      .describe(
+        "True when the stored credentials are missing required scopes (e.g. yt-analytics.readonly for YouTube) and the user must re-authorize.",
+      ),
+    missingScopes: zod
+      .array(zod.string())
+      .optional()
+      .describe(
+        "List of OAuth scopes that are required but missing from the stored grant.",
+      ),
   }),
   instagram: zod.object({
     connected: zod.boolean(),
     accountName: zod.string().optional(),
     connectedAt: zod.coerce.date().optional(),
     expiresAt: zod.coerce.date().optional(),
+    needsReconnect: zod
+      .boolean()
+      .optional()
+      .describe(
+        "True when the stored credentials are missing required scopes (e.g. yt-analytics.readonly for YouTube) and the user must re-authorize.",
+      ),
+    missingScopes: zod
+      .array(zod.string())
+      .optional()
+      .describe(
+        "List of OAuth scopes that are required but missing from the stored grant.",
+      ),
   }),
   facebook: zod.object({
     connected: zod.boolean(),
     accountName: zod.string().optional(),
     connectedAt: zod.coerce.date().optional(),
     expiresAt: zod.coerce.date().optional(),
+    needsReconnect: zod
+      .boolean()
+      .optional()
+      .describe(
+        "True when the stored credentials are missing required scopes (e.g. yt-analytics.readonly for YouTube) and the user must re-authorize.",
+      ),
+    missingScopes: zod
+      .array(zod.string())
+      .optional()
+      .describe(
+        "List of OAuth scopes that are required but missing from the stored grant.",
+      ),
   }),
 });
 
