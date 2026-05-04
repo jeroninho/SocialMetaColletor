@@ -1,8 +1,10 @@
 import { Router } from "express";
 import { eq } from "drizzle-orm";
 import { db, tokensTable } from "@workspace/db";
+import { TwitterProvider } from "../services/TwitterProvider.js";
 
 const router = Router();
+const twitter = new TwitterProvider();
 
 const tweets = [
   {
@@ -93,7 +95,7 @@ router.get("/twitter/tweets", async (req, res) => {
   res.json({ items: sliced, total: tweets.length, limit, offset });
 });
 
-router.get("/twitter/analytics", async (_req, res) => {
+router.get("/twitter/analytics", async (req, res) => {
   const totalImpressions = tweets.reduce((s, t) => s + t.impressionCount, 0);
   const totalLikes = tweets.reduce((s, t) => s + t.likeCount, 0);
   const totalRetweets = tweets.reduce((s, t) => s + t.retweetCount, 0);
@@ -101,7 +103,7 @@ router.get("/twitter/analytics", async (_req, res) => {
   const totalBookmarks = tweets.reduce((s, t) => s + t.bookmarkCount, 0);
   const averageEngagementRate = ((totalLikes + totalRetweets + totalReplies) / totalImpressions) * 100;
 
-  res.json({
+  const mockPayload = {
     platform: "twitter",
     totalContent: tweets.length,
     totalViews: totalImpressions,
@@ -120,7 +122,40 @@ router.get("/twitter/analytics", async (_req, res) => {
       engagementRate: parseFloat((((t.likeCount + t.retweetCount + t.replyCount) / t.impressionCount) * 100).toFixed(2)),
       platform: "twitter",
     })),
-  });
+  };
+
+  const [token] = await db
+    .select()
+    .from(tokensTable)
+    .where(eq(tokensTable.platform, "twitter"))
+    .limit(1);
+
+  if (token?.connected && token.accessToken) {
+    try {
+      const normalized = await twitter.getNormalizedMetrics(token.accessToken, token.scope, 28);
+      const hasScope = twitter.hasReadScope(token.scope);
+      const hasSignal = normalized.totalViews > 0 || normalized.impressions > 0;
+      res.json({
+        ...mockPayload,
+        totalContent: normalized.postsCount,
+        totalViews: normalized.totalViews,
+        totalLikes: Math.round((normalized.engagementRate / 100) * normalized.totalViews),
+        averageEngagementRate: parseFloat(normalized.engagementRate.toFixed(2)),
+        followerCount: normalized.followers,
+        normalized,
+        analyticsAvailable: hasScope && hasSignal,
+        analyticsReason: !hasScope ? "insufficient_scope" : !hasSignal ? "no_signal" : "ok",
+        periodDays: normalized.periodDays,
+      });
+      return;
+    } catch (err) {
+      req.log.error({ err }, "twitter analytics failed; falling back to mock");
+      res.json({ ...mockPayload, analyticsAvailable: false, analyticsReason: "upstream_error" });
+      return;
+    }
+  }
+
+  res.json({ ...mockPayload, analyticsAvailable: false, analyticsReason: "not_connected" });
 });
 
 export default router;

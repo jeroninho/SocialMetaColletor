@@ -298,6 +298,7 @@ router.get("/auth/instagram/callback", async (req, res) => {
       refreshToken: null,
       expiresAt,
       connected: true,
+      scope: "user_profile,user_media",
     });
   } catch {
     redirectToFrontend(res as never, "error", "instagram", "Failed to save token.");
@@ -412,6 +413,7 @@ router.get("/auth/facebook/callback", async (req, res) => {
       refreshToken: null,
       expiresAt,
       connected: true,
+      scope: "pages_read_engagement,pages_show_list,read_insights,public_profile",
     });
   } catch {
     redirectToFrontend(res as never, "error", "facebook", "Failed to save token.");
@@ -466,6 +468,7 @@ router.get("/auth/tiktok/callback", async (req, res) => {
   let accessToken: string;
   let refreshToken: string | undefined;
   let expiresIn: number | undefined;
+  let grantedScope = "user.info.basic,video.list";
 
   try {
     const tokenRes = await fetch("https://open.tiktokapis.com/v2/oauth/token/", {
@@ -487,6 +490,9 @@ router.get("/auth/tiktok/callback", async (req, res) => {
     accessToken = tokenData.access_token as string;
     refreshToken = tokenData.refresh_token as string | undefined;
     expiresIn = tokenData.expires_in as number | undefined;
+    if (typeof tokenData.scope === "string" && tokenData.scope.length > 0) {
+      grantedScope = tokenData.scope;
+    }
   } catch {
     redirectToFrontend(res as never, "error", "tiktok", "Network error during token exchange.");
     return;
@@ -518,6 +524,7 @@ router.get("/auth/tiktok/callback", async (req, res) => {
       refreshToken: encryptedRefresh,
       expiresAt,
       connected: true,
+      scope: grantedScope,
     });
   } catch {
     redirectToFrontend(res as never, "error", "tiktok", "Failed to save token.");
@@ -574,6 +581,7 @@ router.get("/auth/twitter/callback", async (req, res) => {
   let accessToken: string;
   let refreshToken: string | undefined;
   let expiresIn: number | undefined;
+  let grantedScope = "tweet.read,users.read,offline.access";
 
   try {
     const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
@@ -599,6 +607,9 @@ router.get("/auth/twitter/callback", async (req, res) => {
     accessToken = tokenData.access_token as string;
     refreshToken = tokenData.refresh_token as string | undefined;
     expiresIn = tokenData.expires_in as number | undefined;
+    if (typeof tokenData.scope === "string" && tokenData.scope.length > 0) {
+      grantedScope = (tokenData.scope as string).split(/\s+/).join(",");
+    }
   } catch {
     redirectToFrontend(res as never, "error", "twitter", "Network error during token exchange.");
     return;
@@ -630,6 +641,7 @@ router.get("/auth/twitter/callback", async (req, res) => {
       refreshToken: encryptedRefresh,
       expiresAt,
       connected: true,
+      scope: grantedScope,
     });
   } catch {
     redirectToFrontend(res as never, "error", "twitter", "Failed to save token.");

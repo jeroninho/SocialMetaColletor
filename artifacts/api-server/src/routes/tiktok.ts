@@ -1,8 +1,10 @@
 import { Router } from "express";
 import { eq } from "drizzle-orm";
 import { db, tokensTable } from "@workspace/db";
+import { TikTokProvider } from "../services/TikTokProvider.js";
 
 const router = Router();
+const tiktok = new TikTokProvider();
 
 const tiktokVideos = [
   {
@@ -91,14 +93,14 @@ router.get("/tiktok/videos", async (req, res) => {
   res.json({ items: sliced, total: tiktokVideos.length, limit, offset });
 });
 
-router.get("/tiktok/analytics", async (_req, res) => {
+router.get("/tiktok/analytics", async (req, res) => {
   const totalViews = tiktokVideos.reduce((s, v) => s + v.viewCount, 0);
   const totalLikes = tiktokVideos.reduce((s, v) => s + v.likeCount, 0);
   const totalComments = tiktokVideos.reduce((s, v) => s + v.commentCount, 0);
   const totalShares = tiktokVideos.reduce((s, v) => s + v.shareCount, 0);
   const averageEngagementRate = ((totalLikes + totalComments + totalShares) / totalViews) * 100;
 
-  res.json({
+  const mockPayload = {
     platform: "tiktok",
     totalContent: tiktokVideos.length,
     totalViews,
@@ -116,7 +118,40 @@ router.get("/tiktok/analytics", async (_req, res) => {
       engagementRate: parseFloat((((v.likeCount + v.commentCount + v.shareCount) / v.viewCount) * 100).toFixed(2)),
       platform: "tiktok",
     })),
-  });
+  };
+
+  const [token] = await db
+    .select()
+    .from(tokensTable)
+    .where(eq(tokensTable.platform, "tiktok"))
+    .limit(1);
+
+  if (token?.connected && token.accessToken) {
+    try {
+      const normalized = await tiktok.getNormalizedMetrics(token.accessToken, token.scope, 28);
+      const hasScope = tiktok.hasVideoListScope(token.scope);
+      const hasSignal = normalized.totalViews > 0;
+      res.json({
+        ...mockPayload,
+        totalContent: normalized.postsCount,
+        totalViews: normalized.totalViews,
+        totalLikes: Math.round((normalized.engagementRate / 100) * normalized.totalViews),
+        averageEngagementRate: parseFloat(normalized.engagementRate.toFixed(2)),
+        followerCount: normalized.followers,
+        normalized,
+        analyticsAvailable: hasScope && hasSignal,
+        analyticsReason: !hasScope ? "insufficient_scope" : !hasSignal ? "no_signal" : "ok",
+        periodDays: normalized.periodDays,
+      });
+      return;
+    } catch (err) {
+      req.log.error({ err }, "tiktok analytics failed; falling back to mock");
+      res.json({ ...mockPayload, analyticsAvailable: false, analyticsReason: "upstream_error" });
+      return;
+    }
+  }
+
+  res.json({ ...mockPayload, analyticsAvailable: false, analyticsReason: "not_connected" });
 });
 
 export default router;

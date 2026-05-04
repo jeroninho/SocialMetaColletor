@@ -4,14 +4,18 @@ import { db, metadataTable, tokensTable } from "@workspace/db";
 import { ListRecentMetadataQueryParams } from "@workspace/api-zod";
 import { cacheGet, cacheSet } from "../services/RedisClient.js";
 import { getMetadataSyncQueue, startSyncWorker, type SyncJobData } from "../queues/metadataSyncQueue.js";
-import { YouTubeProvider } from "../services/YouTubeProvider.js";
+import { YouTubeProvider, type NormalizedPlatformMetrics } from "../services/YouTubeProvider.js";
 import { MetaProvider } from "../services/MetaProvider.js";
+import { TikTokProvider } from "../services/TikTokProvider.js";
+import { TwitterProvider } from "../services/TwitterProvider.js";
 
 const router = Router();
 const CACHE_TTL = parseInt(process.env["CACHE_TTL_SECONDS"] ?? "60", 10);
 
 const youtube = new YouTubeProvider();
 const meta = new MetaProvider();
+const tiktok = new TikTokProvider();
+const twitter = new TwitterProvider();
 
 startSyncWorker();
 
@@ -26,105 +30,121 @@ router.get("/dashboard/summary", async (req, res) => {
     return;
   }
 
-  // Try to enrich YouTube breakdown with real Analytics API data
-  const [ytToken] = await db
-    .select()
-    .from(tokensTable)
-    .where(eq(tokensTable.platform, "youtube"))
-    .limit(1);
+  const allTokens = await db.select().from(tokensTable);
+  const tokenByPlatform = new Map(allTokens.map((t) => [t.platform, t] as const));
 
-  let ytNormalized = {
-    platform: "youtube",
-    followers: 184200,
-    totalViews: 434400,
-    engagementRate: 5.82,
-    reach: 434400,
-    impressions: 0,
-    ctr: 0,
-    watchTimeMinutes: 0,
-    postsCount: 5,
-    periodDays: 28,
-    lastUpdated: new Date().toISOString(),
+  const MOCK_FALLBACKS: Record<string, NormalizedPlatformMetrics & { content: number }> = {
+    youtube: {
+      platform: "youtube", followers: 184200, totalViews: 434400, engagementRate: 5.82,
+      reach: 434400, impressions: 0, ctr: 0, watchTimeMinutes: 0, postsCount: 5,
+      periodDays: 28, lastUpdated: new Date().toISOString(), content: 5,
+    },
+    instagram: {
+      platform: "instagram", followers: 42800, totalViews: 237700, engagementRate: 7.59,
+      reach: 237700, impressions: 237700, ctr: 0, watchTimeMinutes: 0, postsCount: 5,
+      periodDays: 28, lastUpdated: new Date().toISOString(), content: 5,
+    },
+    facebook: {
+      platform: "facebook", followers: 31200, totalViews: 209600, engagementRate: 6.81,
+      reach: 209600, impressions: 209600, ctr: 0, watchTimeMinutes: 0, postsCount: 5,
+      periodDays: 28, lastUpdated: new Date().toISOString(), content: 5,
+    },
+    tiktok: {
+      platform: "tiktok", followers: 324000, totalViews: 5491000, engagementRate: 10.07,
+      reach: 5491000, impressions: 5491000, ctr: 0, watchTimeMinutes: 0, postsCount: 5,
+      periodDays: 28, lastUpdated: new Date().toISOString(), content: 5,
+    },
+    twitter: {
+      platform: "twitter", followers: 89400, totalViews: 1440000, engagementRate: 3.07,
+      reach: 1440000, impressions: 1440000, ctr: 0, watchTimeMinutes: 0, postsCount: 5,
+      periodDays: 28, lastUpdated: new Date().toISOString(), content: 5,
+    },
   };
-  let ytAnalyticsAvailable = false;
 
-  if (ytToken?.connected && ytToken.accessToken) {
+  type PlatformResult = {
+    platform: string;
+    connected: boolean;
+    analyticsAvailable: boolean;
+    metrics: NormalizedPlatformMetrics;
+  };
+
+  async function safeFetch(
+    platform: string,
+    fn: () => Promise<NormalizedPlatformMetrics>,
+    hasScope: boolean,
+  ): Promise<PlatformResult> {
+    const token = tokenByPlatform.get(platform);
+    const connected = !!token?.connected;
+    if (!connected || !token?.accessToken) {
+      return { platform, connected: false, analyticsAvailable: false, metrics: MOCK_FALLBACKS[platform]! };
+    }
     try {
-      const normalized = await youtube.getNormalizedMetrics(ytToken.accessToken, ytToken.scope, 28);
-      ytNormalized = normalized;
-      ytAnalyticsAvailable = youtube.hasAnalyticsScope(ytToken.scope);
+      const metrics = await fn();
+      const hasSignal =
+        metrics.totalViews > 0 ||
+        metrics.postsCount > 0 ||
+        metrics.impressions > 0 ||
+        metrics.followers > 0;
+      return { platform, connected: true, analyticsAvailable: hasScope && hasSignal, metrics };
     } catch (err) {
-      // Authenticated but provider call failed — do NOT silently return mock
-      // numbers. Surface zeros + analyticsAvailable=false so the UI can prompt
-      // the user. The error is logged for observability.
-      console.error("[dashboard] YouTube normalized metrics failed", err);
-      ytNormalized = {
-        platform: "youtube",
-        followers: 0,
-        totalViews: 0,
-        engagementRate: 0,
-        reach: 0,
-        impressions: 0,
-        ctr: 0,
-        watchTimeMinutes: 0,
-        postsCount: 0,
-        periodDays: 28,
-        lastUpdated: new Date().toISOString(),
-      };
-      ytAnalyticsAvailable = false;
+      req.log.error({ err, platform }, "dashboard: normalized metrics failed");
+      return { platform, connected: true, analyticsAvailable: false, metrics: MOCK_FALLBACKS[platform]! };
     }
   }
 
-  const otherBreakdowns = [
-    { platform: "instagram", followers: 42800, content: 5, engagementRate: 7.59, totalViews: 237700, reach: 237700, impressions: 237700, watchTimeMinutes: 0 },
-    { platform: "facebook", followers: 31200, content: 5, engagementRate: 6.81, totalViews: 209600, reach: 209600, impressions: 209600, watchTimeMinutes: 0 },
-    { platform: "tiktok", followers: 324000, content: 5, engagementRate: 10.07, totalViews: 5491000, reach: 5491000, impressions: 5491000, watchTimeMinutes: 0 },
-    { platform: "twitter", followers: 89400, content: 5, engagementRate: 3.07, totalViews: 1440000, reach: 1440000, impressions: 1440000, watchTimeMinutes: 0 },
-  ];
+  const ytToken = tokenByPlatform.get("youtube");
+  const igToken = tokenByPlatform.get("instagram");
+  const fbToken = tokenByPlatform.get("facebook");
+  const ttToken = tokenByPlatform.get("tiktok");
+  const twToken = tokenByPlatform.get("twitter");
 
-  const platformBreakdown = [
-    {
-      platform: "youtube",
-      connected: !!ytToken?.connected,
-      followers: ytNormalized.followers,
-      content: ytNormalized.postsCount,
-      engagementRate: parseFloat(ytNormalized.engagementRate.toFixed(2)),
-      totalViews: ytNormalized.totalViews,
-      reach: ytNormalized.reach,
-      impressions: ytNormalized.impressions,
-      watchTimeMinutes: ytNormalized.watchTimeMinutes,
-      analyticsAvailable: ytAnalyticsAvailable,
-    },
-    ...otherBreakdowns.map((p) => ({
-      platform: p.platform,
-      connected: p.platform === "instagram" || p.platform === "tiktok",
-      followers: p.followers,
-      content: p.content,
-      engagementRate: p.engagementRate,
-      totalViews: p.totalViews,
-      reach: p.reach,
-      impressions: p.impressions,
-      watchTimeMinutes: p.watchTimeMinutes,
-      analyticsAvailable: false,
-    })),
-  ];
+  const [ytRes, igRes, fbRes, ttRes, twRes] = await Promise.all([
+    safeFetch(
+      "youtube",
+      () => youtube.getNormalizedMetrics(ytToken!.accessToken, ytToken!.scope, 28),
+      youtube.hasAnalyticsScope(ytToken?.scope),
+    ),
+    safeFetch(
+      "instagram",
+      () => meta.getInstagramNormalizedMetrics(igToken!.accessToken, igToken!.scope, 28),
+      meta.hasInstagramInsightsScope(igToken?.scope),
+    ),
+    safeFetch(
+      "facebook",
+      () => meta.getFacebookNormalizedMetrics(fbToken!.accessToken, fbToken!.scope, 28),
+      meta.hasFacebookInsightsScope(fbToken?.scope),
+    ),
+    safeFetch(
+      "tiktok",
+      () => tiktok.getNormalizedMetrics(ttToken!.accessToken, ttToken!.scope, 28),
+      tiktok.hasVideoListScope(ttToken?.scope),
+    ),
+    safeFetch(
+      "twitter",
+      () => twitter.getNormalizedMetrics(twToken!.accessToken, twToken!.scope, 28),
+      twitter.hasReadScope(twToken?.scope),
+    ),
+  ]);
 
-  const normalizedBreakdown = [
-    ytNormalized,
-    ...otherBreakdowns.map((p) => ({
-      platform: p.platform,
-      followers: p.followers,
-      totalViews: p.totalViews,
-      engagementRate: p.engagementRate,
-      reach: p.reach,
-      impressions: p.impressions,
-      ctr: 0,
-      watchTimeMinutes: p.watchTimeMinutes,
-      postsCount: p.content,
-      periodDays: 28,
-      lastUpdated: new Date().toISOString(),
-    })),
-  ];
+  const results: PlatformResult[] = [ytRes, igRes, fbRes, ttRes, twRes];
+
+  const platformBreakdown = results.map((r) => ({
+    platform: r.platform,
+    connected: r.connected,
+    followers: r.metrics.followers,
+    content: r.metrics.postsCount,
+    engagementRate: parseFloat(r.metrics.engagementRate.toFixed(2)),
+    totalViews: r.metrics.totalViews,
+    reach: r.metrics.reach,
+    impressions: r.metrics.impressions,
+    watchTimeMinutes: r.metrics.watchTimeMinutes,
+    analyticsAvailable: r.analyticsAvailable,
+  }));
+
+  const normalizedBreakdown: NormalizedPlatformMetrics[] = results.map((r) => ({
+    ...r.metrics,
+    engagementRate: parseFloat(r.metrics.engagementRate.toFixed(2)),
+  }));
 
   const totalFollowers = normalizedBreakdown.reduce((s, p) => s + p.followers, 0);
   const totalViews = normalizedBreakdown.reduce((s, p) => s + p.totalViews, 0);

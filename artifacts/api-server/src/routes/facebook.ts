@@ -2,8 +2,10 @@ import { Router } from "express";
 import { eq } from "drizzle-orm";
 import { db, tokensTable } from "@workspace/db";
 import { ListFacebookPostsQueryParams } from "@workspace/api-zod";
+import { MetaProvider } from "../services/MetaProvider.js";
 
 const router = Router();
+const meta = new MetaProvider();
 
 const facebookPosts = [
   {
@@ -99,14 +101,14 @@ router.get("/facebook/posts", async (req, res) => {
   res.json({ items: sliced, total: facebookPosts.length, limit, offset });
 });
 
-router.get("/facebook/analytics", async (_req, res) => {
+router.get("/facebook/analytics", async (req, res) => {
   const totalViews = facebookPosts.reduce((s, p) => s + p.impressions, 0);
   const totalLikes = facebookPosts.reduce((s, p) => s + p.likeCount, 0);
   const totalComments = facebookPosts.reduce((s, p) => s + p.commentCount, 0);
   const totalShares = facebookPosts.reduce((s, p) => s + p.shareCount, 0);
   const averageEngagementRate = ((totalLikes + totalComments + totalShares) / totalViews) * 100;
 
-  res.json({
+  const mockPayload = {
     platform: "facebook",
     totalContent: facebookPosts.length,
     totalViews,
@@ -124,7 +126,40 @@ router.get("/facebook/analytics", async (_req, res) => {
       engagementRate: parseFloat((((p.likeCount + p.commentCount + p.shareCount) / p.impressions) * 100).toFixed(2)),
       platform: "facebook",
     })),
-  });
+  };
+
+  const [token] = await db
+    .select()
+    .from(tokensTable)
+    .where(eq(tokensTable.platform, "facebook"))
+    .limit(1);
+
+  if (token?.connected && token.accessToken) {
+    try {
+      const normalized = await meta.getFacebookNormalizedMetrics(token.accessToken, token.scope, 28);
+      const hasInsights = meta.hasFacebookInsightsScope(token.scope);
+      const hasSignal = normalized.totalViews > 0 || normalized.impressions > 0;
+      res.json({
+        ...mockPayload,
+        totalContent: normalized.postsCount,
+        totalViews: normalized.totalViews,
+        totalLikes: Math.round((normalized.engagementRate / 100) * normalized.totalViews),
+        averageEngagementRate: parseFloat(normalized.engagementRate.toFixed(2)),
+        followerCount: normalized.followers,
+        normalized,
+        analyticsAvailable: hasInsights && hasSignal,
+        analyticsReason: !hasInsights ? "insufficient_scope" : !hasSignal ? "no_signal" : "ok",
+        periodDays: normalized.periodDays,
+      });
+      return;
+    } catch (err) {
+      req.log.error({ err }, "facebook analytics failed; falling back to mock");
+      res.json({ ...mockPayload, analyticsAvailable: false, analyticsReason: "upstream_error" });
+      return;
+    }
+  }
+
+  res.json({ ...mockPayload, analyticsAvailable: false, analyticsReason: "not_connected" });
 });
 
 export default router;

@@ -2,8 +2,10 @@ import { Router } from "express";
 import { eq } from "drizzle-orm";
 import { db, tokensTable } from "@workspace/db";
 import { ListInstagramMediaQueryParams } from "@workspace/api-zod";
+import { MetaProvider } from "../services/MetaProvider.js";
 
 const router = Router();
+const meta = new MetaProvider();
 
 const instagramMedia = [
   {
@@ -99,13 +101,13 @@ router.get("/instagram/media", async (req, res) => {
   res.json({ items: sliced, total: instagramMedia.length, limit, offset });
 });
 
-router.get("/instagram/analytics", async (_req, res) => {
+router.get("/instagram/analytics", async (req, res) => {
   const totalViews = instagramMedia.reduce((s, m) => s + m.impressions, 0);
   const totalLikes = instagramMedia.reduce((s, m) => s + m.likeCount, 0);
   const totalComments = instagramMedia.reduce((s, m) => s + m.commentsCount, 0);
   const averageEngagementRate = ((totalLikes + totalComments) / totalViews) * 100;
 
-  res.json({
+  const mockPayload = {
     platform: "instagram",
     totalContent: instagramMedia.length,
     totalViews,
@@ -123,7 +125,48 @@ router.get("/instagram/analytics", async (_req, res) => {
       engagementRate: parseFloat((((m.likeCount + m.commentsCount) / m.impressions) * 100).toFixed(2)),
       platform: "instagram",
     })),
-  });
+  };
+
+  const [token] = await db
+    .select()
+    .from(tokensTable)
+    .where(eq(tokensTable.platform, "instagram"))
+    .limit(1);
+
+  if (token?.connected && token.accessToken) {
+    try {
+      const normalized = await meta.getInstagramNormalizedMetrics(
+        token.accessToken,
+        token.scope,
+        28,
+      );
+      const hasScope = meta.hasInstagramInsightsScope(token.scope);
+      const hasSignal = normalized.totalViews > 0 || normalized.postsCount > 0;
+      res.json({
+        ...mockPayload,
+        totalContent: normalized.postsCount,
+        totalViews: normalized.totalViews,
+        totalLikes: Math.round((normalized.engagementRate / 100) * normalized.totalViews),
+        averageEngagementRate: parseFloat(normalized.engagementRate.toFixed(2)),
+        followerCount: normalized.followers,
+        normalized,
+        analyticsAvailable: hasScope && hasSignal,
+        analyticsReason: !hasScope ? "insufficient_scope" : !hasSignal ? "no_signal" : "ok",
+        periodDays: normalized.periodDays,
+      });
+      return;
+    } catch (err) {
+      req.log.error({ err }, "instagram analytics failed; falling back to mock");
+      res.json({
+        ...mockPayload,
+        analyticsAvailable: false,
+        analyticsReason: "upstream_error",
+      });
+      return;
+    }
+  }
+
+  res.json({ ...mockPayload, analyticsAvailable: false, analyticsReason: "not_connected" });
 });
 
 export default router;
