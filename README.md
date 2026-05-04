@@ -250,6 +250,46 @@ pnpm --filter @workspace/social-meta-collector run dev  # Frontend
 
 ---
 
+## Testing
+
+The repo has a three-tier Vitest stack (~40/40/20 unit/integration/e2e) plus a
+Playwright black-box suite at the repo root.
+
+```bash
+# Vitest tiers (per project)
+pnpm --filter @workspace/api-server run test:unit         # ~7 specs, no IO
+pnpm --filter @workspace/api-server run test:integration  # ~12 specs, mocked db
+pnpm --filter @workspace/api-server run test:e2e          # ~3 multi-route flows
+
+# Schema regression on the shared db package
+pnpm --filter @workspace/db test
+
+# Browser-driven E2E (requires `playwright install` once)
+pnpm --filter @workspace/playwright-e2e exec playwright install --with-deps chromium
+pnpm --filter @workspace/playwright-e2e test
+
+# Convenience aliases at the repo root
+pnpm test            # all vitest tiers
+pnpm test:unit
+pnpm test:integration
+pnpm test:e2e
+pnpm test:browser    # playwright
+```
+
+The two invariants the suite is designed to protect:
+
+1. **OAuth tokens are never persisted in plaintext** — the AES-256-GCM helpers
+   are asserted to roundtrip, fail closed on tampered ciphertext, and refuse a
+   wrong-length key.
+2. **Redis is optional, never load-bearing** — `cacheGet`/`cacheSet`/`cacheDel`
+   swallow every error path, and the dashboard route returns a full payload
+   when `REDIS_URL` is unset.
+
+See [`TESTING.md`](./TESTING.md) for the full file inventory, conventions,
+mocking patterns, and instructions for adding a new test.
+
+---
+
 ## Paleta de Design
 
 | Papel | Cor | Hex |

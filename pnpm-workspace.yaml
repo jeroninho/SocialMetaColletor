@@ -2,6 +2,7 @@ packages:
   - artifacts/*
   - lib/*
   - lib/integrations/*
+  - playwright
   - scripts
 
 autoInstallPeers: false

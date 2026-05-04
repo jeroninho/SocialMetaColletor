@@ -8,7 +8,11 @@
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:unit": "vitest run --project=unit",
+    "test:integration": "vitest run --project=integration",
+    "test:e2e": "vitest run --project=e2e",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@types/bcrypt": "^6.0.0",
