@@ -226,7 +226,8 @@ paths run by default; tests opt into them where needed.
 
 ### Out of scope
 
-* Coverage gates and CI configuration (Task #14).
+* Coverage **gates** and CI configuration (Task #14). Coverage reporting itself
+  is wired up — see [Coverage](#coverage) below — but no thresholds are enforced.
 * Frontend (React) component tests (Task #11/#15).
 * Real Postgres in tests — Task #16 covers the DB stack overhaul; until then,
   the db mock is the contract.
@@ -245,3 +246,33 @@ paths run by default; tests opt into them where needed.
    don't reach for the real driver.
 5. Run `pnpm --filter @workspace/api-server run test:<tier>` locally before
    committing.
+
+---
+
+## Coverage
+
+`@workspace/api-server` ships a coverage report powered by `@vitest/coverage-v8`.
+It runs all three Vitest projects (unit, integration, e2e) in a single pass and
+emits both a terminal summary and a browsable HTML report.
+
+```bash
+pnpm --filter @workspace/api-server run test:coverage
+```
+
+Outputs:
+
+* **Text** — printed to the terminal at the end of the run, one row per source
+  file with statement / branch / function / line percentages and the line
+  numbers that are still uncovered.
+* **HTML** — written to `artifacts/api-server/coverage/` (gitignored). Open
+  `artifacts/api-server/coverage/index.html` in a browser for a per-file drill
+  down, including which branches inside the OAuth callback handlers, dashboard
+  fallback paths, and queue retry logic still need tests.
+
+Configuration lives in `artifacts/api-server/vitest.config.ts` under
+`test.coverage`. It uses the v8 provider, includes everything under `src/**`
+(excluding `*.test.ts` and the `src/test/**` setup harness), and runs with
+`all: true` so files with zero tests still appear in the report.
+
+There is **no coverage threshold gate** — this is a feedback tool, not a CI
+guard. Enforcing minimums is tracked separately under Task #14.

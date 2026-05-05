@@ -6,6 +6,19 @@ export default defineConfig({
   resolve: sharedResolve,
   test: {
     pool: "forks",
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html"],
+      reportsDirectory: "./coverage",
+      include: ["src/**/*.ts"],
+      exclude: [
+        "src/**/*.test.ts",
+        "src/test/**",
+        "src/**/*.d.ts",
+      ],
+      all: true,
+      clean: true,
+    },
     projects: [
       {
         resolve: sharedResolve,
