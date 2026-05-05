@@ -1,22 +1,67 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// Targets $REPLIT_DEV_DOMAIN when set, else localhost:80 (path-based proxy).
-// Workflow startup is platform-managed; see TESTING.md.
+type WebServerConfig = NonNullable<Parameters<typeof defineConfig>[0]["webServer"]>;
+
+// Default to the local path-based proxy on :80; opt into the public Replit
+// domain (or any URL) by setting PLAYWRIGHT_BASE_URL.
 function resolveBaseUrl(): string {
   if (process.env["PLAYWRIGHT_BASE_URL"]) return process.env["PLAYWRIGHT_BASE_URL"];
-  if (process.env["REPLIT_DEV_DOMAIN"]) return `https://${process.env["REPLIT_DEV_DOMAIN"]}`;
   return "http://localhost:80";
 }
+
+const baseURL = resolveBaseUrl();
+
+// Skip the webServer block when targeting an already-running remote URL.
+const skipWebServer =
+  process.env["PLAYWRIGHT_SKIP_WEBSERVER"] === "1" || Boolean(process.env["PLAYWRIGHT_BASE_URL"]);
+
+const apiPort = process.env["API_PORT"] ?? "8080";
+const webPort = process.env["WEB_PORT"] ?? "24982";
+
+const webServer: WebServerConfig | undefined = skipWebServer
+  ? undefined
+  : [
+      {
+        command: `pnpm --filter @workspace/api-server run dev`,
+        cwd: "..",
+        url: `http://localhost:80/api/healthz`,
+        reuseExistingServer: !process.env["CI"],
+        timeout: 180_000,
+        stdout: "pipe",
+        stderr: "pipe",
+        env: {
+          PORT: apiPort,
+          NODE_ENV: "development",
+        },
+      },
+      {
+        command: `pnpm --filter @workspace/social-meta-collector run dev`,
+        cwd: "..",
+        url: `http://localhost:80/`,
+        reuseExistingServer: !process.env["CI"],
+        timeout: 180_000,
+        stdout: "pipe",
+        stderr: "pipe",
+        env: {
+          PORT: webPort,
+          BASE_PATH: "/",
+        },
+      },
+    ];
 
 export default defineConfig({
   testDir: "./specs",
   timeout: 30_000,
   expect: { timeout: 5_000 },
-  fullyParallel: true,
+  // The connections specs install per-test `page.route` mocks for
+  // /api/auth/status; running them in parallel sometimes races the mock
+  // installation against the SPA's first fetch, so we serialize.
+  fullyParallel: false,
+  workers: 1,
   retries: process.env["CI"] ? 2 : 0,
   reporter: process.env["CI"] ? "github" : [["list"]],
   use: {
-    baseURL: resolveBaseUrl(),
+    baseURL,
     trace: "on-first-retry",
     headless: true,
     ignoreHTTPSErrors: true,
@@ -27,4 +72,5 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"] },
     },
   ],
+  ...(webServer ? { webServer } : {}),
 });

@@ -42,11 +42,51 @@ pnpm test:browser       # alias of test:e2e
 
 ```bash
 pnpm --filter @workspace/playwright-e2e run test:install
+# equivalent: pnpm --filter @workspace/playwright-e2e exec playwright install --with-deps chromium
 ```
 
-By default the Playwright suite targets `https://$REPLIT_DEV_DOMAIN`
-(the live preview proxy) when that env var is set, otherwise
-`http://localhost:80`. Override with `PLAYWRIGHT_BASE_URL=...`.
+This is a **one-time bootstrap** per machine (or CI cache key); subsequent
+`pnpm test:e2e` runs reuse the installed browser.
+
+### What `pnpm test:e2e` actually does
+
+`playwright.config.ts` declares a two-process `webServer` block that boots the
+backend and frontend before the suite runs:
+
+| Process | Command | Wait URL |
+| --- | --- | --- |
+| API server | `pnpm --filter @workspace/api-server run dev` (PORT=8080) | `http://localhost:80/api/healthz` |
+| Frontend (Vite) | `pnpm --filter @workspace/social-meta-collector run dev` (PORT=24982, BASE_PATH=/) | `http://localhost:80/` |
+
+Both wait URLs go through the platform's path-based proxy on `:80`, which is
+how the registered artifact services are normally reached. With
+`reuseExistingServer: true` (the default outside CI), Playwright will piggy-back
+on the workflows that the Replit workspace already keeps running — no extra
+processes are spawned. In CI (`CI=1`), Playwright owns the lifecycle and will
+fail fast if either service does not become healthy within 180 s.
+
+### Targeting an already-running deployment
+
+Set any of the following to skip the `webServer` block and point Playwright at
+an existing URL:
+
+```bash
+# Live Replit preview (auto-detected when REPLIT_DEV_DOMAIN is set)
+pnpm --filter @workspace/playwright-e2e run test:remote
+
+# Arbitrary base URL (production smoke)
+PLAYWRIGHT_BASE_URL=https://example.com pnpm test:e2e
+
+# Force-skip the webServer even on localhost (e.g. you're running workflows by hand)
+PLAYWRIGHT_SKIP_WEBSERVER=1 pnpm test:e2e
+```
+
+By default the Playwright suite targets `http://localhost:80` (the in-workspace
+proxy fronting the artifact services). To point it at any other URL —
+including the live Replit preview at `https://$REPLIT_DEV_DOMAIN` or a
+production domain — set `PLAYWRIGHT_BASE_URL` (the convenience
+`pnpm --filter @workspace/playwright-e2e run test:remote` script defaults it
+to `https://$REPLIT_DEV_DOMAIN`).
 
 ---
 

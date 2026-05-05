@@ -26,7 +26,7 @@ test.describe("Connections page UI", () => {
   test("unauthenticated /connections bounces to /login", async ({ page }) => {
     await page.context().clearCookies();
     await page.addInitScript(() => window.localStorage.removeItem("smc_token"));
-    await page.goto("/connections");
+    await page.goto("/connections", { waitUntil: "domcontentloaded" });
     await page.waitForURL(/\/login/, { timeout: 10_000 });
   });
 
@@ -36,13 +36,13 @@ test.describe("Connections page UI", () => {
       route.fulfill({ contentType: "application/json", body: JSON.stringify(buildStatus()) }),
     );
 
-    await page.goto("/connections");
+    await page.goto("/connections", { waitUntil: "domcontentloaded" });
     const body = page.locator("body");
     await expect(body).toContainText(/YouTube/i, { timeout: 10_000 });
-    await expect(body).toContainText(/Instagram/i);
-    await expect(body).toContainText(/Facebook/i);
-    await expect(body).toContainText(/TikTok/i);
-    await expect(body).toContainText(/Twitter|X\b/i);
+    await expect(body).toContainText(/Instagram/i, { timeout: 10_000 });
+    await expect(body).toContainText(/Facebook/i, { timeout: 10_000 });
+    await expect(body).toContainText(/TikTok/i, { timeout: 10_000 });
+    await expect(body).toContainText(/Twitter|X\b/i, { timeout: 10_000 });
   });
 
   test("happy path: a fully-connected YouTube account shows the Conectado badge", async ({ page, registerAndLogin }) => {
@@ -65,7 +65,7 @@ test.describe("Connections page UI", () => {
       }),
     );
 
-    await page.goto("/connections");
+    await page.goto("/connections", { waitUntil: "domcontentloaded" });
     const badge = page.getByTestId("badge-youtube-status");
     await expect(badge).toContainText(/Conectado/i, { timeout: 10_000 });
     // The reconnect banner must NOT appear on the happy path.
@@ -92,7 +92,7 @@ test.describe("Connections page UI", () => {
       }),
     );
 
-    await page.goto("/connections");
+    await page.goto("/connections", { waitUntil: "domcontentloaded" });
 
     const badge = page.getByTestId("badge-youtube-status");
     await expect(badge).toContainText(/Reconex[aã]o necess[áa]ria/i, { timeout: 10_000 });
@@ -121,7 +121,7 @@ test.describe("Connections page UI", () => {
       });
     });
 
-    await page.goto("/connections");
+    await page.goto("/connections", { waitUntil: "domcontentloaded" });
     await page.getByRole("button", { name: /Conectar com YouTube/i }).click();
 
     await expect.poll(() => connectCalled, { timeout: 5000 }).toBe(true);

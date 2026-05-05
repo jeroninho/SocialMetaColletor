@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "test": "playwright test --config=playwright.config.ts",
-    "test:install": "playwright install --with-deps chromium"
+    "test:install": "playwright install --with-deps chromium",
+    "test:remote": "PLAYWRIGHT_BASE_URL=${PLAYWRIGHT_BASE_URL:-https://$REPLIT_DEV_DOMAIN} playwright test --config=playwright.config.ts"
   },
   "devDependencies": {
-    "@playwright/test": "^1.50.1"
+    "@playwright/test": "^1.50.1",
+    "@types/node": "catalog:"
   }
 }

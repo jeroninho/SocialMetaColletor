@@ -26,7 +26,6 @@ interface Fixtures {
 
 function resolveAppBaseUrl(): string {
   if (process.env["PLAYWRIGHT_BASE_URL"]) return process.env["PLAYWRIGHT_BASE_URL"];
-  if (process.env["REPLIT_DEV_DOMAIN"]) return `https://${process.env["REPLIT_DEV_DOMAIN"]}`;
   return "http://localhost:80";
 }
 
