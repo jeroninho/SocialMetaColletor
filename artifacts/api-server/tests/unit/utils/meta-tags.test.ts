@@ -76,6 +76,46 @@ describe("extractMetaTags", () => {
       expect(result.title).toBe("Tom & Jerry 'Show' & Friends");
       expect(result.og.get("description")).toBe('A <b>bold</b> "quote"');
     });
+
+    it("decodes common HTML5 named entities in titles", () => {
+      const html = `<title>Hello&nbsp;World&hellip; &copy; 2024 &mdash; All&nbsp;Rights&nbsp;Reserved</title>`;
+      const result = extractMetaTags(html);
+      expect(result.title).toBe(
+        "Hello\u00a0World\u2026 \u00a9 2024 \u2014 All\u00a0Rights\u00a0Reserved",
+      );
+    });
+
+    it("decodes punctuation, currency, and symbol entities in descriptions", () => {
+      const html = `
+        <meta property="og:title" content="It&rsquo;s &ldquo;great&rdquo;">
+        <meta property="og:description" content="Pay &pound;10 or &euro;12 &mdash; save 50&#37;... &reg; &trade;">
+      `;
+      const result = extractMetaTags(html);
+      expect(result.og.get("title")).toBe("It\u2019s \u201cgreat\u201d");
+      expect(result.og.get("description")).toBe(
+        "Pay \u00a310 or \u20ac12 \u2014 save 50%... \u00ae \u2122",
+      );
+    });
+
+    it("decodes accented letter entities", () => {
+      const html = `<meta property="og:title" content="Caf&eacute; na&iuml;ve r&eacute;sum&eacute;">`;
+      const result = extractMetaTags(html);
+      // iuml is not in our list; it should remain literal, but eacute should decode.
+      expect(result.og.get("title")).toContain("Caf\u00e9");
+      expect(result.og.get("title")).toContain("r\u00e9sum\u00e9");
+    });
+
+    it("leaves unknown named entities untouched", () => {
+      const html = `<meta property="og:title" content="Unknown &fooBar; entity">`;
+      const result = extractMetaTags(html);
+      expect(result.og.get("title")).toBe("Unknown &fooBar; entity");
+    });
+
+    it("decodes &apos; to a single quote", () => {
+      const html = `<meta property="og:title" content="It&apos;s working">`;
+      const result = extractMetaTags(html);
+      expect(result.og.get("title")).toBe("It's working");
+    });
   });
 
   describe("missing tags", () => {
