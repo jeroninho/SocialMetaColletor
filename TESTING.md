@@ -90,8 +90,23 @@ to `https://$REPLIT_DEV_DOMAIN`).
 
 ### Continuous integration
 
-The Playwright suite runs automatically on every push and pull request via
-the `.github/workflows/e2e.yml` GitHub Actions workflow. The job:
+Two jobs run in parallel on every push and pull request via
+`.github/workflows/e2e.yml`. Both share the pnpm store cache via
+`actions/setup-node`'s built-in `cache: pnpm`.
+
+**`checks` job — Typecheck & Vitest**
+
+1. Checks out the repo and sets up pnpm + Node 20 with pnpm cache.
+2. Runs `pnpm install --frozen-lockfile`.
+3. Runs `pnpm typecheck` (composite libs + leaf workspace packages).
+4. Runs `pnpm test` (Vitest unit + integration tiers across
+   `@workspace/api-server` and `@workspace/db`).
+5. Runs `pnpm test:server-e2e` (Vitest cross-route e2e tier in
+   `@workspace/api-server`).
+
+The build fails if any of those tiers fails.
+
+**`playwright` job — Playwright smoke tests**
 
 1. Checks out the repo and sets up pnpm + Node 20 with pnpm cache.
 2. Runs `pnpm install --frozen-lockfile`.
