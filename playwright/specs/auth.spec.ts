@@ -2,12 +2,13 @@ import { test, expect, makeTestUser } from "../fixtures/test-user.js";
 
 // The login page renders two text-equivalent buttons in places (the tab
 // switcher AND the form submit button can both read "Entrar"), so each
-// spec scopes its selectors with the actual class names rendered by
+// spec scopes its selectors with stable data-testid attributes added in
 // `artifacts/social-meta-collector/src/pages/login.tsx`:
-//   - `button.tab-btn` is the Login/Cadastrar tab pill
-//   - `button.login-btn` is the form's submit button
-const tabRegister = "button.tab-btn:has-text('Cadastrar')";
-const submitButton = "button.login-btn";
+//   - `[data-testid="tab-login"]` / `[data-testid="tab-register"]` — tab pills
+//   - `[data-testid="button-submit"]` — form submit button
+const tabRegister = "[data-testid='tab-register']";
+const tabLogin = "[data-testid='tab-login']";
+const submitButton = "[data-testid='button-submit']";
 
 test.describe("Auth UI flow", () => {
   test("/login renders the email/senha form and Entrar button", async ({ page }) => {
@@ -55,7 +56,7 @@ test.describe("Auth UI flow", () => {
     await page.locator(tabRegister).click();
     await expect(page.getByPlaceholder(/Seu nome/i)).toBeVisible();
 
-    await page.locator("button.tab-btn:has-text('Entrar')").click();
+    await page.locator(tabLogin).click();
     await expect(page.getByPlaceholder(/Seu nome/i)).toHaveCount(0);
   });
 

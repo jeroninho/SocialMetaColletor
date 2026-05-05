@@ -592,6 +592,7 @@ export default function LoginPage() {
                   key={m}
                   type="button"
                   className={`tab-btn${mode === m ? " active" : ""}`}
+                  data-testid={`tab-${m}`}
                   onClick={() => { setMode(m); setError(null); }}
                 >
                   {m === "login" ? "Entrar" : "Cadastrar"}
@@ -726,7 +727,7 @@ export default function LoginPage() {
               )}
 
               <div className="fade-slide-4">
-                <button type="submit" className="login-btn" disabled={loading}>
+                <button type="submit" className="login-btn" data-testid="button-submit" disabled={loading}>
                   {loading
                     ? <Loader2 size={18} className="animate-spin" />
                     : <>
