@@ -6,6 +6,7 @@
   "scripts": {
     "test": "playwright test --config=playwright.config.ts",
     "test:install": "playwright install --with-deps chromium",
+    "test:install-browsers": "playwright install chromium",
     "test:remote": "PLAYWRIGHT_BASE_URL=${PLAYWRIGHT_BASE_URL:-https://$REPLIT_DEV_DOMAIN} playwright test --config=playwright.config.ts"
   },
   "devDependencies": {

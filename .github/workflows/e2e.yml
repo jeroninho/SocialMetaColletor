@@ -42,12 +42,7 @@ jobs:
           key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
 
       - name: Install Playwright browsers
-        if: steps.pw-cache.outputs.cache-hit != 'true'
         run: pnpm --filter @workspace/playwright-e2e run test:install
-
-      - name: Install Playwright system deps
-        if: steps.pw-cache.outputs.cache-hit == 'true'
-        run: pnpm --filter @workspace/playwright-e2e exec playwright install-deps chromium
 
       - name: Run smoke tests
         env:
