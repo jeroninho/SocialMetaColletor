@@ -88,6 +88,21 @@ production domain — set `PLAYWRIGHT_BASE_URL` (the convenience
 `pnpm --filter @workspace/playwright-e2e run test:remote` script defaults it
 to `https://$REPLIT_DEV_DOMAIN`).
 
+### Continuous integration
+
+The Playwright suite runs automatically on every push and pull request via
+the `.github/workflows/e2e.yml` GitHub Actions workflow. The job:
+
+1. Checks out the repo and sets up pnpm + Node 20 with pnpm cache.
+2. Runs `pnpm install --frozen-lockfile`.
+3. Restores `~/.cache/ms-playwright` keyed on the resolved `@playwright/test`
+   version, then runs `pnpm --filter @workspace/playwright-e2e run test:install`
+   on a cache miss (or just `playwright install-deps chromium` on a hit).
+4. Runs `CI=1 pnpm test:e2e`, which lets Playwright own the api-server +
+   frontend lifecycle and fail the build if any smoke spec fails.
+5. Uploads `playwright/playwright-report` and `playwright/test-results` as a
+   build artifact for post-mortem debugging.
+
 ---
 
 ## Layout
