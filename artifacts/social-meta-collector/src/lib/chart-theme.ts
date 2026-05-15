@@ -1,41 +1,45 @@
+/**
+ * Chart palette — neutral monochromatic Squarespace-inspired.
+ * Platform marks kept muted; charts use foreground/muted scale.
+ */
 export const PLATFORM_COLORS = {
-  youtube: "#FF4444",
-  instagram: "#E1306C",
-  facebook: "#2D88FF",
-  tiktok: "#2EC4B6",
-  twitter: "#1DA1F2",
+  youtube:   "#1A1A1A",
+  instagram: "#3A3A3A",
+  facebook:  "#5A5A5A",
+  tiktok:    "#7A7A7A",
+  twitter:   "#9A9A9A",
 } as const;
 
 export const CHART_PALETTE = [
-  "#7C6FEA",
-  "#FF4444",
-  "#E1306C",
-  "#2D88FF",
-  "#2EC4B6",
-  "#F59E0B",
+  "#0F0F0F",
+  "#3A3A3A",
+  "#6E6E6E",
+  "#9A9A9A",
+  "#B8865B", // restrained warm accent
+  "#5B6B7B", // restrained cool accent
 ] as const;
 
 export function getTooltipStyle(isDark: boolean) {
   return {
-    background: isDark ? "hsl(230 20% 16%)" : "#ffffff",
-    border: `1px solid ${isDark ? "hsl(230 18% 22%)" : "hsl(220 20% 90%)"}`,
-    borderRadius: 10,
+    background: isDark ? "hsl(0 0% 10%)" : "#ffffff",
+    border: `1px solid ${isDark ? "hsl(0 0% 18%)" : "hsl(30 8% 90%)"}`,
+    borderRadius: 6,
     fontSize: 12,
-    color: isDark ? "hsl(220 20% 90%)" : "hsl(224 47% 12%)",
+    color: isDark ? "hsl(0 0% 92%)" : "hsl(0 0% 6%)",
     boxShadow: isDark
-      ? "0 8px 24px rgba(0,0,0,0.4)"
-      : "0 8px 24px rgba(0,0,0,0.08)",
+      ? "0 4px 12px rgba(0,0,0,0.4)"
+      : "0 4px 12px rgba(0,0,0,0.06)",
     padding: "8px 12px",
   };
 }
 
 export function getAxisStyle(isDark: boolean) {
   return {
-    tick: { fontSize: 11, fill: isDark ? "hsl(220 12% 55%)" : "hsl(220 10% 50%)" },
-    stroke: isDark ? "hsl(220 12% 55%)" : "hsl(220 10% 50%)",
+    tick: { fontSize: 11, fill: isDark ? "hsl(0 0% 58%)" : "hsl(0 0% 40%)" },
+    stroke: isDark ? "hsl(0 0% 58%)" : "hsl(0 0% 40%)",
   };
 }
 
 export function getGridStyle(isDark: boolean) {
-  return isDark ? "hsl(230 18% 20%)" : "hsl(220 20% 92%)";
+  return isDark ? "hsl(0 0% 18%)" : "hsl(30 8% 90%)";
 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useLocation } from "wouter";
-import { Mail, Lock, User, Eye, EyeOff, Loader2, BarChart2, ArrowRight } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { Mail, Lock, User, Eye, EyeOff, Loader2, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/auth";
 
@@ -28,89 +28,6 @@ declare global {
       };
     };
   }
-}
-
-/* ─── Design tokens ─────────────────────────────────────── */
-const PETROLEUM = "#1E2A38";
-const PURPLE    = "#6C63FF";
-const ROSE      = "#FF6F91";
-
-/* ─── Inline SVG platform logos ─────────────────────────── */
-function YouTubeLogo({ size = 32 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="32" height="32" rx="8" fill="#FF0000" />
-      <path d="M25.8 11.4C25.6 10.6 24.9 10 24.1 9.8C22.5 9.4 16 9.4 16 9.4C16 9.4 9.5 9.4 7.9 9.8C7.1 10 6.4 10.7 6.2 11.4C5.8 13 5.8 16 5.8 16C5.8 16 5.8 19 6.2 20.6C6.4 21.4 7.1 22 7.9 22.2C9.5 22.6 16 22.6 16 22.6C16 22.6 22.5 22.6 24.1 22.2C24.9 22 25.6 21.3 25.8 20.6C26.2 19 26.2 16 26.2 16C26.2 16 26.2 13 25.8 11.4Z" fill="white" />
-      <path d="M13.6 19.4L19.6 16L13.6 12.6V19.4Z" fill="#FF0000" />
-    </svg>
-  );
-}
-
-function InstagramLogo({ size = 32 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="igGrad" x1="0" y1="32" x2="32" y2="0" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#F9A825" />
-          <stop offset="0.4" stopColor="#E1306C" />
-          <stop offset="1" stopColor="#833AB4" />
-        </linearGradient>
-      </defs>
-      <rect width="32" height="32" rx="8" fill="url(#igGrad)" />
-      <rect x="10" y="10" width="12" height="12" rx="3.5" stroke="white" strokeWidth="1.8" fill="none" />
-      <circle cx="16" cy="16" r="3.2" stroke="white" strokeWidth="1.8" fill="none" />
-      <circle cx="22" cy="10.5" r="1.1" fill="white" />
-    </svg>
-  );
-}
-
-function FacebookLogo({ size = 32 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="32" height="32" rx="8" fill="#1877F2" />
-      <path d="M20.5 10H18C17 10 16 11 16 12V14H13.5V17H16V26H19V17H21.5L22 14H19V12.5C19 12.2 19.2 12 19.5 12H22V10H20.5Z" fill="white" />
-    </svg>
-  );
-}
-
-function TikTokLogo({ size = 32 }: { size?: number }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="32" height="32" rx="8" fill="#010101" />
-      <path d="M21.5 7H18.8C18.8 7 19.2 10.6 23 11.1V13.7C23 13.7 21.2 13.6 19.5 12.7V19.5C19.5 22.5 17.2 25 14 25C10.7 25 8 22.3 8 19C8 15.7 10.7 13 14 13V15.7C12.2 15.7 10.7 17.2 10.7 19C10.7 20.8 12.2 22.3 14 22.3C15.8 22.3 17.3 20.8 17.3 19V7H21.5Z" fill="white" />
-      <path d="M20.5 6H22.5C22.5 6 23 9.8 27 10V12C27 12 25 11.8 23 10.5V19C23 22.9 19.9 26 16 26C12.1 26 9 22.9 9 19C9 15.1 12.1 12 16 12V14.2C13.3 14.2 11.2 16.3 11.2 19C11.2 21.7 13.3 23.8 16 23.8C18.7 23.8 20.8 21.7 20.8 19V6H20.5Z" fill="#25F4EE" opacity="0.7" />
-    </svg>
-  );
-}
-
-/* ─── Floating bubble ────────────────────────────────────── */
-interface BubbleProps {
-  style: React.CSSProperties;
-  animClass: string;
-  children: React.ReactNode;
-}
-
-function FloatingBubble({ style, animClass, children }: BubbleProps) {
-  return (
-    <div
-      className={animClass}
-      style={{
-        position: "absolute",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        borderRadius: "var(--radius)",
-        padding: "12px",
-        background: "rgba(255,255,255,0.08)",
-        backdropFilter: "blur(12px)",
-        border: "1px solid rgba(255,255,255,0.12)",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.3)",
-        ...style,
-      }}
-    >
-      {children}
-    </div>
-  );
 }
 
 type Mode = "login" | "register";
@@ -161,16 +78,13 @@ export default function LoginPage() {
         theme: "outline",
         size: "large",
         text: "continue_with",
-        shape: "pill",
+        shape: "rectangular",
         logo_alignment: "left",
         width: 336,
       });
     };
 
-    if (document.getElementById(SCRIPT_ID)) {
-      setup();
-      return;
-    }
+    if (document.getElementById(SCRIPT_ID)) { setup(); return; }
     const s = document.createElement("script");
     s.src = "https://accounts.google.com/gsi/client";
     s.async = true;
@@ -249,349 +163,186 @@ export default function LoginPage() {
 
   return (
     <>
-      {/* ── Keyframe animations injected via style tag ── */}
       <style>{`
-        @keyframes floatA {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          33%       { transform: translateY(-18px) rotate(4deg); }
-          66%       { transform: translateY(-8px) rotate(-3deg); }
-        }
-        @keyframes floatB {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          40%       { transform: translateY(-22px) rotate(-5deg); }
-          75%       { transform: translateY(-10px) rotate(3deg); }
-        }
-        @keyframes floatC {
-          0%, 100% { transform: translateY(0px) rotate(0deg) scale(1); }
-          50%       { transform: translateY(-14px) rotate(6deg) scale(1.04); }
-        }
-        @keyframes floatD {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          30%       { transform: translateY(-20px) rotate(-4deg); }
-          70%       { transform: translateY(-6px) rotate(5deg); }
-        }
-        @keyframes pulseGlow {
-          0%, 100% { box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 0 0 rgba(108,99,255,0); }
-          50%       { box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 20px 4px rgba(108,99,255,0.25); }
-        }
-        @keyframes fadeSlideUp {
-          from { opacity: 0; transform: translateY(16px); }
+        @keyframes login-fade {
+          from { opacity: 0; transform: translateY(8px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        @keyframes lineGrow {
-          from { width: 0; }
-          to   { width: 48px; }
-        }
-        .float-a { animation: floatA 6s ease-in-out infinite; }
-        .float-b { animation: floatB 7.5s ease-in-out infinite 0.8s; }
-        .float-c { animation: floatC 5.5s ease-in-out infinite 1.5s; }
-        .float-d { animation: floatD 8s ease-in-out infinite 0.4s; }
-        .pulse-glow { animation: pulseGlow 3s ease-in-out infinite; }
-        .fade-slide { animation: fadeSlideUp 0.5s ease-out both; }
-        .fade-slide-1 { animation: fadeSlideUp 0.5s ease-out 0.05s both; }
-        .fade-slide-2 { animation: fadeSlideUp 0.5s ease-out 0.1s both; }
-        .fade-slide-3 { animation: fadeSlideUp 0.5s ease-out 0.15s both; }
-        .fade-slide-4 { animation: fadeSlideUp 0.5s ease-out 0.2s both; }
+        .login-fade   { animation: login-fade 0.5s ease-out both; }
+        .login-fade-1 { animation: login-fade 0.5s ease-out 0.06s both; }
+        .login-fade-2 { animation: login-fade 0.5s ease-out 0.12s both; }
+        .login-fade-3 { animation: login-fade 0.5s ease-out 0.18s both; }
+        .login-fade-4 { animation: login-fade 0.5s ease-out 0.24s both; }
+
         .login-input {
           width: 100%;
-          padding: 11px 14px 11px 40px;
-          border-radius: var(--radius);
-          border: 1.5px solid rgba(0,0,0,0.10);
-          background: #F8FAFC;
-          font-size: 15px;
-          color: #111;
+          padding: 12px 14px 12px 40px;
+          border-radius: 6px;
+          border: 1px solid hsl(var(--border));
+          background: hsl(var(--background));
+          font-size: 14.5px;
+          color: hsl(var(--foreground));
           outline: none;
           font-family: 'Inter', sans-serif;
-          transition: border-color 0.2s, box-shadow 0.2s;
+          transition: border-color 0.18s ease;
         }
         .login-input:focus {
-          border-color: #6C63FF;
-          box-shadow: 0 0 0 3px rgba(108,99,255,0.14);
-          background: #fff;
+          border-color: hsl(var(--foreground));
         }
-        .login-input::placeholder { color: #9CA3AF; }
-        .login-btn {
+        .login-input:focus-visible {
+          outline: 2px solid hsl(var(--foreground) / 0.18);
+          outline-offset: 1px;
+        }
+        .login-input::placeholder { color: hsl(var(--muted-foreground)); }
+        .login-tab:focus-visible {
+          outline: 2px solid hsl(var(--foreground) / 0.25);
+          outline-offset: 2px;
+        }
+
+        .login-submit {
           width: 100%;
           padding: 12px;
-          border-radius: var(--radius);
-          border: none;
-          background: linear-gradient(135deg, #6C63FF 0%, #FF6F91 100%);
-          color: white;
-          font-size: 15px;
-          font-weight: 600;
-          font-family: 'Space Grotesk', sans-serif;
+          border-radius: 999px;
+          border: 1px solid hsl(var(--foreground));
+          background: hsl(var(--foreground));
+          color: hsl(var(--background));
+          font-size: 14.5px;
+          font-weight: 500;
+          font-family: 'Inter', sans-serif;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
-          transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
-          box-shadow: 0 4px 16px rgba(108,99,255,0.35);
+          transition: background-color 0.18s ease, transform 0.12s ease;
         }
-        .login-btn:hover:not(:disabled) {
-          opacity: 0.92;
-          transform: translateY(-1px);
-          box-shadow: 0 6px 24px rgba(108,99,255,0.45);
-        }
-        .login-btn:active:not(:disabled) { transform: translateY(0); }
-        .login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .tab-btn {
+        .login-submit:hover:not(:disabled) { background: hsl(var(--foreground) / 0.88); }
+        .login-submit:active:not(:disabled) { transform: scale(0.985); }
+        .login-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .login-tab {
           flex: 1;
-          padding: 8px;
-          font-size: 14px;
-          font-weight: 600;
-          font-family: 'Space Grotesk', sans-serif;
+          padding: 9px;
+          font-size: 13.5px;
+          font-weight: 500;
+          font-family: 'Inter', sans-serif;
           border: none;
-          border-radius: calc(var(--radius) - 2px);
+          border-radius: 4px;
           cursor: pointer;
-          transition: all 0.2s;
           background: transparent;
-          color: #6B7280;
+          color: hsl(var(--muted-foreground));
+          transition: all 0.18s ease;
         }
-        .tab-btn.active {
-          background: #6C63FF;
-          color: white;
-          box-shadow: 0 2px 8px rgba(108,99,255,0.3);
+        .login-tab.active {
+          background: hsl(var(--background));
+          color: hsl(var(--foreground));
+          box-shadow: 0 1px 3px rgba(0,0,0,0.06);
         }
       `}</style>
 
-      <div style={{ display: "flex", minHeight: "100dvh", background: "#FFFFFF" }}>
+      <div className="min-h-[100dvh] flex bg-background">
 
-        {/* ── Left panel: animated branding ──────────────── */}
-        <div
-          style={{
-            display: "none",
-            width: "50%",
-            background: `linear-gradient(145deg, ${PETROLEUM} 0%, #243447 60%, #1a2535 100%)`,
-            position: "relative",
-            overflow: "hidden",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          className="lg:!flex"
-        >
-          {/* Background glow orbs */}
-          <div style={{
-            position: "absolute", top: "20%", left: "30%",
-            width: 300, height: 300,
-            background: "radial-gradient(circle, rgba(108,99,255,0.18) 0%, transparent 70%)",
-            borderRadius: "50%", pointerEvents: "none",
-          }} />
-          <div style={{
-            position: "absolute", bottom: "25%", right: "20%",
-            width: 200, height: 200,
-            background: "radial-gradient(circle, rgba(255,111,145,0.12) 0%, transparent 70%)",
-            borderRadius: "50%", pointerEvents: "none",
-          }} />
+        {/* ── Left panel: editorial branding (desktop) ─────── */}
+        <div className="hidden lg:flex w-1/2 bg-cream border-r border-border relative overflow-hidden">
+          <div className="flex flex-col justify-between p-12 xl:p-16 w-full">
+            {/* Brand mark */}
+            <Link href="/">
+              <span className="flex items-center gap-2.5 cursor-pointer select-none">
+                <span className="w-6 h-6 rounded-sm bg-foreground flex items-center justify-center">
+                  <span className="block w-2 h-2 bg-background rounded-[1px]" />
+                </span>
+                <span
+                  className="text-[16px] text-foreground font-medium"
+                  style={{ fontFamily: "var(--app-font-heading)", letterSpacing: "-0.02em" }}
+                >
+                  MetaCollector
+                </span>
+              </span>
+            </Link>
 
-          {/* Floating platform logos */}
-          <FloatingBubble animClass="float-a pulse-glow" style={{ top: "18%", left: "12%" }}>
-            <YouTubeLogo size={42} />
-          </FloatingBubble>
-
-          <FloatingBubble animClass="float-b" style={{ top: "14%", right: "16%" }}>
-            <InstagramLogo size={42} />
-          </FloatingBubble>
-
-          <FloatingBubble animClass="float-c" style={{ bottom: "22%", left: "10%" }}>
-            <FacebookLogo size={42} />
-          </FloatingBubble>
-
-          <FloatingBubble animClass="float-d pulse-glow" style={{ bottom: "18%", right: "12%" }}>
-            <TikTokLogo size={42} />
-          </FloatingBubble>
-
-          {/* Small decorative dots */}
-          <div style={{
-            position: "absolute", top: "40%", left: "6%",
-            width: 8, height: 8, borderRadius: "50%",
-            background: "rgba(108,99,255,0.5)",
-            animation: "floatC 4s ease-in-out infinite 0.2s",
-          }} />
-          <div style={{
-            position: "absolute", top: "62%", right: "8%",
-            width: 6, height: 6, borderRadius: "50%",
-            background: "rgba(255,111,145,0.5)",
-            animation: "floatA 5s ease-in-out infinite 1s",
-          }} />
-          <div style={{
-            position: "absolute", top: "30%", right: "35%",
-            width: 5, height: 5, borderRadius: "50%",
-            background: "rgba(255,255,255,0.25)",
-            animation: "floatB 6s ease-in-out infinite 0.5s",
-          }} />
-
-          {/* Center text */}
-          <div style={{ textAlign: "center", padding: "0 48px", position: "relative", zIndex: 1 }}>
-            <div style={{
-              display: "inline-flex", alignItems: "center", justifyContent: "center",
-              width: 64, height: 64, borderRadius: "var(--radius-xl)",
-              background: `linear-gradient(135deg, ${PURPLE}, ${ROSE})`,
-              marginBottom: 28,
-              boxShadow: "var(--shadow-lg)",
-            }}>
-              <BarChart2 size={32} color="white" />
+            {/* Center quote */}
+            <div className="max-w-md">
+              <p className="eyebrow mb-5">Análise social</p>
+              <h2 className="font-display text-foreground" style={{ fontSize: "clamp(28px, 4vw, 44px)", lineHeight: 1.1 }}>
+                Centralize suas<br />
+                <span className="text-muted-foreground">métricas sociais.</span>
+              </h2>
+              <p className="mt-6 text-[15px] text-muted-foreground leading-[1.6] max-w-sm">
+                YouTube, Instagram, Facebook, TikTok e X — em um único
+                painel calmo, feito para foco.
+              </p>
             </div>
 
-            <h2 style={{
-              fontFamily: "'Space Grotesk', sans-serif",
-              fontSize: 32, fontWeight: 700,
-              color: "white", letterSpacing: "-0.03em",
-              lineHeight: 1.15, marginBottom: 16,
-            }}>
-              Centralize suas<br />métricas sociais
-            </h2>
-
-            <p style={{
-              fontFamily: "'Inter', sans-serif",
-              fontSize: 16, color: "rgba(224,224,224,0.72)",
-              lineHeight: 1.6, maxWidth: 320, margin: "0 auto 28px",
-            }}>
-              YouTube, Instagram, Facebook e TikTok em um só painel inteligente.
-            </p>
-
-            {/* Platform stat pills */}
-            <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
-              {[
-                { label: "YouTube", color: "#FF4444" },
-                { label: "Instagram", color: "#E1306C" },
-                { label: "Facebook", color: "#1877F2" },
-                { label: "TikTok", color: "#25F4EE" },
-              ].map(({ label, color }) => (
-                <span key={label} style={{
-                  padding: "5px 14px",
-                  borderRadius: 999,
-                  background: "rgba(255,255,255,0.08)",
-                  border: `1px solid ${color}40`,
-                  color, fontSize: 13,
-                  fontFamily: "'Inter', sans-serif",
-                  fontWeight: 500,
-                }}>
-                  {label}
-                </span>
-              ))}
+            {/* Bottom row */}
+            <div className="flex items-center gap-5 text-[12px] text-muted-foreground tracking-wide uppercase">
+              <span>YouTube</span>
+              <span className="w-1 h-1 rounded-full bg-foreground/20" />
+              <span>Instagram</span>
+              <span className="w-1 h-1 rounded-full bg-foreground/20" />
+              <span>Facebook</span>
+              <span className="w-1 h-1 rounded-full bg-foreground/20" />
+              <span>TikTok</span>
+              <span className="w-1 h-1 rounded-full bg-foreground/20" />
+              <span>X</span>
             </div>
           </div>
         </div>
 
-        {/* ── Right panel: minimal form ─────────────────── */}
-        <div style={{
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "32px 24px",
-          background: "#FFFFFF",
-        }}>
+        {/* ── Right panel: form ────────────────────────────── */}
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 bg-background">
 
-          {/* Mobile logo (only on small screens) */}
-          <div className="lg:hidden" style={{ marginBottom: 32, textAlign: "center" }}>
-            <div style={{
-              display: "inline-flex", alignItems: "center", justifyContent: "center",
-              width: 52, height: 52, borderRadius: "var(--radius-xl)",
-              background: `linear-gradient(135deg, ${PURPLE}, ${ROSE})`,
-              marginBottom: 12,
-              boxShadow: "var(--shadow-md)",
-            }}>
-              <BarChart2 size={26} color="white" />
-            </div>
-            <p style={{
-              fontFamily: "'Space Grotesk', sans-serif",
-              fontSize: 22, fontWeight: 700, color: PETROLEUM,
-              letterSpacing: "-0.02em",
-            }}>
-              <span style={{ color: PURPLE }}>Meta</span>Collector
-            </p>
+          {/* Mobile brand */}
+          <div className="lg:hidden mb-10 flex items-center gap-2.5">
+            <span className="w-6 h-6 rounded-sm bg-foreground flex items-center justify-center">
+              <span className="block w-2 h-2 bg-background rounded-[1px]" />
+            </span>
+            <span
+              className="text-[16px] text-foreground font-medium"
+              style={{ fontFamily: "var(--app-font-heading)", letterSpacing: "-0.02em" }}
+            >
+              MetaCollector
+            </span>
           </div>
 
-          {/* Mobile floating icons row */}
-          <div
-            className="lg:hidden"
-            style={{
-              display: "flex", gap: 16, marginBottom: 32,
-              justifyContent: "center",
-            }}
-          >
-            {[YouTubeLogo, InstagramLogo, FacebookLogo, TikTokLogo].map((Logo, i) => (
-              <div key={i} style={{
-                padding: 10, borderRadius: 12,
-                background: "rgba(0,0,0,0.04)",
-                border: "1px solid rgba(0,0,0,0.10)",
-                animation: `floatA ${5 + i}s ease-in-out infinite ${i * 0.4}s`,
-              }}>
-                <Logo size={28} />
-              </div>
-            ))}
-          </div>
+          <div className="w-full max-w-[400px]">
 
-          {/* Form card */}
-          <div
-            className="fade-slide"
-            style={{
-              width: "100%", maxWidth: 400,
-              background: "white",
-              borderRadius: "var(--radius-xl)",
-              padding: "36px 32px",
-              boxShadow: "var(--shadow-md)",
-            }}
-          >
             {/* Heading */}
-            <div className="fade-slide-1" style={{ marginBottom: 28 }}>
-              <h1 style={{
-                fontFamily: "'Space Grotesk', sans-serif",
-                fontSize: 26, fontWeight: 700,
-                color: PETROLEUM, letterSpacing: "-0.03em",
-                marginBottom: 6,
-              }}>
-                {mode === "login" ? "Bem-vindo de volta" : "Criar conta"}
+            <div className="login-fade mb-9">
+              <h1
+                className="text-foreground font-display"
+                style={{ fontSize: "clamp(28px, 4vw, 36px)", lineHeight: 1.1 }}
+              >
+                {mode === "login" ? "Bem-vindo de volta." : "Criar conta."}
               </h1>
-              <p style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 14, color: "#6B7280", lineHeight: 1.5,
-              }}>
+              <p className="mt-3 text-[14.5px] text-muted-foreground">
                 {mode === "login"
-                  ? "Entre para acessar seu painel"
-                  : "Centralize suas redes sociais"}
+                  ? "Entre para acessar seu painel."
+                  : "Centralize suas redes sociais em minutos."}
               </p>
             </div>
 
             {/* Google sign-in */}
             {googleClientId && (
-              <div className="fade-slide-2" style={{ marginBottom: 18 }}>
+              <div className="login-fade-1 mb-5">
                 <div
                   ref={googleBtnRef}
                   style={{ display: "flex", justifyContent: "center", minHeight: 44 }}
                 />
-                <div style={{
-                  display: "flex", alignItems: "center", gap: 12,
-                  marginTop: 18,
-                }}>
-                  <div style={{ flex: 1, height: 1, background: "rgba(0,0,0,0.08)" }} />
-                  <span style={{
-                    fontSize: 12, color: "#9CA3AF",
-                    fontFamily: "'Inter', sans-serif", textTransform: "uppercase",
-                    letterSpacing: "0.08em",
-                  }}>
-                    ou
-                  </span>
-                  <div style={{ flex: 1, height: 1, background: "rgba(0,0,0,0.08)" }} />
+                <div className="flex items-center gap-3 mt-5">
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="eyebrow text-[11px] tracking-[0.16em]">ou</span>
+                  <div className="flex-1 h-px bg-border" />
                 </div>
               </div>
             )}
 
             {/* Tab switcher */}
-            <div className="fade-slide-2" style={{
-              display: "flex", gap: 4, padding: 4,
-              background: "#F3F4F6", borderRadius: "var(--radius)",
-              marginBottom: 24,
-            }}>
+            <div className="login-fade-2 flex gap-1 p-1 bg-muted rounded-md mb-7">
               {(["login", "register"] as Mode[]).map((m) => (
                 <button
                   key={m}
                   type="button"
-                  className={`tab-btn${mode === m ? " active" : ""}`}
+                  className={`login-tab${mode === m ? " active" : ""}`}
                   data-testid={`tab-${m}`}
                   onClick={() => { setMode(m); setError(null); }}
                 >
@@ -600,27 +351,20 @@ export default function LoginPage() {
               ))}
             </div>
 
-            {/* Form fields */}
+            {/* Form */}
             <form onSubmit={handleSubmit}>
-              <div className="fade-slide-3" style={{ display: "flex", flexDirection: "column", gap: 16, marginBottom: 20 }}>
+              <div className="login-fade-3 flex flex-col gap-4 mb-5">
 
                 {mode === "register" && (
                   <div>
-                    <label style={{
-                      display: "block", marginBottom: 6,
-                      fontSize: 13, fontWeight: 500,
-                      color: "#374151", fontFamily: "'Inter', sans-serif",
-                    }}>
-                      Nome completo
+                    <label className="block mb-1.5 text-[12.5px] font-medium text-foreground/75">
+                      Nome
                     </label>
-                    <div style={{ position: "relative" }}>
+                    <div className="relative">
                       <User
-                        size={15}
-                        style={{
-                          position: "absolute", left: 13,
-                          top: "50%", transform: "translateY(-50%)",
-                          color: "#9CA3AF", pointerEvents: "none",
-                        }}
+                        size={14}
+                        strokeWidth={1.5}
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
                       />
                       <input
                         className="login-input"
@@ -637,21 +381,14 @@ export default function LoginPage() {
                 )}
 
                 <div>
-                  <label style={{
-                    display: "block", marginBottom: 6,
-                    fontSize: 13, fontWeight: 500,
-                    color: "#374151", fontFamily: "'Inter', sans-serif",
-                  }}>
+                  <label className="block mb-1.5 text-[12.5px] font-medium text-foreground/75">
                     E-mail
                   </label>
-                  <div style={{ position: "relative" }}>
+                  <div className="relative">
                     <Mail
-                      size={15}
-                      style={{
-                        position: "absolute", left: 13,
-                        top: "50%", transform: "translateY(-50%)",
-                        color: "#9CA3AF", pointerEvents: "none",
-                      }}
+                      size={14}
+                      strokeWidth={1.5}
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
                     />
                     <input
                       className="login-input"
@@ -666,21 +403,14 @@ export default function LoginPage() {
                 </div>
 
                 <div>
-                  <label style={{
-                    display: "block", marginBottom: 6,
-                    fontSize: 13, fontWeight: 500,
-                    color: "#374151", fontFamily: "'Inter', sans-serif",
-                  }}>
+                  <label className="block mb-1.5 text-[12.5px] font-medium text-foreground/75">
                     Senha
                   </label>
-                  <div style={{ position: "relative" }}>
+                  <div className="relative">
                     <Lock
-                      size={15}
-                      style={{
-                        position: "absolute", left: 13,
-                        top: "50%", transform: "translateY(-50%)",
-                        color: "#9CA3AF", pointerEvents: "none",
-                      }}
+                      size={14}
+                      strokeWidth={1.5}
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
                     />
                     <input
                       className="login-input"
@@ -696,18 +426,9 @@ export default function LoginPage() {
                     <button
                       type="button"
                       onClick={() => setShowSenha((v) => !v)}
-                      style={{
-                        position: "absolute", right: 12,
-                        top: "50%", transform: "translateY(-50%)",
-                        background: "none", border: "none",
-                        color: "#9CA3AF", cursor: "pointer",
-                        padding: 2, display: "flex",
-                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      {showSenha
-                        ? <EyeOff size={16} />
-                        : <Eye size={16} />
-                      }
+                      {showSenha ? <EyeOff size={15} strokeWidth={1.5} /> : <Eye size={15} strokeWidth={1.5} />}
                     </button>
                   </div>
                 </div>
@@ -715,24 +436,18 @@ export default function LoginPage() {
 
               {/* Error */}
               {error && (
-                <div style={{
-                  marginBottom: 16, padding: "10px 14px",
-                  background: "#FEF2F2", borderRadius: 10,
-                  border: "1px solid #FECACA",
-                  color: "#B91C1C",
-                  fontSize: 13, fontFamily: "'Inter', sans-serif",
-                }}>
+                <div className="mb-4 px-3.5 py-2.5 rounded-md border border-destructive/30 bg-destructive/[0.04] text-destructive text-[13px]">
                   {error}
                 </div>
               )}
 
-              <div className="fade-slide-4">
-                <button type="submit" className="login-btn" data-testid="button-submit" disabled={loading}>
+              <div className="login-fade-4">
+                <button type="submit" className="login-submit" data-testid="button-submit" disabled={loading}>
                   {loading
-                    ? <Loader2 size={18} className="animate-spin" />
+                    ? <Loader2 size={16} className="animate-spin" />
                     : <>
                         {mode === "login" ? "Entrar" : "Criar conta"}
-                        <ArrowRight size={16} />
+                        <ArrowRight size={14} strokeWidth={1.75} />
                       </>
                   }
                 </button>
@@ -740,35 +455,19 @@ export default function LoginPage() {
             </form>
 
             {/* Switch mode */}
-            <p style={{
-              marginTop: 20, textAlign: "center",
-              fontSize: 13, color: "#6B7280",
-              fontFamily: "'Inter', sans-serif",
-            }}>
+            <p className="mt-6 text-center text-[13px] text-muted-foreground">
               {mode === "login" ? "Ainda não tem conta? " : "Já tem uma conta? "}
               <button
                 type="button"
                 onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(null); }}
-                style={{
-                  background: "none", border: "none",
-                  color: PURPLE, fontWeight: 600,
-                  cursor: "pointer", fontSize: 13,
-                  fontFamily: "'Inter', sans-serif",
-                  textDecoration: "underline",
-                  textUnderlineOffset: 2,
-                }}
+                className="text-foreground font-medium underline underline-offset-4 decoration-foreground/30 hover:decoration-foreground transition-colors"
               >
                 {mode === "login" ? "Cadastre-se" : "Entrar"}
               </button>
             </p>
           </div>
 
-          {/* Security note */}
-          <p style={{
-            marginTop: 20, fontSize: 12,
-            color: "#9CA3AF", textAlign: "center",
-            fontFamily: "'Inter', sans-serif",
-          }}>
+          <p className="mt-10 text-[11px] text-muted-foreground tracking-wide uppercase">
             Protegido com criptografia AES-256-GCM
           </p>
         </div>

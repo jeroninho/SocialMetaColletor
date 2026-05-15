@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import {
-  BarChart2,
   LayoutDashboard,
   Settings,
   Youtube,
@@ -28,19 +27,14 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "@/context/theme";
 import { useAuth } from "@/context/auth";
 
-/* ── Design tokens ─────────────────────────────────────── */
-const PETROLEUM = "#1E2A38";
-const PURPLE    = "#6C63FF";
-const ROSE      = "#FF6F91";
-
 /* ── Nav items ─────────────────────────────────────────── */
 const navMain = [
   { href: "/dashboard",   icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/youtube",     icon: Youtube,         label: "YouTube",         color: "#FF0000" },
-  { href: "/instagram",   icon: Instagram,       label: "Instagram",       color: "#FF6F91" },
-  { href: "/facebook",    icon: Facebook,        label: "Facebook",        color: "#1877F2" },
-  { href: "/tiktok",      icon: Music,           label: "TikTok",          color: "#00F2EA" },
-  { href: "/twitter",     icon: Twitter,         label: "X / Twitter",     color: "#1DA1F2" },
+  { href: "/youtube",     icon: Youtube,         label: "YouTube" },
+  { href: "/instagram",   icon: Instagram,       label: "Instagram" },
+  { href: "/facebook",    icon: Facebook,        label: "Facebook" },
+  { href: "/tiktok",      icon: Music,           label: "TikTok" },
+  { href: "/twitter",     icon: Twitter,         label: "X / Twitter" },
   { href: "/reports",     icon: TrendingUp,      label: "Relatórios" },
   { href: "/comparator",  icon: GitCompare,      label: "Comparador" },
   { href: "/alerts",      icon: Bell,            label: "Alertas" },
@@ -51,7 +45,7 @@ const navMain = [
 const navLearn = [
   { href: "/articles",  icon: BookOpen, label: "Artigos" },
   { href: "/videos",    icon: Play,     label: "Vídeos" },
-  { href: "/guide",     icon: Map,      label: "Guia Interativo" },
+  { href: "/guide",     icon: Map,      label: "Guia" },
   { href: "/glossary",  icon: BookA,    label: "Glossário" },
 ];
 
@@ -67,14 +61,14 @@ const pageLabels: Record<string, string> = {
   "/tiktok":      "TikTok",
   "/twitter":     "X / Twitter",
   "/reports":     "Relatórios",
-  "/comparator":  "Comparador de Campanhas",
-  "/alerts":      "Alertas Inteligentes",
+  "/comparator":  "Comparador",
+  "/alerts":      "Alertas",
   "/scheduler":   "Agendamento",
   "/fetch":       "Buscar Metadados",
   "/connections": "Conexões",
-  "/articles":    "Artigos Técnicos",
-  "/videos":      "Tutoriais em Vídeo",
-  "/guide":       "Guia Interativo",
+  "/articles":    "Artigos",
+  "/videos":      "Vídeos",
+  "/guide":       "Guia",
   "/glossary":    "Glossário",
 };
 
@@ -83,54 +77,31 @@ function NavLink({
   href,
   icon: Icon,
   label,
-  color,
   active,
   onClick,
 }: {
   href: string;
   icon: React.ElementType;
   label: string;
-  color?: string;
   active: boolean;
   onClick?: () => void;
 }) {
   return (
     <Link href={href} onClick={onClick}>
-      <span
-        className={cn(
-          "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer",
-          "transition-all duration-200 ease-in-out",
-          active
-            ? "font-semibold"
-            : "hover:bg-white/10 text-white/70 hover:text-white"
-        )}
-        style={
-          active
-            ? {
-                backgroundColor: "rgba(108,99,255,0.22)",
-                color: PURPLE,
-                boxShadow: "inset 0 0 0 1px rgba(108,99,255,0.30)",
-              }
-            : undefined
-        }
-      >
-        <Icon
-          className="w-4 h-4 flex-shrink-0"
-          style={
-            active ? { color: PURPLE } : color ? { color } : { color: "rgba(255,255,255,0.65)" }
-          }
-        />
-        <span style={active ? { color: PURPLE } : { color: "rgba(255,255,255,0.85)" }}>
-          {label}
-        </span>
-        {active && (
-          <span
-            className="ml-auto w-1.5 h-1.5 rounded-full"
-            style={{ background: PURPLE }}
-          />
-        )}
+      <span className={cn("nav-item", active && "active")}>
+        <Icon className="w-[15px] h-[15px] flex-shrink-0 opacity-80" strokeWidth={1.5} />
+        <span>{label}</span>
       </span>
     </Link>
+  );
+}
+
+/* ── Section heading ────────────────────────────────────── */
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-sidebar-foreground/55 mt-6 mb-2 px-3">
+      {children}
+    </p>
   );
 }
 
@@ -147,56 +118,42 @@ function SidebarContent({
   const { user } = useAuth();
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: PETROLEUM }}>
+    <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
       {/* Brand */}
-      <div
-        className="h-16 flex items-center px-5 flex-shrink-0"
-        style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}
-      >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center shadow-lg flex-shrink-0"
-            style={{ background: `linear-gradient(135deg, ${PURPLE}, ${ROSE})` }}
-          >
-            <BarChart2 className="w-5 h-5 text-white" />
-          </div>
-          <span
-            className="text-white font-bold text-[17px] tracking-tight select-none"
-            style={{ fontFamily: "var(--app-font-heading)", letterSpacing: "-0.025em" }}
-          >
-            <span style={{ color: PURPLE }}>Meta</span>
-            <span style={{ color: "rgba(255,255,255,0.90)" }}>Collector</span>
+      <div className="h-16 flex items-center px-5 flex-shrink-0 border-b border-sidebar-border">
+        <Link href="/dashboard">
+          <span className="flex items-center gap-2.5 cursor-pointer select-none">
+            <span className="w-6 h-6 rounded-sm bg-foreground flex items-center justify-center">
+              <span className="block w-2 h-2 bg-background rounded-[1px]" />
+            </span>
+            <span
+              className="text-[15px] tracking-tight font-medium"
+              style={{ fontFamily: "var(--app-font-heading)", letterSpacing: "-0.02em" }}
+            >
+              MetaCollector
+            </span>
           </span>
-        </div>
+        </Link>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
-        <p
-          className="text-[10px] font-semibold uppercase tracking-widest mb-2 px-1"
-          style={{ color: "rgba(224,224,224,0.38)" }}
-        >
-          Navegação
-        </p>
-        {navMain.map(({ href, icon, label, color }) => (
-          <NavLink
-            key={href}
-            href={href}
-            icon={icon}
-            label={label}
-            color={color}
-            active={location === href}
-            onClick={onNav}
-          />
-        ))}
+      <nav className="flex-1 overflow-y-auto py-4 px-2.5">
+        <SectionLabel>Navegação</SectionLabel>
+        <div className="space-y-0.5">
+          {navMain.map(({ href, icon, label }) => (
+            <NavLink
+              key={href}
+              href={href}
+              icon={icon}
+              label={label}
+              active={location === href}
+              onClick={onNav}
+            />
+          ))}
+        </div>
 
-        <div className="pt-5">
-          <p
-            className="text-[10px] font-semibold uppercase tracking-widest mb-2 px-1"
-            style={{ color: "rgba(224,224,224,0.38)" }}
-          >
-            Aprender
-          </p>
+        <SectionLabel>Aprender</SectionLabel>
+        <div className="space-y-0.5">
           {navLearn.map(({ href, icon, label }) => (
             <NavLink
               key={href}
@@ -209,13 +166,8 @@ function SidebarContent({
           ))}
         </div>
 
-        <div className="pt-5">
-          <p
-            className="text-[10px] font-semibold uppercase tracking-widest mb-2 px-1"
-            style={{ color: "rgba(224,224,224,0.38)" }}
-          >
-            Configurações
-          </p>
+        <SectionLabel>Configurações</SectionLabel>
+        <div className="space-y-0.5">
           {navSettings.map(({ href, icon, label }) => (
             <NavLink
               key={href}
@@ -230,36 +182,27 @@ function SidebarContent({
       </nav>
 
       {/* User footer */}
-      <div
-        className="p-4 flex-shrink-0"
-        style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}
-      >
+      <div className="p-3 flex-shrink-0 border-t border-sidebar-border">
         {user ? (
-          <div className="flex items-center gap-2.5 px-1">
-            <div
-              className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold text-white uppercase"
-              style={{ background: `linear-gradient(135deg, ${PURPLE}, ${ROSE})` }}
-            >
+          <div className="flex items-center gap-2.5 px-1 py-1">
+            <div className="w-7 h-7 rounded-full bg-foreground text-background flex items-center justify-center flex-shrink-0 text-[11px] font-medium uppercase">
               {user.nome.charAt(0)}
             </div>
             <div className="min-w-0 flex-1">
-              <p
-                className="text-xs font-semibold text-white/90 truncate"
-                style={{ fontFamily: "var(--app-font-heading)" }}
-              >
+              <p className="text-[13px] font-medium truncate text-sidebar-foreground">
                 {user.nome}
               </p>
-              <p className="text-[10px] truncate" style={{ color: "rgba(224,224,224,0.55)" }}>
+              <p className="text-[11px] truncate text-sidebar-foreground/70">
                 {user.email}
               </p>
             </div>
             <button
               onClick={onLogout}
               title="Sair"
-              className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-200 hover:bg-white/15"
-              style={{ color: "rgba(255,255,255,0.55)" }}
+              aria-label="Sair"
+              className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0 transition-colors hover:bg-sidebar-foreground/8 text-sidebar-foreground/70 hover:text-sidebar-foreground"
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-4 h-4" strokeWidth={1.5} />
             </button>
           </div>
         ) : null}
@@ -284,18 +227,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
     navigate("/login");
   }
 
-  /* Close sidebar when route changes */
   useEffect(() => {
     setMobileOpen(false);
   }, [location]);
 
-  /* Prevent scroll when mobile sidebar is open */
   useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
 
@@ -303,38 +240,29 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-[100dvh] flex w-full bg-background">
 
       {/* ── Desktop sidebar ─────────────────────────── */}
-      <aside
-        className="hidden lg:flex flex-col w-60 xl:w-64 flex-shrink-0 sticky top-0 h-screen"
-        style={{ backgroundColor: PETROLEUM }}
-      >
+      <aside className="hidden lg:flex flex-col w-60 xl:w-64 flex-shrink-0 sticky top-0 h-screen bg-sidebar border-r border-sidebar-border">
         <SidebarContent location={location} onLogout={handleLogout} />
       </aside>
 
       {/* ── Mobile overlay ──────────────────────────── */}
       {mobileOpen && (
-        <div
-          className="sidebar-overlay lg:hidden"
-          onClick={() => setMobileOpen(false)}
-        />
+        <div className="sidebar-overlay lg:hidden" onClick={() => setMobileOpen(false)} />
       )}
 
       {/* ── Mobile sidebar drawer ───────────────────── */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-72 flex flex-col lg:hidden",
+          "fixed inset-y-0 left-0 z-50 w-72 flex flex-col lg:hidden bg-sidebar border-r border-sidebar-border",
           "transition-transform duration-300 ease-in-out",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
-        style={{ backgroundColor: PETROLEUM }}
       >
-        {/* Close button */}
         <button
           onClick={() => setMobileOpen(false)}
-          className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center z-50"
-          style={{ background: "rgba(255,255,255,0.12)" }}
+          className="absolute top-4 right-4 w-8 h-8 rounded-md flex items-center justify-center z-50 hover:bg-sidebar-foreground/8 text-sidebar-foreground/65"
           aria-label="Fechar menu"
         >
-          <X className="w-4 h-4 text-white/80" />
+          <X className="w-4 h-4" strokeWidth={1.5} />
         </button>
         <SidebarContent location={location} onNav={() => setMobileOpen(false)} onLogout={handleLogout} />
       </aside>
@@ -342,77 +270,55 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* ── Main ────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0">
 
-        {/* Top header */}
-        <header
-          className="h-16 flex items-center justify-between px-4 md:px-8 sticky top-0 z-30 backdrop-blur-md"
-          style={{
-            backgroundColor: dark
-              ? "rgba(44,44,44,0.88)"
-              : "rgba(255,255,255,0.92)",
-            borderBottom: `1px solid ${dark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.10)"}`,
-          }}
-        >
+        {/* Top header — minimal */}
+        <header className="h-16 flex items-center justify-between px-4 md:px-8 sticky top-0 z-30 bg-background/85 backdrop-blur-md border-b border-border">
           <div className="flex items-center gap-3">
-            {/* Hamburger — mobile only */}
             <button
-              className="lg:hidden w-9 h-9 rounded-xl flex items-center justify-center transition-colors duration-200"
-              style={{ background: "rgba(108,99,255,0.12)" }}
+              className="lg:hidden w-11 h-11 -ml-2 rounded-md flex items-center justify-center hover:bg-foreground/5 text-foreground"
               onClick={() => setMobileOpen(true)}
               aria-label="Abrir menu"
             >
-              <Menu className="w-5 h-5" style={{ color: PURPLE }} />
+              <Menu className="w-5 h-5" strokeWidth={1.5} />
             </button>
 
-            <div className="flex items-center gap-2.5">
-              <h1
-                className="text-xl font-bold tracking-tight"
-                style={{ fontFamily: "var(--app-font-heading)", letterSpacing: "-0.025em" }}
-              >
-                {pageTitle}
-              </h1>
-              <span
-                className="hidden sm:flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full"
-                style={{
-                  background: dark ? "rgba(74,207,80,0.15)" : "rgba(74,207,80,0.12)",
-                  color: "#4CAF50",
-                }}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Ao vivo
-              </span>
-            </div>
+            <h1
+              className="text-[18px] tracking-tight font-medium text-foreground"
+              style={{ fontFamily: "var(--app-font-heading)", letterSpacing: "-0.02em" }}
+            >
+              {pageTitle}
+            </h1>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Dark mode toggle */}
+            {/* Status pill */}
+            <span className="hidden sm:flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full border border-border text-muted-foreground">
+              <span className="w-1.5 h-1.5 rounded-full bg-foreground/70" />
+              Ao vivo
+            </span>
+
+            {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              className="w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200"
-              style={{
-                background: dark ? "rgba(255,255,255,0.10)" : "rgba(30,42,56,0.08)",
-              }}
+              className="w-11 h-11 rounded-md flex items-center justify-center hover:bg-foreground/5 text-foreground transition-colors"
               title={dark ? "Modo claro" : "Modo escuro"}
+              aria-label={dark ? "Mudar para modo claro" : "Mudar para modo escuro"}
             >
               {dark ? (
-                <Sun className="w-4 h-4 icon-enter" style={{ color: "#FBBF24" }} />
+                <Sun className="w-4 h-4 icon-enter" strokeWidth={1.5} />
               ) : (
-                <Moon className="w-4 h-4 icon-enter" style={{ color: PETROLEUM }} />
+                <Moon className="w-4 h-4 icon-enter" strokeWidth={1.5} />
               )}
             </button>
 
             {/* Primary CTA */}
             <Link href="/connections">
-              <span
-                className="btn-gradient hidden sm:flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold cursor-pointer"
-                style={{ fontFamily: "var(--app-font-heading)" }}
-              >
-                Gerenciar Conexões
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-medium cursor-pointer bg-foreground text-background hover:bg-foreground/88 transition-colors">
+                Conexões
               </span>
             </Link>
           </div>
         </header>
 
-        {/* Page content */}
         <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto">
           {children}
         </main>
