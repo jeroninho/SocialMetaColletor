@@ -163,11 +163,9 @@ describe("POST /api/fetch-metadata edge cases", () => {
     expect(state.historyRows).toHaveLength(0);
   });
 
-  it("handles oversized HTML responses without crashing", async () => {
-    // Build a ~5MB HTML payload with valid OG tags at the top. The route has no
-    // explicit size cap today, so the expectation is graceful handling: either a
-    // successful 200 with parsed tags or a 500 fetch_failed — never a hang or
-    // unhandled exception.
+  it("rejects oversized HTML responses with response_too_large", async () => {
+    // Build a >2MB HTML payload. The route should refuse to buffer the whole
+    // body and return a deterministic 413 response_too_large error.
     const filler = "<div>padding</div>".repeat(300_000);
     const oversized = `<html><head><meta property="og:title" content="Big Page" /></head><body>${filler}</body></html>`;
 
@@ -183,12 +181,8 @@ describe("POST /api/fetch-metadata edge cases", () => {
     const res = await request(app).post("/api/fetch-metadata").send({ url: FB_URL });
     installed.restore();
 
-    expect([200, 500]).toContain(res.status);
-    if (res.status === 200) {
-      expect(res.body.platform).toBe("facebook");
-      expect(res.body.title).toBe("Big Page");
-    } else {
-      expect(res.body.error).toBe("fetch_failed");
-    }
+    expect(res.status).toBe(413);
+    expect(res.body.error).toBe("response_too_large");
+    expect(state.historyRows).toHaveLength(0);
   });
 });

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { httpGet } from "../utils/http.js";
+import { httpGet, LINK_PREVIEW_MAX_RESPONSE_BYTES, ResponseTooLargeError } from "../utils/http.js";
 import { extractMetaTags } from "../utils/meta-tags.js";
 import { desc } from "drizzle-orm";
 import { db, fetchHistoryTable } from "@workspace/db";
@@ -72,6 +72,7 @@ async function fetchViaOpenGraph(url: string, platform: Platform): Promise<Norma
       Accept: "text/html,application/xhtml+xml",
     },
     timeoutMs: 10000,
+    maxBytes: LINK_PREVIEW_MAX_RESPONSE_BYTES,
   });
 
   const html = response.data;
@@ -278,6 +279,14 @@ router.post("/fetch-metadata", async (req, res) => {
 
     res.json({ ...metadata, historyId: saved?.id });
   } catch (err) {
+    if (err instanceof ResponseTooLargeError) {
+      req.log.warn({ err, url }, "Upstream response exceeded size limit");
+      res.status(413).json({
+        error: "response_too_large",
+        message: "The linked page is too large to preview.",
+      });
+      return;
+    }
     req.log.error({ err }, "Error fetching metadata");
     res.status(500).json({ error: "fetch_failed", message: "Failed to fetch metadata. The URL may be private or blocked." });
   }
