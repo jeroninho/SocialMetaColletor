@@ -1,0 +1,61 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-ink: var(--slide-ink);
+  --color-paper: var(--slide-paper);
+  --color-cream: var(--slide-cream);
+  --color-rule: var(--slide-rule);
+  --color-muted: var(--slide-muted);
+  --color-accent: var(--slide-accent);
+  --font-display: var(--font-display-family);
+  --font-body: var(--font-body-family);
+  --font-mono: var(--font-mono-family);
+}
+
+:root {
+  --slide-ink: #141414;
+  --slide-paper: #FBFAF7;
+  --slide-cream: #F3EFE6;
+  --slide-rule: #1414141A;
+  --slide-muted: #6B6B66;
+  --slide-accent: #B23A30;
+  --font-display-family: "Fraunces", Georgia, serif;
+  --font-body-family: "Inter", system-ui, sans-serif;
+  --font-mono-family: "JetBrains Mono", Menlo, monospace;
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--slide-paper);
+  color: var(--slide-ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.slide {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.slide-viewer {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.eyebrow {
+  font-family: var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-weight: 500;
+}

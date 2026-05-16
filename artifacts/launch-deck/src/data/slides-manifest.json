@@ -1,0 +1,58 @@
+[
+  {
+    "id": "5f7a1b62-1c1a-4a01-9f3a-001000000001",
+    "position": 1,
+    "filepath": "src/pages/slides/Title.tsx",
+    "title": "Title",
+    "description": "Hero proposition: five platforms, one quiet desk.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "5f7a1b62-1c1a-4a01-9f3a-001000000002",
+    "position": 2,
+    "filepath": "src/pages/slides/Frictions.tsx",
+    "title": "Three frictions removed",
+    "description": "The three things our team stopped doing.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "5f7a1b62-1c1a-4a01-9f3a-001000000003",
+    "position": 3,
+    "filepath": "src/pages/slides/Coverage.tsx",
+    "title": "Five-platform coverage",
+    "description": "YouTube, Instagram, Facebook, TikTok, X under one schema.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "5f7a1b62-1c1a-4a01-9f3a-001000000004",
+    "position": 4,
+    "filepath": "src/pages/slides/DashboardShot.tsx",
+    "title": "Dashboard screenshot",
+    "description": "Stylised launch screenshot of the cross-platform dashboard.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "5f7a1b62-1c1a-4a01-9f3a-001000000005",
+    "position": 5,
+    "filepath": "src/pages/slides/ComparatorShot.tsx",
+    "title": "Comparator & alerts screenshot",
+    "description": "Campaign comparator paired with the alerts inbox.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "5f7a1b62-1c1a-4a01-9f3a-001000000006",
+    "position": 6,
+    "filepath": "src/pages/slides/Security.tsx",
+    "title": "Security & OAuth",
+    "description": "OAuth 2.0, AES-256-GCM at rest, short-TTL JWT sessions.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "5f7a1b62-1c1a-4a01-9f3a-001000000007",
+    "position": 7,
+    "filepath": "src/pages/slides/CTA.tsx",
+    "title": "Call to action",
+    "description": "Three steps from signup to insight.",
+    "speakerNotes": ""
+  }
+]
