@@ -26,11 +26,11 @@ import {
   LogIn,
   Unlink,
   AlertCircle,
-  Info,
   Music,
   Twitter,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { OAuthCredentialsSetup } from "@/components/oauth-credentials-setup";
 
 const PLATFORM_LABELS: Record<string, string> = {
   youtube: "YouTube",
@@ -77,7 +77,7 @@ function PlatformCard({
 
   const handleDisconnect = async () => {
     try {
-      await disconnect.mutateAsync({ platform });
+      await disconnect.mutateAsync({ platform: platform as "youtube" | "instagram" | "facebook" });
       toast({
         title: `${label} desconectado`,
         description: "Plataforma desconectada com sucesso.",
@@ -349,7 +349,14 @@ export default function Connections() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6">
         {platforms.map(({ platform, label, color, icon }) => {
-          const status = authStatus?.[platform];
+          const status = (authStatus as Record<string, {
+            connected?: boolean;
+            accountName?: string;
+            connectedAt?: string;
+            expiresAt?: string | null;
+            needsReconnect?: boolean;
+            missingScopes?: string[];
+          } | undefined> | undefined)?.[platform];
           return (
             <PlatformCard
               key={platform}
@@ -369,66 +376,7 @@ export default function Connections() {
         })}
       </div>
 
-      <Card className="bg-muted/30">
-        <CardContent className="pt-4 pb-4">
-          <div className="flex items-start gap-2">
-            <Info className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-            <div className="space-y-1">
-              <p className="text-xs font-medium text-muted-foreground">
-                Como configurar as credenciais OAuth:
-              </p>
-              <ul className="text-xs text-muted-foreground space-y-1 list-disc ml-4">
-                <li>
-                  <strong>YouTube:</strong> Crie um projeto no{" "}
-                  <a
-                    href="https://console.cloud.google.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline"
-                  >
-                    Google Cloud Console
-                  </a>{" "}
-                  e configure as credenciais OAuth 2.0 com a URI de redirecionamento{" "}
-                  <code className="bg-muted px-1 rounded">/api/auth/youtube/callback</code>.
-                </li>
-                <li>
-                  <strong>Instagram:</strong> Crie um app no{" "}
-                  <a
-                    href="https://developers.facebook.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="underline"
-                  >
-                    Meta Developer Portal
-                  </a>{" "}
-                  com a URI{" "}
-                  <code className="bg-muted px-1 rounded">/api/auth/instagram/callback</code>.
-                </li>
-                <li>
-                  <strong>Facebook:</strong> Use o mesmo app Meta com a URI{" "}
-                  <code className="bg-muted px-1 rounded">/api/auth/facebook/callback</code>.
-                </li>
-                <li>
-                  <strong>TikTok:</strong> Registre um app no{" "}
-                  <a href="https://developers.tiktok.com" target="_blank" rel="noopener noreferrer" className="underline">
-                    TikTok for Developers
-                  </a>{" "}
-                  com a URI{" "}
-                  <code className="bg-muted px-1 rounded">/api/auth/tiktok/callback</code>.
-                </li>
-                <li>
-                  <strong>X/Twitter:</strong> Crie um app no{" "}
-                  <a href="https://developer.twitter.com" target="_blank" rel="noopener noreferrer" className="underline">
-                    Twitter Developer Portal
-                  </a>{" "}
-                  com a URI{" "}
-                  <code className="bg-muted px-1 rounded">/api/auth/twitter/callback</code>.
-                </li>
-              </ul>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <OAuthCredentialsSetup />
     </div>
   );
 }

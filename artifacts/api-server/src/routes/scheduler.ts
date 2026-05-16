@@ -119,7 +119,7 @@ router.post("/scheduler/schedules", authMiddleware, async (req, res) => {
 
 router.patch("/scheduler/schedules/:id/toggle", authMiddleware, async (req, res) => {
   const userId = req.user!.sub;
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id));
   try {
     const existing = await db.select().from(syncSchedulesTable)
       .where(and(eq(syncSchedulesTable.id, id), eq(syncSchedulesTable.userId, userId)))
@@ -147,7 +147,7 @@ router.patch("/scheduler/schedules/:id/toggle", authMiddleware, async (req, res)
 
 router.delete("/scheduler/schedules/:id", authMiddleware, async (req, res) => {
   const userId = req.user!.sub;
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id));
   try {
     clearSchedule(id);
     await db.delete(syncSchedulesTable)

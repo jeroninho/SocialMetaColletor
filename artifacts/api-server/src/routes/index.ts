@@ -14,6 +14,7 @@ import alertsRouter from "./alerts";
 import schedulerRouter from "./scheduler";
 import fetchMetadataRouter from "./fetch-metadata";
 import webhooksRouter from "./webhooks";
+import oauthCredentialsRouter from "./oauth-credentials";
 import { optionalAuth } from "../middleware/auth.js";
 
 const router: IRouter = Router();
@@ -39,6 +40,7 @@ router.use(comparatorRouter);
 router.use(alertsRouter);
 router.use(schedulerRouter);
 router.use(fetchMetadataRouter);
+router.use(oauthCredentialsRouter);
 
 export { optionalAuth };
 export default router;

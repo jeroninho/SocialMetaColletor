@@ -1,8 +1,45 @@
 import { Router } from "express";
 import { randomBytes } from "crypto";
 import { eq } from "drizzle-orm";
-import { db, tokensTable } from "@workspace/db";
-import { encryptToken } from "../utils/crypto.js";
+import { db, tokensTable, oauthCredentialsTable } from "@workspace/db";
+import { encryptToken, decryptToken } from "../utils/crypto.js";
+
+const ENV_MAP: Record<string, { idKey: string; secretKey: string }> = {
+  youtube: { idKey: "YOUTUBE_CLIENT_ID", secretKey: "YOUTUBE_CLIENT_SECRET" },
+  instagram: { idKey: "INSTAGRAM_CLIENT_ID", secretKey: "INSTAGRAM_CLIENT_SECRET" },
+  facebook: { idKey: "FACEBOOK_CLIENT_ID", secretKey: "FACEBOOK_CLIENT_SECRET" },
+  tiktok: { idKey: "TIKTOK_CLIENT_KEY", secretKey: "TIKTOK_CLIENT_SECRET" },
+  twitter: { idKey: "TWITTER_CLIENT_ID", secretKey: "TWITTER_CLIENT_SECRET" },
+};
+
+function safeDecrypt(s: string): string {
+  try { return decryptToken(s); } catch { return s; }
+}
+
+async function getCreds(platform: string): Promise<{ clientId: string; clientSecret: string } | null> {
+  try {
+    const [row] = await db
+      .select()
+      .from(oauthCredentialsTable)
+      .where(eq(oauthCredentialsTable.platform, platform))
+      .limit(1);
+    if (row) {
+      return { clientId: safeDecrypt(row.clientId), clientSecret: safeDecrypt(row.clientSecret) };
+    }
+  } catch {
+    // fall through to env
+  }
+  const env = ENV_MAP[platform];
+  if (!env) return null;
+  const clientId = process.env[env.idKey];
+  const clientSecret = process.env[env.secretKey];
+  if (!clientId || !clientSecret) return null;
+  return { clientId, clientSecret };
+}
+
+async function isConfigured(platform: string): Promise<boolean> {
+  return (await getCreds(platform)) !== null;
+}
 
 const router = Router();
 
@@ -54,40 +91,27 @@ function safeEncrypt(token: string): string {
   }
 }
 
-router.get("/auth/config", (req, res) => {
+router.get("/auth/config", async (_req, res) => {
   const base = getBaseUrl();
-  res.json({
-    youtube: {
-      callbackUrl: `${base}/api/auth/youtube/callback`,
-      configured: !!(process.env.YOUTUBE_CLIENT_ID && process.env.YOUTUBE_CLIENT_SECRET),
-    },
-    instagram: {
-      callbackUrl: `${base}/api/auth/instagram/callback`,
-      configured: !!(process.env.INSTAGRAM_CLIENT_ID && process.env.INSTAGRAM_CLIENT_SECRET),
-    },
-    facebook: {
-      callbackUrl: `${base}/api/auth/facebook/callback`,
-      configured: !!(process.env.FACEBOOK_CLIENT_ID && process.env.FACEBOOK_CLIENT_SECRET),
-    },
-    tiktok: {
-      callbackUrl: `${base}/api/auth/tiktok/callback`,
-      configured: !!(process.env.TIKTOK_CLIENT_KEY && process.env.TIKTOK_CLIENT_SECRET),
-    },
-    twitter: {
-      callbackUrl: `${base}/api/auth/twitter/callback`,
-      configured: !!(process.env.TWITTER_CLIENT_ID && process.env.TWITTER_CLIENT_SECRET),
-    },
-  });
+  const platforms = ["youtube", "instagram", "facebook", "tiktok", "twitter"] as const;
+  const entries = await Promise.all(
+    platforms.map(async (p) => [p, {
+      callbackUrl: `${base}/api/auth/${p}/callback`,
+      configured: await isConfigured(p),
+    }] as const)
+  );
+  res.json(Object.fromEntries(entries));
 });
 
 // ─── YOUTUBE ────────────────────────────────────────────────────────────────
 
-router.get("/auth/youtube/connect", (req, res) => {
-  const clientId = process.env.YOUTUBE_CLIENT_ID;
-  if (!clientId) {
-    res.status(503).json({ error: "YouTube OAuth not configured. Set YOUTUBE_CLIENT_ID." });
+router.get("/auth/youtube/connect", async (req, res) => {
+  const creds = await getCreds("youtube");
+  if (!creds) {
+    res.status(503).json({ error: "YouTube OAuth not configured. Add credentials in /connections." });
     return;
   }
+  const clientId = creds.clientId;
   const state = generateState("youtube");
   const redirectUri = getCallbackUrl("youtube");
   const scopes = [
@@ -120,8 +144,9 @@ router.get("/auth/youtube/callback", async (req, res) => {
     return;
   }
 
-  const clientId = process.env.YOUTUBE_CLIENT_ID;
-  const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
+  const ytCreds = await getCreds("youtube");
+  const clientId = ytCreds?.clientId;
+  const clientSecret = ytCreds?.clientSecret;
   if (!clientId || !clientSecret) {
     redirectToFrontend(res as never, "error", "youtube", "OAuth credentials not configured.");
     return;
@@ -198,12 +223,13 @@ router.get("/auth/youtube/callback", async (req, res) => {
 
 // ─── INSTAGRAM ──────────────────────────────────────────────────────────────
 
-router.get("/auth/instagram/connect", (req, res) => {
-  const clientId = process.env.INSTAGRAM_CLIENT_ID;
-  if (!clientId) {
-    res.status(503).json({ error: "Instagram OAuth not configured. Set INSTAGRAM_CLIENT_ID." });
+router.get("/auth/instagram/connect", async (req, res) => {
+  const creds = await getCreds("instagram");
+  if (!creds) {
+    res.status(503).json({ error: "Instagram OAuth not configured. Add credentials in /connections." });
     return;
   }
+  const clientId = creds.clientId;
   const state = generateState("instagram");
   const params = new URLSearchParams({
     client_id: clientId,
@@ -227,8 +253,9 @@ router.get("/auth/instagram/callback", async (req, res) => {
     return;
   }
 
-  const clientId = process.env.INSTAGRAM_CLIENT_ID;
-  const clientSecret = process.env.INSTAGRAM_CLIENT_SECRET;
+  const igCreds = await getCreds("instagram");
+  const clientId = igCreds?.clientId;
+  const clientSecret = igCreds?.clientSecret;
   if (!clientId || !clientSecret) {
     redirectToFrontend(res as never, "error", "instagram", "OAuth credentials not configured.");
     return;
@@ -310,12 +337,13 @@ router.get("/auth/instagram/callback", async (req, res) => {
 
 // ─── FACEBOOK ───────────────────────────────────────────────────────────────
 
-router.get("/auth/facebook/connect", (req, res) => {
-  const clientId = process.env.FACEBOOK_CLIENT_ID;
-  if (!clientId) {
-    res.status(503).json({ error: "Facebook OAuth not configured. Set FACEBOOK_CLIENT_ID." });
+router.get("/auth/facebook/connect", async (req, res) => {
+  const creds = await getCreds("facebook");
+  if (!creds) {
+    res.status(503).json({ error: "Facebook OAuth not configured. Add credentials in /connections." });
     return;
   }
+  const clientId = creds.clientId;
   const state = generateState("facebook");
   const params = new URLSearchParams({
     client_id: clientId,
@@ -339,8 +367,9 @@ router.get("/auth/facebook/callback", async (req, res) => {
     return;
   }
 
-  const clientId = process.env.FACEBOOK_CLIENT_ID;
-  const clientSecret = process.env.FACEBOOK_CLIENT_SECRET;
+  const fbCreds = await getCreds("facebook");
+  const clientId = fbCreds?.clientId;
+  const clientSecret = fbCreds?.clientSecret;
   if (!clientId || !clientSecret) {
     redirectToFrontend(res as never, "error", "facebook", "OAuth credentials not configured.");
     return;
@@ -425,12 +454,13 @@ router.get("/auth/facebook/callback", async (req, res) => {
 
 // ─── TIKTOK ─────────────────────────────────────────────────────────────────
 
-router.get("/auth/tiktok/connect", (req, res) => {
-  const clientKey = process.env.TIKTOK_CLIENT_KEY;
-  if (!clientKey) {
-    res.status(503).json({ error: "TikTok OAuth not configured. Set TIKTOK_CLIENT_KEY." });
+router.get("/auth/tiktok/connect", async (req, res) => {
+  const creds = await getCreds("tiktok");
+  if (!creds) {
+    res.status(503).json({ error: "TikTok OAuth not configured. Add credentials in /connections." });
     return;
   }
+  const clientKey = creds.clientId;
   const state = generateState("tiktok");
   const csrfState = state;
   const redirectUri = getCallbackUrl("tiktok");
@@ -458,8 +488,9 @@ router.get("/auth/tiktok/callback", async (req, res) => {
     return;
   }
 
-  const clientKey = process.env.TIKTOK_CLIENT_KEY;
-  const clientSecret = process.env.TIKTOK_CLIENT_SECRET;
+  const ttCreds = await getCreds("tiktok");
+  const clientKey = ttCreds?.clientId;
+  const clientSecret = ttCreds?.clientSecret;
   if (!clientKey || !clientSecret) {
     redirectToFrontend(res as never, "error", "tiktok", "OAuth credentials not configured.");
     return;
@@ -536,12 +567,13 @@ router.get("/auth/tiktok/callback", async (req, res) => {
 
 // ─── TWITTER (X) ────────────────────────────────────────────────────────────
 
-router.get("/auth/twitter/connect", (req, res) => {
-  const clientId = process.env.TWITTER_CLIENT_ID;
-  if (!clientId) {
-    res.status(503).json({ error: "Twitter/X OAuth not configured. Set TWITTER_CLIENT_ID." });
+router.get("/auth/twitter/connect", async (req, res) => {
+  const creds = await getCreds("twitter");
+  if (!creds) {
+    res.status(503).json({ error: "Twitter/X OAuth not configured. Add credentials in /connections." });
     return;
   }
+  const clientId = creds.clientId;
   const state = generateState("twitter");
   const redirectUri = getCallbackUrl("twitter");
   const scopes = ["tweet.read", "users.read", "offline.access"];
@@ -571,8 +603,9 @@ router.get("/auth/twitter/callback", async (req, res) => {
     return;
   }
 
-  const clientId = process.env.TWITTER_CLIENT_ID;
-  const clientSecret = process.env.TWITTER_CLIENT_SECRET;
+  const twCreds = await getCreds("twitter");
+  const clientId = twCreds?.clientId;
+  const clientSecret = twCreds?.clientSecret;
   if (!clientId || !clientSecret) {
     redirectToFrontend(res as never, "error", "twitter", "OAuth credentials not configured.");
     return;

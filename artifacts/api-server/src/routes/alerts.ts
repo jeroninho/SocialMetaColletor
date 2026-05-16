@@ -89,7 +89,7 @@ router.post("/alerts/rules", authMiddleware, async (req, res) => {
 
 router.patch("/alerts/rules/:id/toggle", authMiddleware, async (req, res) => {
   const userId = req.user!.sub;
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id));
   try {
     const existing = await db.select().from(alertRulesTable)
       .where(and(eq(alertRulesTable.id, id), eq(alertRulesTable.userId, userId)))
@@ -110,7 +110,7 @@ router.patch("/alerts/rules/:id/toggle", authMiddleware, async (req, res) => {
 
 router.delete("/alerts/rules/:id", authMiddleware, async (req, res) => {
   const userId = req.user!.sub;
-  const id = parseInt(req.params.id);
+  const id = parseInt(String(req.params.id));
   try {
     await db.delete(alertRulesTable)
       .where(and(eq(alertRulesTable.id, id), eq(alertRulesTable.userId, userId)));

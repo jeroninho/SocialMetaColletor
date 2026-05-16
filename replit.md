@@ -64,6 +64,9 @@ lib/
 - `GET /api/auth/{platform}/connect` — initiates OAuth 2.0 redirect flow (YouTube/Instagram/Facebook/TikTok/Twitter)
 - `GET /api/auth/{platform}/callback` — OAuth callback (receives code, exchanges for token, stores encrypted)
 - `POST /api/auth/{platform}/disconnect` — disconnect a platform
+- `GET /api/oauth-credentials` — list per-platform OAuth app credential status (source: db | env | none)
+- `PUT /api/oauth-credentials/{platform}` — save user-supplied OAuth app clientId/clientSecret (encrypted)
+- `DELETE /api/oauth-credentials/{platform}` — clear user-supplied credentials (falls back to env)
 - `GET /api/youtube/channel` — channel metadata
 - `GET /api/youtube/videos` — video list with metrics
 - `GET /api/youtube/analytics` — channel analytics
@@ -98,6 +101,7 @@ lib/
 ## Database Schema
 
 - `tokens` — OAuth tokens per platform (accessToken + refreshToken stored AES-256-GCM encrypted)
+- `oauth_credentials` — Per-platform OAuth app credentials (clientId + clientSecret stored AES-256-GCM encrypted); read by oauth.ts `getCreds()` with fallback to env vars. **Single-tenant model**: one row per platform shared by all authenticated users (matches `tokens` table model). If a future requirement is multi-tenant, add a `userId` FK and a composite unique `(userId, platform)` index, and scope `getCreds`/list/PUT/DELETE by `req.user.sub`.
 - `metadata` — Normalized collected metadata (platform, contentType, contentId, views, likes, comments, engagementRate)
 - `fetch_history` — URL metadata fetch history
 - `users` — User accounts (id uuid, email unique, nome, senhaHash via bcrypt)
