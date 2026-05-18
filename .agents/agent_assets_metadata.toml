@@ -1,0 +1,26 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "cDehcCMrFRWQSVyuTYpW7"
+uri = "file://scripts/loadtest-results/REPORT.md"
+type = "text"
+title = "Scalability Test Report — Load · Spike · Stress"
+
+[[outputs]]
+id = "OB0OXUoJ85IXdUWdCP12d"
+uri = "file://scripts/loadtest-results/load-test.json"
+type = "unspecified"
+title = "Load test — raw JSON"
+
+[[outputs]]
+id = "Rv1FwIMvYIanRvjGufyCT"
+uri = "file://scripts/loadtest-results/spike-test.json"
+type = "unspecified"
+title = "Spike test — raw JSON"
+
+[[outputs]]
+id = "xpKcAk_iciY1ISbnrsT9j"
+uri = "file://scripts/loadtest-results/stress-test.json"
+type = "unspecified"
+title = "Stress test — raw JSON"

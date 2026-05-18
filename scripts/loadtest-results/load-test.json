@@ -1,0 +1,132 @@
+{
+  "at": "2026-05-18T16:18:44.140Z",
+  "connections": 50,
+  "duration_s": 15,
+  "results": {
+    "healthz": {
+      "duration_s": 15.06,
+      "connections": 50,
+      "requests_total": 72400,
+      "req_per_sec_avg": 4827.1,
+      "throughput_kbps": 1103.1,
+      "latency_avg_ms": 9.9,
+      "latency_p50_ms": 8,
+      "latency_p90_ms": 16,
+      "latency_p99_ms": 31,
+      "latency_max_ms": 110,
+      "errors": 0,
+      "timeouts": 0,
+      "non_2xx": 0,
+      "cache": {
+        "hits": 0,
+        "misses": 0,
+        "sets": 0,
+        "invalidations": 0,
+        "errors": 0,
+        "hitRate": 0,
+        "entries_after": 9,
+        "tier": "memory"
+      }
+    },
+    "auth-status": {
+      "duration_s": 15.03,
+      "connections": 50,
+      "requests_total": 29348,
+      "req_per_sec_avg": 1956.6,
+      "throughput_kbps": 898,
+      "latency_avg_ms": 25,
+      "latency_p50_ms": 5,
+      "latency_p90_ms": 89,
+      "latency_p99_ms": 102,
+      "latency_max_ms": 156,
+      "errors": 0,
+      "timeouts": 0,
+      "non_2xx": 0,
+      "cache": {
+        "hits": 0,
+        "misses": 0,
+        "sets": 0,
+        "invalidations": 0,
+        "errors": 0,
+        "hitRate": 0,
+        "entries_after": 9,
+        "tier": "memory"
+      }
+    },
+    "dashboard-summary": {
+      "duration_s": 15.03,
+      "connections": 50,
+      "requests_total": 62830,
+      "req_per_sec_avg": 4189.1,
+      "throughput_kbps": 10860.5,
+      "latency_avg_ms": 11.4,
+      "latency_p50_ms": 4,
+      "latency_p90_ms": 41,
+      "latency_p99_ms": 79,
+      "latency_max_ms": 108,
+      "errors": 0,
+      "timeouts": 0,
+      "non_2xx": 0,
+      "cache": {
+        "hits": 62830,
+        "misses": 50,
+        "sets": 1,
+        "invalidations": 0,
+        "errors": 0,
+        "hitRate": 0.999,
+        "entries_after": 9,
+        "tier": "memory"
+      }
+    },
+    "dashboard-trends": {
+      "duration_s": 15.04,
+      "connections": 50,
+      "requests_total": 72544,
+      "req_per_sec_avg": 4836.7,
+      "throughput_kbps": 4232,
+      "latency_avg_ms": 9.9,
+      "latency_p50_ms": 6,
+      "latency_p90_ms": 25,
+      "latency_p99_ms": 58,
+      "latency_max_ms": 81,
+      "errors": 0,
+      "timeouts": 0,
+      "non_2xx": 0,
+      "cache": {
+        "hits": 72593,
+        "misses": 1,
+        "sets": 1,
+        "invalidations": 0,
+        "errors": 0,
+        "hitRate": 1,
+        "entries_after": 9,
+        "tier": "memory"
+      }
+    },
+    "dashboard-recent": {
+      "duration_s": 15.03,
+      "connections": 50,
+      "requests_total": 65113,
+      "req_per_sec_avg": 4341.5,
+      "throughput_kbps": 5756.7,
+      "latency_avg_ms": 11,
+      "latency_p50_ms": 5,
+      "latency_p90_ms": 33,
+      "latency_p99_ms": 70,
+      "latency_max_ms": 108,
+      "errors": 0,
+      "timeouts": 0,
+      "non_2xx": 0,
+      "cache": {
+        "hits": 65147,
+        "misses": 16,
+        "sets": 1,
+        "invalidations": 0,
+        "errors": 0,
+        "hitRate": 1,
+        "entries_after": 9,
+        "tier": "memory"
+      }
+    }
+  }
+}
