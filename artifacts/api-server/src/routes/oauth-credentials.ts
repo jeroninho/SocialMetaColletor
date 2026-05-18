@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db, oauthCredentialsTable } from "@workspace/db";
 import { encryptToken, decryptToken } from "../utils/crypto.js";
 import { authMiddleware } from "../middleware/auth.js";
+import { cacheDelByPattern } from "../services/RedisClient.js";
 
 const router = Router();
 
@@ -91,6 +92,7 @@ router.put("/oauth-credentials/:platform", authMiddleware, async (req, res) => {
       set: { clientId: encryptedId, clientSecret: encryptedSecret, updatedAt: now },
     });
 
+  await cacheDelByPattern("auth:config:");
   res.json({ ok: true, platform, source: "db", clientIdPreview: preview(parsed.data.clientId.trim()) });
 });
 
@@ -101,6 +103,7 @@ router.delete("/oauth-credentials/:platform", authMiddleware, async (req, res) =
     return;
   }
   await db.delete(oauthCredentialsTable).where(eq(oauthCredentialsTable.platform, platform));
+  await cacheDelByPattern("auth:config:");
   res.json({ ok: true, platform });
 });
 

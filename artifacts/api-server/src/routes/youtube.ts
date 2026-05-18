@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, tokensTable } from "@workspace/db";
 import { ListYoutubeVideosQueryParams } from "@workspace/api-zod";
 import { YouTubeProvider } from "../services/YouTubeProvider.js";
+import { cached } from "../services/RedisClient.js";
 
 const router = Router();
 const youtube = new YouTubeProvider();
@@ -205,6 +206,25 @@ router.get("/youtube/videos/:videoId", async (req, res) => {
 });
 
 router.get("/youtube/analytics", async (_req, res) => {
+  let hit = false;
+  const payload = await cached(
+    "youtube:analytics:v1",
+    300,
+    async () => buildYoutubeAnalytics(),
+    {
+      onHit: () => { hit = true; },
+      cacheIf: (v) => !("error" in v) && v.analyticsReason !== "upstream_error",
+    },
+  );
+  res.setHeader("X-Cache", hit ? "HIT" : "MISS");
+  if ("error" in payload) {
+    res.status(502).json(payload);
+    return;
+  }
+  res.json(payload);
+});
+
+async function buildYoutubeAnalytics() {
   const token = await loadYoutubeToken();
 
   // Mock fallback is preserved ONLY for unauthenticated users or tokens
@@ -230,7 +250,7 @@ router.get("/youtube/analytics", async (_req, res) => {
           ? ((totalLikes + totalComments + totalShares) / totalViews) * 100
           : 0;
 
-      res.json({
+      return {
         platform: "youtube",
         totalContent: stats.videoCount,
         totalViews,
@@ -263,17 +283,15 @@ router.get("/youtube/analytics", async (_req, res) => {
         subscribersGained: analytics.subscribersGained,
         subscribersLost: analytics.subscribersLost,
         periodDays: analytics.periodDays,
-      });
-      return;
+      };
     } catch (err) {
-      res.status(502).json({
+      return {
         error: "youtube_analytics_failed",
         reason: youtube.hasAnalyticsScope(token.scope) ? "upstream_error" : "insufficient_scope",
         message: err instanceof Error ? err.message : "Failed to fetch analytics from YouTube.",
         analyticsAvailable: false,
         analyticsReason: youtube.hasAnalyticsScope(token.scope) ? "upstream_error" : "insufficient_scope",
-      });
-      return;
+      };
     }
   }
 
@@ -282,7 +300,7 @@ router.get("/youtube/analytics", async (_req, res) => {
   const totalComments = youtubeVideos.reduce((s, v) => s + v.commentCount, 0);
   const averageEngagementRate = ((totalLikes + totalComments) / totalViews) * 100;
 
-  res.json({
+  return {
     platform: "youtube",
     totalContent: youtubeVideos.length,
     totalViews,
@@ -320,7 +338,7 @@ router.get("/youtube/analytics", async (_req, res) => {
     subscribersGained: 0,
     subscribersLost: 0,
     periodDays: ANALYTICS_PERIOD_DAYS,
-  });
-});
+  };
+}
 
 export default router;

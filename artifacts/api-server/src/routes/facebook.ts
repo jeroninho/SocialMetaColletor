@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, tokensTable } from "@workspace/db";
 import { ListFacebookPostsQueryParams } from "@workspace/api-zod";
 import { MetaProvider } from "../services/MetaProvider.js";
+import { cached } from "../services/RedisClient.js";
 
 const router = Router();
 const meta = new MetaProvider();
@@ -102,6 +103,21 @@ router.get("/facebook/posts", async (req, res) => {
 });
 
 router.get("/facebook/analytics", async (req, res) => {
+  let hit = false;
+  const payload = await cached(
+    "facebook:analytics:v1",
+    600,
+    async () => buildFacebookAnalytics(req),
+    {
+      onHit: () => { hit = true; },
+      cacheIf: (v) => v.analyticsReason !== "upstream_error",
+    },
+  );
+  res.setHeader("X-Cache", hit ? "HIT" : "MISS");
+  res.json(payload);
+});
+
+async function buildFacebookAnalytics(req: Parameters<Parameters<typeof router.get>[1]>[0]) {
   const totalViews = facebookPosts.reduce((s, p) => s + p.impressions, 0);
   const totalLikes = facebookPosts.reduce((s, p) => s + p.likeCount, 0);
   const totalComments = facebookPosts.reduce((s, p) => s + p.commentCount, 0);
@@ -139,7 +155,7 @@ router.get("/facebook/analytics", async (req, res) => {
       const normalized = await meta.getFacebookNormalizedMetrics(token.accessToken, token.scope, 28);
       const hasInsights = meta.hasFacebookInsightsScope(token.scope);
       const hasSignal = normalized.totalViews > 0 || normalized.impressions > 0;
-      res.json({
+      return {
         ...mockPayload,
         totalContent: normalized.postsCount,
         totalViews: normalized.totalViews,
@@ -150,16 +166,14 @@ router.get("/facebook/analytics", async (req, res) => {
         analyticsAvailable: hasInsights && hasSignal,
         analyticsReason: !hasInsights ? "insufficient_scope" : !hasSignal ? "no_signal" : "ok",
         periodDays: normalized.periodDays,
-      });
-      return;
+      };
     } catch (err) {
       req.log.error({ err }, "facebook analytics failed; falling back to mock");
-      res.json({ ...mockPayload, analyticsAvailable: false, analyticsReason: "upstream_error" });
-      return;
+      return { ...mockPayload, analyticsAvailable: false, analyticsReason: "upstream_error" };
     }
   }
 
-  res.json({ ...mockPayload, analyticsAvailable: false, analyticsReason: "not_connected" });
-});
+  return { ...mockPayload, analyticsAvailable: false, analyticsReason: "not_connected" };
+}
 
 export default router;

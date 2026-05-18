@@ -3,6 +3,7 @@ import { randomBytes } from "crypto";
 import { eq } from "drizzle-orm";
 import { db, tokensTable, oauthCredentialsTable } from "@workspace/db";
 import { encryptToken, decryptToken } from "../utils/crypto.js";
+import { cached, cacheDelByPattern } from "../services/RedisClient.js";
 
 const ENV_MAP: Record<string, { idKey: string; secretKey: string }> = {
   youtube: { idKey: "YOUTUBE_CLIENT_ID", secretKey: "YOUTUBE_CLIENT_SECRET" },
@@ -92,15 +93,25 @@ function safeEncrypt(token: string): string {
 }
 
 router.get("/auth/config", async (_req, res) => {
+  let hit = false;
   const base = getBaseUrl();
-  const platforms = ["youtube", "instagram", "facebook", "tiktok", "twitter"] as const;
-  const entries = await Promise.all(
-    platforms.map(async (p) => [p, {
-      callbackUrl: `${base}/api/auth/${p}/callback`,
-      configured: await isConfigured(p),
-    }] as const)
+  const payload = await cached(
+    `auth:config:${base}`,
+    3600,
+    async () => {
+      const platforms = ["youtube", "instagram", "facebook", "tiktok", "twitter"] as const;
+      const entries = await Promise.all(
+        platforms.map(async (p) => [p, {
+          callbackUrl: `${base}/api/auth/${p}/callback`,
+          configured: await isConfigured(p),
+        }] as const)
+      );
+      return Object.fromEntries(entries);
+    },
+    { onHit: () => { hit = true; } },
   );
-  res.json(Object.fromEntries(entries));
+  res.setHeader("X-Cache", hit ? "HIT" : "MISS");
+  res.json(payload);
 });
 
 // ─── YOUTUBE ────────────────────────────────────────────────────────────────
@@ -218,6 +229,11 @@ router.get("/auth/youtube/callback", async (req, res) => {
     return;
   }
 
+  await Promise.all([
+    cacheDelByPattern("youtube:"),
+    cacheDelByPattern("dashboard:"),
+    cacheDelByPattern("comparator:"),
+  ]);
   redirectToFrontend(res as never, "success", "youtube");
 });
 
@@ -332,6 +348,11 @@ router.get("/auth/instagram/callback", async (req, res) => {
     return;
   }
 
+  await Promise.all([
+    cacheDelByPattern("instagram:"),
+    cacheDelByPattern("dashboard:"),
+    cacheDelByPattern("comparator:"),
+  ]);
   redirectToFrontend(res as never, "success", "instagram");
 });
 
@@ -449,6 +470,11 @@ router.get("/auth/facebook/callback", async (req, res) => {
     return;
   }
 
+  await Promise.all([
+    cacheDelByPattern("facebook:"),
+    cacheDelByPattern("dashboard:"),
+    cacheDelByPattern("comparator:"),
+  ]);
   redirectToFrontend(res as never, "success", "facebook");
 });
 
@@ -562,6 +588,11 @@ router.get("/auth/tiktok/callback", async (req, res) => {
     return;
   }
 
+  await Promise.all([
+    cacheDelByPattern("tiktok:"),
+    cacheDelByPattern("dashboard:"),
+    cacheDelByPattern("comparator:"),
+  ]);
   redirectToFrontend(res as never, "success", "tiktok");
 });
 
@@ -681,6 +712,11 @@ router.get("/auth/twitter/callback", async (req, res) => {
     return;
   }
 
+  await Promise.all([
+    cacheDelByPattern("twitter:"),
+    cacheDelByPattern("dashboard:"),
+    cacheDelByPattern("comparator:"),
+  ]);
   redirectToFrontend(res as never, "success", "twitter");
 });
 

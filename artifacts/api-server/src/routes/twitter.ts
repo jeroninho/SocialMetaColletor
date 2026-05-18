@@ -2,6 +2,7 @@ import { Router } from "express";
 import { eq } from "drizzle-orm";
 import { db, tokensTable } from "@workspace/db";
 import { TwitterProvider } from "../services/TwitterProvider.js";
+import { cached } from "../services/RedisClient.js";
 
 const router = Router();
 const twitter = new TwitterProvider();
@@ -96,6 +97,21 @@ router.get("/twitter/tweets", async (req, res) => {
 });
 
 router.get("/twitter/analytics", async (req, res) => {
+  let hit = false;
+  const payload = await cached(
+    "twitter:analytics:v1",
+    900,
+    async () => buildTwitterAnalytics(req),
+    {
+      onHit: () => { hit = true; },
+      cacheIf: (v) => v.analyticsReason !== "upstream_error",
+    },
+  );
+  res.setHeader("X-Cache", hit ? "HIT" : "MISS");
+  res.json(payload);
+});
+
+async function buildTwitterAnalytics(req: Parameters<Parameters<typeof router.get>[1]>[0]) {
   const totalImpressions = tweets.reduce((s, t) => s + t.impressionCount, 0);
   const totalLikes = tweets.reduce((s, t) => s + t.likeCount, 0);
   const totalRetweets = tweets.reduce((s, t) => s + t.retweetCount, 0);
@@ -135,7 +151,7 @@ router.get("/twitter/analytics", async (req, res) => {
       const normalized = await twitter.getNormalizedMetrics(token.accessToken, token.scope, 28);
       const hasScope = twitter.hasReadScope(token.scope);
       const hasSignal = normalized.totalViews > 0 || normalized.impressions > 0;
-      res.json({
+      return {
         ...mockPayload,
         totalContent: normalized.postsCount,
         totalViews: normalized.totalViews,
@@ -146,16 +162,14 @@ router.get("/twitter/analytics", async (req, res) => {
         analyticsAvailable: hasScope && hasSignal,
         analyticsReason: !hasScope ? "insufficient_scope" : !hasSignal ? "no_signal" : "ok",
         periodDays: normalized.periodDays,
-      });
-      return;
+      };
     } catch (err) {
       req.log.error({ err }, "twitter analytics failed; falling back to mock");
-      res.json({ ...mockPayload, analyticsAvailable: false, analyticsReason: "upstream_error" });
-      return;
+      return { ...mockPayload, analyticsAvailable: false, analyticsReason: "upstream_error" };
     }
   }
 
-  res.json({ ...mockPayload, analyticsAvailable: false, analyticsReason: "not_connected" });
-});
+  return { ...mockPayload, analyticsAvailable: false, analyticsReason: "not_connected" };
+}
 
 export default router;

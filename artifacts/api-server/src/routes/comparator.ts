@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { authMiddleware } from "../middleware/auth.js";
+import { cached } from "../services/RedisClient.js";
 
 const router = Router();
 
@@ -91,14 +92,21 @@ router.get("/comparator", authMiddleware, async (req, res) => {
     return;
   }
 
-  const results = platforms
-    .map((p) => generatePeriodData(p, effectiveStart, effectiveEnd))
-    .filter(Boolean);
-
-  res.json({
-    comparison: results,
-    availablePlatforms: VALID_PLATFORMS,
-  });
+  const key = `comparator:${platforms.sort().join(",")}:${effectiveStart}:${effectiveEnd}`;
+  let hit = false;
+  const payload = await cached(
+    key,
+    300,
+    async () => ({
+      comparison: platforms
+        .map((p) => generatePeriodData(p, effectiveStart, effectiveEnd))
+        .filter(Boolean),
+      availablePlatforms: VALID_PLATFORMS,
+    }),
+    { onHit: () => { hit = true; } },
+  );
+  res.setHeader("X-Cache", hit ? "HIT" : "MISS");
+  res.json(payload);
 });
 
 export default router;

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { eq } from "drizzle-orm";
 import { db, tokensTable } from "@workspace/db";
 import { TikTokProvider } from "../services/TikTokProvider.js";
+import { cached } from "../services/RedisClient.js";
 
 const router = Router();
 const tiktok = new TikTokProvider();
@@ -94,6 +95,21 @@ router.get("/tiktok/videos", async (req, res) => {
 });
 
 router.get("/tiktok/analytics", async (req, res) => {
+  let hit = false;
+  const payload = await cached(
+    "tiktok:analytics:v1",
+    900,
+    async () => buildTikTokAnalytics(req),
+    {
+      onHit: () => { hit = true; },
+      cacheIf: (v) => v.analyticsReason !== "upstream_error",
+    },
+  );
+  res.setHeader("X-Cache", hit ? "HIT" : "MISS");
+  res.json(payload);
+});
+
+async function buildTikTokAnalytics(req: Parameters<Parameters<typeof router.get>[1]>[0]) {
   const totalViews = tiktokVideos.reduce((s, v) => s + v.viewCount, 0);
   const totalLikes = tiktokVideos.reduce((s, v) => s + v.likeCount, 0);
   const totalComments = tiktokVideos.reduce((s, v) => s + v.commentCount, 0);
@@ -131,7 +147,7 @@ router.get("/tiktok/analytics", async (req, res) => {
       const normalized = await tiktok.getNormalizedMetrics(token.accessToken, token.scope, 28);
       const hasScope = tiktok.hasVideoListScope(token.scope);
       const hasSignal = normalized.totalViews > 0;
-      res.json({
+      return {
         ...mockPayload,
         totalContent: normalized.postsCount,
         totalViews: normalized.totalViews,
@@ -142,16 +158,14 @@ router.get("/tiktok/analytics", async (req, res) => {
         analyticsAvailable: hasScope && hasSignal,
         analyticsReason: !hasScope ? "insufficient_scope" : !hasSignal ? "no_signal" : "ok",
         periodDays: normalized.periodDays,
-      });
-      return;
+      };
     } catch (err) {
       req.log.error({ err }, "tiktok analytics failed; falling back to mock");
-      res.json({ ...mockPayload, analyticsAvailable: false, analyticsReason: "upstream_error" });
-      return;
+      return { ...mockPayload, analyticsAvailable: false, analyticsReason: "upstream_error" };
     }
   }
 
-  res.json({ ...mockPayload, analyticsAvailable: false, analyticsReason: "not_connected" });
-});
+  return { ...mockPayload, analyticsAvailable: false, analyticsReason: "not_connected" };
+}
 
 export default router;

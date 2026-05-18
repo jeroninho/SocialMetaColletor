@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { db, tokensTable } from "@workspace/db";
 import { ListInstagramMediaQueryParams } from "@workspace/api-zod";
 import { MetaProvider } from "../services/MetaProvider.js";
+import { cached } from "../services/RedisClient.js";
 
 const router = Router();
 const meta = new MetaProvider();
@@ -102,6 +103,21 @@ router.get("/instagram/media", async (req, res) => {
 });
 
 router.get("/instagram/analytics", async (req, res) => {
+  let hit = false;
+  const payload = await cached(
+    "instagram:analytics:v1",
+    600,
+    async () => buildInstagramAnalytics(req),
+    {
+      onHit: () => { hit = true; },
+      cacheIf: (v) => v.analyticsReason !== "upstream_error",
+    },
+  );
+  res.setHeader("X-Cache", hit ? "HIT" : "MISS");
+  res.json(payload);
+});
+
+async function buildInstagramAnalytics(req: Parameters<Parameters<typeof router.get>[1]>[0]) {
   const totalViews = instagramMedia.reduce((s, m) => s + m.impressions, 0);
   const totalLikes = instagramMedia.reduce((s, m) => s + m.likeCount, 0);
   const totalComments = instagramMedia.reduce((s, m) => s + m.commentsCount, 0);
@@ -142,7 +158,7 @@ router.get("/instagram/analytics", async (req, res) => {
       );
       const hasScope = meta.hasInstagramInsightsScope(token.scope);
       const hasSignal = normalized.totalViews > 0 || normalized.postsCount > 0;
-      res.json({
+      return {
         ...mockPayload,
         totalContent: normalized.postsCount,
         totalViews: normalized.totalViews,
@@ -153,20 +169,14 @@ router.get("/instagram/analytics", async (req, res) => {
         analyticsAvailable: hasScope && hasSignal,
         analyticsReason: !hasScope ? "insufficient_scope" : !hasSignal ? "no_signal" : "ok",
         periodDays: normalized.periodDays,
-      });
-      return;
+      };
     } catch (err) {
       req.log.error({ err }, "instagram analytics failed; falling back to mock");
-      res.json({
-        ...mockPayload,
-        analyticsAvailable: false,
-        analyticsReason: "upstream_error",
-      });
-      return;
+      return { ...mockPayload, analyticsAvailable: false, analyticsReason: "upstream_error" };
     }
   }
 
-  res.json({ ...mockPayload, analyticsAvailable: false, analyticsReason: "not_connected" });
-});
+  return { ...mockPayload, analyticsAvailable: false, analyticsReason: "not_connected" };
+}
 
 export default router;

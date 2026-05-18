@@ -9,6 +9,7 @@ import {
 } from "@workspace/api-zod";
 import { encryptToken } from "../utils/crypto.js";
 import { YOUTUBE_ANALYTICS_SCOPE } from "../services/YouTubeProvider.js";
+import { cacheDelByPattern } from "../services/RedisClient.js";
 
 const REQUIRED_SCOPES: Record<string, string[]> = {
   youtube: [YOUTUBE_ANALYTICS_SCOPE],
@@ -279,6 +280,11 @@ router.post("/auth/:platform/disconnect", async (req, res) => {
 
   try {
     await db.delete(tokensTable).where(eq(tokensTable.platform, platform));
+    await Promise.all([
+      cacheDelByPattern(`${platform}:`),
+      cacheDelByPattern("dashboard:"),
+      cacheDelByPattern("comparator:"),
+    ]);
     res.json({ success: true, message: `${platform} disconnected successfully` });
   } catch (err) {
     req.log.error({ err }, "Error disconnecting platform");

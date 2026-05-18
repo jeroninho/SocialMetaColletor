@@ -2,7 +2,7 @@ import { Router } from "express";
 import { desc, eq } from "drizzle-orm";
 import { db, metadataTable, tokensTable } from "@workspace/db";
 import { ListRecentMetadataQueryParams } from "@workspace/api-zod";
-import { cacheGet, cacheSet } from "../services/RedisClient.js";
+import { cached, cacheDelByPattern } from "../services/RedisClient.js";
 import { getMetadataSyncQueue, startSyncWorker, type SyncJobData } from "../queues/metadataSyncQueue.js";
 import { YouTubeProvider, type NormalizedPlatformMetrics } from "../services/YouTubeProvider.js";
 import { MetaProvider } from "../services/MetaProvider.js";
@@ -21,15 +21,20 @@ startSyncWorker();
 
 router.get("/dashboard/summary", async (req, res) => {
   const userId = req.user?.sub ?? "anonymous";
-  const cacheKey = `dashboard:summary:${userId}`;
+  let hit = false;
 
-  const cached = await cacheGet(cacheKey);
-  if (cached) {
-    res.setHeader("X-Cache", "HIT");
-    res.json(JSON.parse(cached));
-    return;
-  }
+  const summary = await cached(
+    `dashboard:summary:${userId}`,
+    CACHE_TTL,
+    async () => buildDashboardSummary(req),
+    { onHit: () => { hit = true; } },
+  );
 
+  res.setHeader("X-Cache", hit ? "HIT" : "MISS");
+  res.json(summary);
+});
+
+async function buildDashboardSummary(req: Parameters<Parameters<typeof router.get>[1]>[0]) {
   const allTokens = await db.select().from(tokensTable);
   const tokenByPlatform = new Map(allTokens.map((t) => [t.platform, t] as const));
 
@@ -156,7 +161,7 @@ router.get("/dashboard/summary", async (req, res) => {
   const averageEngagementRate =
     normalizedBreakdown.reduce((s, p) => s + p.engagementRate, 0) / normalizedBreakdown.length;
 
-  const summary = {
+  return {
     totalPlatforms: 5,
     connectedPlatforms: platformBreakdown.filter((p) => p.connected).length,
     totalFollowers,
@@ -169,16 +174,24 @@ router.get("/dashboard/summary", async (req, res) => {
     lastSyncAt: new Date().toISOString(),
     _source: "db",
   };
-
-  await cacheSet(cacheKey, JSON.stringify(summary), CACHE_TTL);
-  res.setHeader("X-Cache", "MISS");
-  res.json(summary);
-});
+}
 
 router.get("/dashboard/recent-metadata", async (req, res) => {
   const parsed = ListRecentMetadataQueryParams.safeParse(req.query);
   const limit = parsed.success ? (parsed.data.limit ?? 10) : 10;
 
+  let hit = false;
+  const payload = await cached(
+    `dashboard:recent:${limit}`,
+    120,
+    async () => buildRecentMetadata(limit),
+    { onHit: () => { hit = true; } },
+  );
+  res.setHeader("X-Cache", hit ? "HIT" : "MISS");
+  res.json(payload);
+});
+
+async function buildRecentMetadata(limit: number) {
   const dbEntries = await db
     .select()
     .from(metadataTable)
@@ -186,8 +199,7 @@ router.get("/dashboard/recent-metadata", async (req, res) => {
     .limit(limit);
 
   if (dbEntries.length > 0) {
-    res.json({ items: dbEntries, total: dbEntries.length });
-    return;
+    return { items: dbEntries, total: dbEntries.length };
   }
 
   const ytEngagement = await youtube.getRecentEngagement("");
@@ -212,24 +224,41 @@ router.get("/dashboard/recent-metadata", async (req, res) => {
     })),
   ].slice(0, limit);
 
-  res.json({ items: mockEntries, total: mockEntries.length });
-});
+  return { items: mockEntries, total: mockEntries.length };
+}
 
 router.get("/dashboard/engagement-trends", async (_req, res) => {
-  const dataPoints = [
-    { date: "2024-11-01", youtube: 12400, instagram: 8200, facebook: 6100, tiktok: 45000, twitter: 18000 },
-    { date: "2024-11-15", youtube: 15800, instagram: 9400, facebook: 7300, tiktok: 62000, twitter: 22000 },
-    { date: "2024-12-01", youtube: 18200, instagram: 11200, facebook: 8600, tiktok: 78000, twitter: 28000 },
-    { date: "2024-12-15", youtube: 22400, instagram: 13800, facebook: 9200, tiktok: 95000, twitter: 34000 },
-    { date: "2025-01-01", youtube: 28600, instagram: 16400, facebook: 11400, tiktok: 124000, twitter: 42000 },
-    { date: "2025-01-15", youtube: 34200, instagram: 19800, facebook: 13600, tiktok: 156000, twitter: 52000 },
-  ];
-  res.json({ period: "last-90-days", dataPoints });
+  let hit = false;
+  const payload = await cached(
+    "dashboard:trends:v1",
+    300,
+    async () => ({
+      period: "last-90-days",
+      dataPoints: [
+        { date: "2024-11-01", youtube: 12400, instagram: 8200, facebook: 6100, tiktok: 45000, twitter: 18000 },
+        { date: "2024-11-15", youtube: 15800, instagram: 9400, facebook: 7300, tiktok: 62000, twitter: 22000 },
+        { date: "2024-12-01", youtube: 18200, instagram: 11200, facebook: 8600, tiktok: 78000, twitter: 28000 },
+        { date: "2024-12-15", youtube: 22400, instagram: 13800, facebook: 9200, tiktok: 95000, twitter: 34000 },
+        { date: "2025-01-01", youtube: 28600, instagram: 16400, facebook: 11400, tiktok: 124000, twitter: 42000 },
+        { date: "2025-01-15", youtube: 34200, instagram: 19800, facebook: 13600, tiktok: 156000, twitter: 52000 },
+      ],
+    }),
+    { onHit: () => { hit = true; } },
+  );
+  res.setHeader("X-Cache", hit ? "HIT" : "MISS");
+  res.json(payload);
 });
 
 router.post("/metadata/sync", async (req, res) => {
   const userId = req.user?.sub ?? "anonymous";
   const platforms = (req.body as { platforms?: string[] })?.platforms ?? ["youtube", "instagram", "facebook"];
+
+  // Invalidate cached dashboard and platform analytics so the next fetch
+  // surfaces fresh numbers right after a sync is queued.
+  await Promise.all([
+    cacheDelByPattern("dashboard:"),
+    ...platforms.map((p) => cacheDelByPattern(`${p}:`)),
+  ]);
 
   const q = getMetadataSyncQueue();
 
