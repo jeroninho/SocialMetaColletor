@@ -63,7 +63,7 @@ export default function FacebookPage() {
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold">{page.name}</h2>
                   {page.category && <span className="text-muted-foreground text-sm">{page.category}</span>}
-                  <Badge variant="secondary" className="text-[#1877F2] border-[#1877F2]/20">Facebook</Badge>
+                  <Badge variant="outline">Facebook</Badge>
                 </div>
                 {page.about && (
                   <p className="text-sm text-muted-foreground mt-1 max-w-2xl line-clamp-2">{page.about}</p>

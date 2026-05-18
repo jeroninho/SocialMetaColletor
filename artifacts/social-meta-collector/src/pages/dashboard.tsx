@@ -28,22 +28,18 @@ import {
   getGridStyle,
 } from "@/lib/chart-theme";
 
-/* ── Helpers ─────────────────────────────────────────────── */
 function fmt(n: number) {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return n.toLocaleString("pt-BR");
 }
 
-/* ── Stat card config ────────────────────────────────────── */
 const statConfig = [
   {
     key: "totalFollowers",
     title: "Total de Seguidores",
     icon: Users,
     desc: "Em todas as plataformas",
-    iconBg: "rgba(108,99,255,0.15)",
-    iconColor: "#6C63FF",
     trend: +12.4,
   },
   {
@@ -51,8 +47,6 @@ const statConfig = [
     title: "Total de Visualizações",
     icon: Eye,
     desc: "Views acumulados",
-    iconBg: "rgba(24,119,242,0.15)",
-    iconColor: "#1877F2",
     trend: +8.1,
   },
   {
@@ -60,8 +54,6 @@ const statConfig = [
     title: "Total de Engajamentos",
     icon: Heart,
     desc: "Curtidas, comentários e shares",
-    iconBg: "rgba(255,111,145,0.15)",
-    iconColor: "#FF6F91",
     trend: -2.3,
   },
   {
@@ -69,51 +61,40 @@ const statConfig = [
     title: "Taxa Média de Engajamento",
     icon: Activity,
     desc: "Performance agregada",
-    iconBg: "rgba(76,175,80,0.15)",
-    iconColor: "#4CAF50",
     trend: +1.7,
     isRate: true,
   },
 ];
 
-/* ── Skeleton ────────────────────────────────────────────── */
 function StatCardSkeleton() {
   return (
-    <Card className="border-border/40 card-static">
+    <Card>
       <CardContent className="pt-5 pb-5 space-y-3">
         <div className="flex items-start justify-between">
-          <Skeleton className="h-4 w-32 skeleton-shimmer" />
-          <Skeleton className="h-10 w-10 rounded-xl skeleton-shimmer" />
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-10 w-10 rounded-md" />
         </div>
-        <Skeleton className="h-9 w-28 skeleton-shimmer" />
+        <Skeleton className="h-9 w-28" />
         <div className="flex justify-between">
-          <Skeleton className="h-3 w-36 skeleton-shimmer" />
-          <Skeleton className="h-3 w-12 skeleton-shimmer" />
+          <Skeleton className="h-3 w-36" />
+          <Skeleton className="h-3 w-12" />
         </div>
       </CardContent>
     </Card>
   );
 }
 
-/* ── Trend badge ─────────────────────────────────────────── */
 function TrendBadge({ value }: { value: number }) {
   const up = value >= 0;
   const Icon = up ? TrendingUp : TrendingDown;
   return (
-    <span
-      className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
-      style={{
-        background: up ? "rgba(76,175,80,0.14)" : "rgba(244,67,54,0.14)",
-        color: up ? "#4CAF50" : "#F44336",
-      }}
-    >
+    <span className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
       <Icon className="w-3 h-3" />
       {Math.abs(value).toFixed(1)}%
     </span>
   );
 }
 
-/* ── Dashboard ───────────────────────────────────────────── */
 export default function Dashboard() {
   const { theme } = useTheme();
   const dark = theme === "dark";
@@ -126,7 +107,6 @@ export default function Dashboard() {
   const axisStyle    = getAxisStyle(dark);
   const gridColor    = getGridStyle(dark);
 
-  /* Skeleton state */
   if (isLoading || !summary) {
     return (
       <div className="space-y-6 animate-in fade-in duration-300">
@@ -134,21 +114,20 @@ export default function Dashboard() {
           {[1, 2, 3, 4].map((i) => <StatCardSkeleton key={i} />)}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          <Skeleton className="lg:col-span-3 h-72 rounded-2xl skeleton-shimmer" />
-          <Skeleton className="lg:col-span-2 h-72 rounded-2xl skeleton-shimmer" />
+          <Skeleton className="lg:col-span-3 h-72 rounded-md" />
+          <Skeleton className="lg:col-span-2 h-72 rounded-md" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-44 rounded-2xl skeleton-shimmer" />)}
+          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-44 rounded-md" />)}
         </div>
       </div>
     );
   }
 
-  /* Chart data */
   const pieData = summary.platformBreakdown.map((p) => ({
     name: p.platform.charAt(0).toUpperCase() + p.platform.slice(1),
     value: p.followers,
-    color: PLATFORM_COLORS[p.platform as keyof typeof PLATFORM_COLORS] ?? "#888",
+    color: PLATFORM_COLORS[p.platform as keyof typeof PLATFORM_COLORS] ?? "hsl(var(--muted-foreground))",
   }));
 
   const barData = summary.platformBreakdown.map((p) => ({
@@ -157,7 +136,6 @@ export default function Dashboard() {
     raw: p.platform,
   }));
 
-  /* Engagement trend sparkline mock */
   const trendData = [
     { mes: "Nov", engaj: 38200 },
     { mes: "Dez", engaj: 44100 },
@@ -165,9 +143,8 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="space-y-6 animate-in fade-in zoom-in-98 duration-300">
+    <div className="space-y-6 animate-in fade-in duration-300">
 
-      {/* ── Stat cards ─────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {statConfig.map((cfg) => {
           const Icon = cfg.icon;
@@ -175,40 +152,20 @@ export default function Dashboard() {
           const value = cfg.isRate ? `${raw.toFixed(2)}%` : fmt(raw);
 
           return (
-            <Card
-              key={cfg.key}
-              className="border-border/40 overflow-hidden group"
-            >
-              {/* Thin accent bar on top */}
-              <div
-                className="h-0.5 w-full"
-                style={{
-                  background: `linear-gradient(90deg, ${cfg.iconColor}, transparent)`,
-                }}
-              />
-              <CardContent className="pt-4 pb-5">
+            <Card key={cfg.key}>
+              <CardContent className="pt-5 pb-5">
                 <div className="flex items-start justify-between mb-3">
-                  <p
-                    className="text-[13px] font-medium leading-tight pr-2"
-                    style={{ color: dark ? "#E0E0E0" : "#4B5563" }}
-                  >
+                  <p className="text-[13px] font-medium leading-tight pr-2 text-muted-foreground">
                     {cfg.title}
                   </p>
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ background: cfg.iconBg }}
-                  >
-                    <Icon className="w-5 h-5" style={{ color: cfg.iconColor }} />
+                  <div className="w-10 h-10 rounded-md flex items-center justify-center flex-shrink-0 bg-muted">
+                    <Icon className="w-5 h-5 text-foreground" />
                   </div>
                 </div>
 
-                {/* Big metric number */}
                 <p
-                  className="text-3xl font-bold tabular-nums tracking-tight"
-                  style={{
-                    fontFamily: "var(--app-font-heading)",
-                    color: dark ? "#FFFFFF" : "#111827",
-                  }}
+                  className="text-3xl font-semibold tabular-nums tracking-tight text-foreground"
+                  style={{ fontFamily: "var(--app-font-heading)" }}
                 >
                   {value}
                 </p>
@@ -223,11 +180,9 @@ export default function Dashboard() {
         })}
       </div>
 
-      {/* ── Charts ─────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
-        {/* Bar chart */}
-        <Card className="lg:col-span-3 border-border/40">
+        <Card className="lg:col-span-3">
           <CardHeader className="pb-1 pt-5">
             <CardTitle
               className="text-base"
@@ -259,13 +214,13 @@ export default function Dashboard() {
                   <Tooltip
                     contentStyle={tooltipStyle}
                     formatter={(v: number) => [fmt(v), "Seguidores"]}
-                    cursor={{ fill: "rgba(108,99,255,0.08)" }}
+                    cursor={{ fill: dark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.04)" }}
                   />
-                  <Bar dataKey="Seguidores" radius={[8, 8, 0, 0]} maxBarSize={56}>
+                  <Bar dataKey="Seguidores" radius={[4, 4, 0, 0]} maxBarSize={56}>
                     {barData.map((entry) => (
                       <Cell
                         key={entry.platform}
-                        fill={PLATFORM_COLORS[entry.raw as keyof typeof PLATFORM_COLORS] ?? "#6C63FF"}
+                        fill={PLATFORM_COLORS[entry.raw as keyof typeof PLATFORM_COLORS] ?? (dark ? "hsl(0 0% 88%)" : "hsl(0 0% 12%)")}
                       />
                     ))}
                   </Bar>
@@ -275,8 +230,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {/* Pie + legend */}
-        <Card className="lg:col-span-2 border-border/40">
+        <Card className="lg:col-span-2">
           <CardHeader className="pb-1 pt-5">
             <CardTitle
               className="text-base"
@@ -323,7 +277,7 @@ export default function Dashboard() {
                     <span className="text-muted-foreground">{entry.name}</span>
                   </div>
                   <span
-                    className="font-bold tabular-nums"
+                    className="font-semibold tabular-nums"
                     style={{ fontFamily: "var(--app-font-heading)" }}
                   >
                     {fmt(entry.value)}
@@ -335,8 +289,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* ── Engagement trend sparkline ──────────────── */}
-      <Card className="border-border/40">
+      <Card>
         <CardHeader className="pb-1 pt-5">
           <CardTitle
             className="text-base"
@@ -357,10 +310,10 @@ export default function Dashboard() {
                 <Line
                   type="monotone"
                   dataKey="engaj"
-                  stroke="#6C63FF"
-                  strokeWidth={3}
-                  dot={{ r: 5, fill: "#6C63FF", strokeWidth: 2, stroke: "#fff" }}
-                  activeDot={{ r: 7, fill: "#FF6F91" }}
+                  stroke={dark ? "hsl(0 0% 92%)" : "hsl(0 0% 8%)"}
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 5, strokeWidth: 0 }}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -368,44 +321,26 @@ export default function Dashboard() {
         </CardContent>
       </Card>
 
-      {/* ── Platform cards ─────────────────────────── */}
       <div>
         <p
-          className="text-[11px] font-bold uppercase tracking-widest mb-3 text-muted-foreground"
+          className="text-[11px] font-semibold uppercase tracking-widest mb-3 text-muted-foreground"
           style={{ fontFamily: "var(--app-font-heading)" }}
         >
           Visão por Plataforma
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {summary.platformBreakdown.map((platform) => {
-            const color = PLATFORM_COLORS[platform.platform as keyof typeof PLATFORM_COLORS] ?? "#888";
             return (
-              <Card
-                key={platform.platform}
-                className="border-border/40 overflow-hidden"
-              >
-                {/* Platform color top bar */}
-                <div
-                  className="h-1 w-full"
-                  style={{ background: `linear-gradient(90deg, ${color}, ${color}60)` }}
-                />
-                <CardContent className="pt-4 pb-5">
+              <Card key={platform.platform}>
+                <CardContent className="pt-5 pb-5">
                   <div className="flex items-center justify-between mb-4">
                     <span
-                      className="font-bold capitalize text-sm"
+                      className="font-semibold capitalize text-sm"
                       style={{ fontFamily: "var(--app-font-heading)" }}
                     >
                       {platform.platform}
                     </span>
-                    <span
-                      className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full"
-                      style={{
-                        background: platform.connected
-                          ? `${color}22`
-                          : dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.06)",
-                        color: platform.connected ? color : "var(--color-muted-foreground)",
-                      }}
-                    >
+                    <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-muted text-muted-foreground">
                       {platform.connected ? "Conectado" : "Desconectado"}
                     </span>
                   </div>
@@ -416,15 +351,9 @@ export default function Dashboard() {
                       { label: "Conteúdo", value: fmt(platform.content) },
                       { label: "Taxa Eng.", value: `${platform.engagementRate.toFixed(1)}%` },
                     ].map(({ label, value }) => (
-                      <div
-                        key={label}
-                        className="rounded-xl py-2.5 px-1"
-                        style={{
-                          background: dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
-                        }}
-                      >
+                      <div key={label} className="rounded-md py-2.5 px-1 bg-muted/60">
                         <p
-                          className="text-sm font-bold tabular-nums"
+                          className="text-sm font-semibold tabular-nums"
                           style={{ fontFamily: "var(--app-font-heading)" }}
                         >
                           {value}

@@ -4,20 +4,12 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { guideSteps } from "@/data/guide-steps";
 import type { CodeSnippet } from "@/data/guide-steps";
-import { useTheme } from "@/context/theme";
-
-const PURPLE = "#6C63FF";
+import { Button } from "@/components/ui/button";
 
 const langIcons: Record<string, string> = {
   javascript: "JS",
   python: "PY",
   curl: "cURL",
-};
-
-const langColors: Record<string, string> = {
-  javascript: "#F7DF1E",
-  python: "#3776AB",
-  curl: "#4CAF50",
 };
 
 function CodeBlock({ snippet }: { snippet: CodeSnippet }) {
@@ -33,11 +25,7 @@ function CodeBlock({ snippet }: { snippet: CodeSnippet }) {
     <div className="relative group">
       <button
         onClick={handleCopy}
-        className="absolute top-3 right-3 z-10 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
-        style={{
-          backgroundColor: copied ? "rgba(74,207,80,0.2)" : "rgba(255,255,255,0.1)",
-          color: copied ? "#4CAF50" : "rgba(255,255,255,0.7)",
-        }}
+        className="absolute top-3 right-3 z-10 flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium bg-background/80 text-foreground border border-border hover:bg-background"
       >
         {copied ? <Check size={13} /> : <Copy size={13} />}
         {copied ? "Copiado!" : "Copiar"}
@@ -46,7 +34,7 @@ function CodeBlock({ snippet }: { snippet: CodeSnippet }) {
         style={oneDark}
         language={snippet.language === "curl" ? "bash" : snippet.language}
         customStyle={{
-          borderRadius: 12,
+          borderRadius: 8,
           fontSize: 13,
           margin: 0,
           paddingTop: 20,
@@ -62,8 +50,6 @@ function CodeBlock({ snippet }: { snippet: CodeSnippet }) {
 export default function GuidePage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [activeLang, setActiveLang] = useState<string>("javascript");
-  const { theme } = useTheme();
-  const dark = theme === "dark";
 
   const step = guideSteps[currentStep];
   const activeSnippet = step.snippets.find((s) => s.language === activeLang) || step.snippets[0];
@@ -72,12 +58,12 @@ export default function GuidePage() {
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
         <h1
-          className="text-2xl font-bold tracking-tight mb-2"
+          className="text-2xl font-semibold tracking-tight mb-2"
           style={{ fontFamily: "var(--app-font-heading)" }}
         >
           Guia Interativo
         </h1>
-        <p className="text-sm" style={{ color: dark ? "rgba(255,255,255,0.55)" : "rgba(0,0,0,0.55)" }}>
+        <p className="text-sm text-muted-foreground">
           Siga o passo-a-passo para integrar APIs sociais na sua aplicação.
         </p>
       </div>
@@ -90,31 +76,22 @@ export default function GuidePage() {
             <button
               key={s.id}
               onClick={() => setCurrentStep(i)}
-              className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap flex-shrink-0"
-              style={{
-                backgroundColor: isActive
-                  ? `${PURPLE}20`
+              className={`flex items-center gap-2.5 px-4 py-2.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap flex-shrink-0 border ${
+                isActive
+                  ? "border-foreground bg-foreground text-background"
                   : isCompleted
-                    ? dark ? "rgba(74,207,80,0.1)" : "rgba(74,207,80,0.08)"
-                    : dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
-                border: `1px solid ${isActive ? `${PURPLE}40` : "transparent"}`,
-                color: isActive
-                  ? PURPLE
-                  : isCompleted
-                    ? "#4CAF50"
-                    : dark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
-              }}
+                    ? "border-border bg-muted text-foreground"
+                    : "border-border bg-card text-muted-foreground hover:text-foreground"
+              }`}
             >
               <span
-                className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0"
-                style={{
-                  backgroundColor: isActive
-                    ? PURPLE
+                className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold flex-shrink-0 ${
+                  isActive
+                    ? "bg-background text-foreground"
                     : isCompleted
-                      ? "#4CAF50"
-                      : dark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)",
-                  color: isActive || isCompleted ? "#fff" : dark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.4)",
-                }}
+                      ? "bg-foreground text-background"
+                      : "bg-muted text-muted-foreground"
+                }`}
               >
                 {isCompleted ? <Check size={12} /> : s.id}
               </span>
@@ -124,52 +101,39 @@ export default function GuidePage() {
         })}
       </div>
 
-      <div
-        className="rounded-2xl p-6 mb-6"
-        style={{
-          backgroundColor: dark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.02)",
-          border: `1px solid ${dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`,
-        }}
-      >
+      <div className="rounded-md p-6 mb-6 border border-border bg-card">
         <div className="flex items-center gap-3 mb-4">
-          <span
-            className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold"
-            style={{ backgroundColor: PURPLE, color: "#fff" }}
-          >
+          <span className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold bg-foreground text-background">
             {step.id}
           </span>
           <h2
-            className="text-lg font-bold tracking-tight"
+            className="text-lg font-semibold tracking-tight"
             style={{ fontFamily: "var(--app-font-heading)" }}
           >
             {step.title}
           </h2>
         </div>
-        <p className="text-sm mb-6 leading-relaxed" style={{ color: dark ? "rgba(255,255,255,0.65)" : "rgba(0,0,0,0.6)" }}>
+        <p className="text-sm mb-6 leading-relaxed text-muted-foreground">
           {step.description}
         </p>
 
         <div className="flex gap-1.5 mb-4">
           {step.snippets.map((snippet) => {
             const isActive = snippet.language === activeLang;
-            const color = langColors[snippet.language] || PURPLE;
             return (
               <button
                 key={snippet.language}
                 onClick={() => setActiveLang(snippet.language)}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all"
-                style={{
-                  backgroundColor: isActive ? `${color}20` : dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
-                  color: isActive ? color : dark ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
-                  border: `1px solid ${isActive ? `${color}40` : "transparent"}`,
-                }}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-md text-xs font-semibold transition-colors border ${
+                  isActive
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border bg-card text-muted-foreground hover:text-foreground"
+                }`}
               >
                 <span
-                  className="w-5 h-5 rounded flex items-center justify-center text-[9px] font-bold"
-                  style={{
-                    backgroundColor: `${color}25`,
-                    color: color,
-                  }}
+                  className={`w-5 h-5 rounded flex items-center justify-center text-[9px] font-bold ${
+                    isActive ? "bg-background text-foreground" : "bg-muted text-muted-foreground"
+                  }`}
                 >
                   {langIcons[snippet.language]}
                 </span>
@@ -183,35 +147,28 @@ export default function GuidePage() {
       </div>
 
       <div className="flex items-center justify-between">
-        <button
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => setCurrentStep((s) => Math.max(0, s - 1))}
           disabled={currentStep === 0}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all disabled:opacity-30"
-          style={{
-            backgroundColor: dark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)",
-            color: dark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.6)",
-          }}
         >
-          <ChevronLeft size={16} />
+          <ChevronLeft size={16} className="mr-1" />
           Anterior
-        </button>
+        </Button>
 
-        <span className="text-xs font-medium" style={{ color: dark ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)" }}>
+        <span className="text-xs font-medium text-muted-foreground">
           Passo {currentStep + 1} de {guideSteps.length}
         </span>
 
-        <button
+        <Button
+          size="sm"
           onClick={() => setCurrentStep((s) => Math.min(guideSteps.length - 1, s + 1))}
           disabled={currentStep === guideSteps.length - 1}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-30"
-          style={{
-            backgroundColor: PURPLE,
-            color: "#fff",
-          }}
         >
           Próximo
-          <ChevronRight size={16} />
-        </button>
+          <ChevronRight size={16} className="ml-1" />
+        </Button>
       </div>
     </div>
   );

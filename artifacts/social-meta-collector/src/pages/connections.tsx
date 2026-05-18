@@ -49,7 +49,6 @@ interface PlatformCardProps {
   needsReconnect?: boolean;
   missingScopes?: string[];
   icon: React.ReactNode;
-  color: string;
   label: string;
   onDisconnected: () => void;
 }
@@ -63,7 +62,6 @@ function PlatformCard({
   needsReconnect,
   missingScopes,
   icon,
-  color,
   label,
   onDisconnected,
 }: PlatformCardProps) {
@@ -102,14 +100,10 @@ function PlatformCard({
 
   return (
     <Card className="overflow-hidden">
-      <div className="h-1.5 w-full" style={{ backgroundColor: color }} />
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: `${color}18` }}
-            >
+            <div className="w-10 h-10 rounded-md flex items-center justify-center bg-muted">
               {icon}
             </div>
             <div>
@@ -227,7 +221,6 @@ function PlatformCard({
             <Button
               size="sm"
               className="w-full font-medium"
-              style={{ backgroundColor: color }}
               onClick={handleConnect}
             >
               <LogIn className="w-4 h-4 mr-2" />
@@ -290,32 +283,27 @@ export default function Connections() {
     {
       platform: "youtube" as const,
       label: "YouTube",
-      color: "#FF0000",
-      icon: <Youtube className="w-5 h-5" style={{ color: "#FF0000" }} />,
+      icon: <Youtube className="w-5 h-5 text-foreground" />,
     },
     {
       platform: "instagram" as const,
       label: "Instagram",
-      color: "#E1306C",
-      icon: <Instagram className="w-5 h-5" style={{ color: "#E1306C" }} />,
+      icon: <Instagram className="w-5 h-5 text-foreground" />,
     },
     {
       platform: "facebook" as const,
       label: "Facebook",
-      color: "#1877F2",
-      icon: <Facebook className="w-5 h-5" style={{ color: "#1877F2" }} />,
+      icon: <Facebook className="w-5 h-5 text-foreground" />,
     },
     {
       platform: "tiktok" as const,
       label: "TikTok",
-      color: "#00F2EA",
-      icon: <Music className="w-5 h-5" style={{ color: "#00F2EA" }} />,
+      icon: <Music className="w-5 h-5 text-foreground" />,
     },
     {
       platform: "twitter" as const,
       label: "X / Twitter",
-      color: "#1DA1F2",
-      icon: <Twitter className="w-5 h-5" style={{ color: "#1DA1F2" }} />,
+      icon: <Twitter className="w-5 h-5 text-foreground" />,
     },
   ];
 
@@ -348,7 +336,7 @@ export default function Connections() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6">
-        {platforms.map(({ platform, label, color, icon }) => {
+        {platforms.map(({ platform, label, icon }) => {
           const status = (authStatus as Record<string, {
             connected?: boolean;
             accountName?: string;
@@ -362,7 +350,6 @@ export default function Connections() {
               key={platform}
               platform={platform}
               label={label}
-              color={color}
               icon={icon}
               connected={status?.connected ?? false}
               accountName={status?.accountName}

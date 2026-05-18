@@ -69,7 +69,7 @@ export default function InstagramPage() {
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold">@{profile.username}</h2>
                   {profile.name && <span className="text-muted-foreground text-sm">{profile.name}</span>}
-                  <Badge variant="secondary" className="text-[#E1306C] border-[#E1306C]/20">Instagram</Badge>
+                  <Badge variant="outline">Instagram</Badge>
                 </div>
                 {profile.biography && (
                   <p className="text-sm text-muted-foreground mt-1 max-w-2xl line-clamp-2">{profile.biography}</p>

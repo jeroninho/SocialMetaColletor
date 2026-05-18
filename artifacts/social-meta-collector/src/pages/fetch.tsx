@@ -49,36 +49,26 @@ function fmt(n?: number | null) {
   return n.toLocaleString();
 }
 
-const platformConfig: Record<string, { color: string; icon: React.ReactNode; label: string; gradient: string }> = {
+const platformConfig: Record<string, { icon: React.ReactNode; label: string }> = {
   youtube: {
-    color: "#FF0000",
     icon: <Youtube className="w-4 h-4" />,
     label: "YouTube",
-    gradient: "from-red-500/10 to-orange-500/5",
   },
   tiktok: {
-    color: "#69C9D0",
     icon: <span className="text-[10px] font-black tracking-tighter">TT</span>,
     label: "TikTok",
-    gradient: "from-teal-500/10 to-cyan-500/5",
   },
   instagram: {
-    color: "#E1306C",
     icon: <Instagram className="w-4 h-4" />,
     label: "Instagram",
-    gradient: "from-pink-500/10 to-rose-500/5",
   },
   facebook: {
-    color: "#1877F2",
     icon: <Facebook className="w-4 h-4" />,
     label: "Facebook",
-    gradient: "from-blue-500/10 to-indigo-500/5",
   },
   twitter: {
-    color: "#1DA1F2",
     icon: <span className="text-xs font-bold">X</span>,
     label: "X / Twitter",
-    gradient: "from-sky-500/10 to-blue-500/5",
   },
 };
 
@@ -117,11 +107,12 @@ function MetricChip({
 }
 
 function MetadataCard({ data }: { data: FetchResult }) {
-  const pc = platformConfig[data.platform] ?? { color: "#888", icon: null, label: data.platform, gradient: "" };
+  const pc = platformConfig[data.platform] ?? { icon: null, label: data.platform };
   const { theme } = useTheme();
   const dark = theme === "dark";
   const tooltipStyle = getTooltipStyle(dark);
   const axisStyle = getAxisStyle(dark);
+  const barColor = dark ? "hsl(0 0% 88%)" : "hsl(0 0% 12%)";
 
   const chartData = [
     { name: "Views", value: data.views ?? 0 },
@@ -132,8 +123,7 @@ function MetadataCard({ data }: { data: FetchResult }) {
 
   return (
     <Card
-      className={`overflow-hidden border-border/60 bg-gradient-to-br ${pc.gradient} animate-in fade-in slide-in-from-bottom-4 duration-400`}
-      style={{ borderTop: `3px solid ${pc.color}` }}
+      className="overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-400"
     >
       <CardContent className="pt-5 space-y-5">
         {/* Header */}
@@ -154,7 +144,6 @@ function MetadataCard({ data }: { data: FetchResult }) {
             <Badge
               variant="outline"
               className="flex items-center gap-1 text-xs mb-2 w-fit"
-              style={{ color: pc.color, borderColor: `${pc.color}50`, background: `${pc.color}10` }}
             >
               {pc.icon}
               {pc.label}
@@ -227,7 +216,7 @@ function MetadataCard({ data }: { data: FetchResult }) {
                   />
                   <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={48}>
                     {chartData.map((_, i) => (
-                      <Cell key={i} fill={pc.color} fillOpacity={0.9 - i * 0.15} />
+                      <Cell key={i} fill={barColor} fillOpacity={0.9 - i * 0.18} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -291,14 +280,18 @@ export default function FetchPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-300 max-w-3xl mx-auto">
       {/* Hero input area */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-primary/5 via-background to-chart-2/5 p-6 md:p-8">
-        <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl pointer-events-none" />
-        <div className="relative">
+      <div className="rounded-md border border-border bg-card p-6 md:p-8">
+        <div>
           <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-xs font-semibold text-primary uppercase tracking-wide">Metadata Fetcher</span>
+            <Sparkles className="w-4 h-4 text-muted-foreground" />
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-widest">Metadata Fetcher</span>
           </div>
-          <h2 className="text-xl font-bold tracking-tight mb-1">Analise qualquer post</h2>
+          <h2
+            className="text-xl font-semibold tracking-tight mb-1"
+            style={{ fontFamily: "var(--app-font-heading)" }}
+          >
+            Analise qualquer post
+          </h2>
           <p className="text-sm text-muted-foreground mb-5">
             Cole o link de qualquer video ou post para extrair titulo, autor, views, likes e mais.
           </p>
@@ -310,7 +303,6 @@ export default function FetchPage() {
                 key={key}
                 variant="outline"
                 className="flex items-center gap-1.5 text-xs rounded-full px-3 py-1"
-                style={{ color: cfg.color, borderColor: `${cfg.color}40`, background: `${cfg.color}08` }}
               >
                 {cfg.icon}
                 {cfg.label}
@@ -417,7 +409,7 @@ export default function FetchPage() {
                           )}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-0.5">
-                              <span className="text-xs font-semibold" style={{ color: pc.color }}>
+                              <span className="text-xs font-semibold text-foreground">
                                 {pc.label}
                               </span>
                               <span className="text-[10px] text-muted-foreground">

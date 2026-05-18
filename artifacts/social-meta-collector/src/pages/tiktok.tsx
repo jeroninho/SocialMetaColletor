@@ -50,7 +50,7 @@ export default function TikTokPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold">{profile.nickname}</h2>
-                  <Badge variant="secondary" className="text-[#00F2EA] border-[#00F2EA]/20">TikTok</Badge>
+                  <Badge variant="outline">TikTok</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">@{profile.uniqueId}</p>
                 {profile.bioDescription && <p className="text-sm text-muted-foreground mt-1 max-w-2xl">{profile.bioDescription}</p>}

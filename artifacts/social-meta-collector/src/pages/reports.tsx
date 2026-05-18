@@ -39,7 +39,7 @@ import {
 } from "recharts";
 import { useToast } from "@/hooks/use-toast";
 import { useTheme } from "@/context/theme";
-import { getTooltipStyle, getAxisStyle, getGridStyle } from "@/lib/chart-theme";
+import { PLATFORM_COLORS, getTooltipStyle, getAxisStyle, getGridStyle } from "@/lib/chart-theme";
 
 function fmt(n?: number) {
   if (n === undefined || n === null) return "—";
@@ -48,20 +48,12 @@ function fmt(n?: number) {
   return n.toLocaleString();
 }
 
-const PLATFORM_HEX: Record<string, string> = {
-  youtube: "#FF4444",
-  instagram: "#E1306C",
-  facebook: "#2D88FF",
-  tiktok: "#00F2EA",
-  twitter: "#1DA1F2",
-};
-
-const platformBadge: Record<string, { hex: string; icon: React.ReactNode }> = {
-  youtube: { hex: "#FF4444", icon: <Youtube className="w-3 h-3" /> },
-  instagram: { hex: "#E1306C", icon: <Instagram className="w-3 h-3" /> },
-  facebook: { hex: "#2D88FF", icon: <Facebook className="w-3 h-3" /> },
-  tiktok: { hex: "#00F2EA", icon: <Music className="w-3 h-3" /> },
-  twitter: { hex: "#1DA1F2", icon: <Twitter className="w-3 h-3" /> },
+const platformBadge: Record<string, { icon: React.ReactNode }> = {
+  youtube: { icon: <Youtube className="w-3 h-3" /> },
+  instagram: { icon: <Instagram className="w-3 h-3" /> },
+  facebook: { icon: <Facebook className="w-3 h-3" /> },
+  tiktok: { icon: <Music className="w-3 h-3" /> },
+  twitter: { icon: <Twitter className="w-3 h-3" /> },
 };
 
 type ChartTab = "line" | "bar" | "pie";
@@ -173,7 +165,7 @@ export default function Reports() {
         new Date(e.collectedAt).toLocaleDateString("pt-BR"),
       ]),
       styles: { fontSize: 8 },
-      headStyles: { fillColor: [108, 99, 255] },
+      headStyles: { fillColor: [30, 30, 30] },
     });
     doc.save(`relatorio_${new Date().toISOString().split("T")[0]}.pdf`);
     toast({ title: "PDF exportado!", description: "Arquivo baixado com sucesso." });
@@ -189,11 +181,11 @@ export default function Reports() {
   }));
 
   const pieData = [
-    { name: "YouTube", value: trends?.dataPoints.reduce((s: number, d: any) => s + d.youtube, 0) ?? 0, color: "#FF4444" },
-    { name: "Instagram", value: trends?.dataPoints.reduce((s: number, d: any) => s + d.instagram, 0) ?? 0, color: "#E1306C" },
-    { name: "Facebook", value: trends?.dataPoints.reduce((s: number, d: any) => s + d.facebook, 0) ?? 0, color: "#2D88FF" },
-    { name: "TikTok", value: trends?.dataPoints.reduce((s: number, d: any) => s + (d.tiktok ?? 0), 0) ?? 0, color: "#00F2EA" },
-    { name: "Twitter", value: trends?.dataPoints.reduce((s: number, d: any) => s + (d.twitter ?? 0), 0) ?? 0, color: "#1DA1F2" },
+    { name: "YouTube", value: trends?.dataPoints.reduce((s: number, d: any) => s + d.youtube, 0) ?? 0, color: PLATFORM_COLORS.youtube },
+    { name: "Instagram", value: trends?.dataPoints.reduce((s: number, d: any) => s + d.instagram, 0) ?? 0, color: PLATFORM_COLORS.instagram },
+    { name: "Facebook", value: trends?.dataPoints.reduce((s: number, d: any) => s + d.facebook, 0) ?? 0, color: PLATFORM_COLORS.facebook },
+    { name: "TikTok", value: trends?.dataPoints.reduce((s: number, d: any) => s + (d.tiktok ?? 0), 0) ?? 0, color: PLATFORM_COLORS.tiktok },
+    { name: "Twitter", value: trends?.dataPoints.reduce((s: number, d: any) => s + (d.twitter ?? 0), 0) ?? 0, color: PLATFORM_COLORS.twitter },
   ].filter((d) => d.value > 0);
 
   const legendStyle = { fontSize: 12, color: dark ? "hsl(220 20% 70%)" : "hsl(220 10% 46%)" };
@@ -253,11 +245,11 @@ export default function Reports() {
                     <YAxis tick={axisStyle.tick} axisLine={false} tickLine={false} tickFormatter={(v) => fmt(v)} />
                     <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [fmt(v), ""]} />
                     <Legend wrapperStyle={legendStyle} />
-                    <Line type="monotone" dataKey="YouTube" stroke="#FF4444" strokeWidth={2.5} dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
-                    <Line type="monotone" dataKey="Instagram" stroke="#E1306C" strokeWidth={2.5} dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
-                    <Line type="monotone" dataKey="Facebook" stroke="#2D88FF" strokeWidth={2.5} dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
-                    <Line type="monotone" dataKey="TikTok" stroke="#00F2EA" strokeWidth={2.5} dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
-                    <Line type="monotone" dataKey="Twitter" stroke="#1DA1F2" strokeWidth={2.5} dot={false} activeDot={{ r: 5, strokeWidth: 0 }} />
+                    <Line type="monotone" dataKey="YouTube" stroke={PLATFORM_COLORS.youtube} strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
+                    <Line type="monotone" dataKey="Instagram" stroke={PLATFORM_COLORS.instagram} strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
+                    <Line type="monotone" dataKey="Facebook" stroke={PLATFORM_COLORS.facebook} strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
+                    <Line type="monotone" dataKey="TikTok" stroke={PLATFORM_COLORS.tiktok} strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
+                    <Line type="monotone" dataKey="Twitter" stroke={PLATFORM_COLORS.twitter} strokeWidth={2} dot={false} activeDot={{ r: 4, strokeWidth: 0 }} />
                   </LineChart>
                 </ResponsiveContainer>
               )}
@@ -270,11 +262,11 @@ export default function Reports() {
                     <YAxis tick={axisStyle.tick} axisLine={false} tickLine={false} tickFormatter={(v) => fmt(v)} />
                     <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [fmt(v), ""]} />
                     <Legend wrapperStyle={legendStyle} />
-                    <Bar dataKey="YouTube" fill="#FF4444" fillOpacity={0.9} radius={[4, 4, 0, 0]} maxBarSize={20} />
-                    <Bar dataKey="Instagram" fill="#E1306C" fillOpacity={0.9} radius={[4, 4, 0, 0]} maxBarSize={20} />
-                    <Bar dataKey="Facebook" fill="#2D88FF" fillOpacity={0.9} radius={[4, 4, 0, 0]} maxBarSize={20} />
-                    <Bar dataKey="TikTok" fill="#00F2EA" fillOpacity={0.9} radius={[4, 4, 0, 0]} maxBarSize={20} />
-                    <Bar dataKey="Twitter" fill="#1DA1F2" fillOpacity={0.9} radius={[4, 4, 0, 0]} maxBarSize={20} />
+                    <Bar dataKey="YouTube" fill={PLATFORM_COLORS.youtube} radius={[4, 4, 0, 0]} maxBarSize={20} />
+                    <Bar dataKey="Instagram" fill={PLATFORM_COLORS.instagram} radius={[4, 4, 0, 0]} maxBarSize={20} />
+                    <Bar dataKey="Facebook" fill={PLATFORM_COLORS.facebook} radius={[4, 4, 0, 0]} maxBarSize={20} />
+                    <Bar dataKey="TikTok" fill={PLATFORM_COLORS.tiktok} radius={[4, 4, 0, 0]} maxBarSize={20} />
+                    <Bar dataKey="Twitter" fill={PLATFORM_COLORS.twitter} radius={[4, 4, 0, 0]} maxBarSize={20} />
                   </BarChart>
                 </ResponsiveContainer>
               )}
@@ -353,7 +345,6 @@ export default function Reports() {
                           <Badge
                             variant="outline"
                             className="flex items-center gap-1.5 w-fit text-xs rounded-full px-2.5"
-                            style={{ color: pb?.hex, borderColor: `${pb?.hex}40`, background: `${pb?.hex}12` }}
                           >
                             {pb?.icon}
                             <span className="capitalize">{entry.platform}</span>

@@ -50,7 +50,7 @@ export default function TwitterPage() {
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold">{profile.name}</h2>
-                  <Badge variant="secondary" className="text-[#1DA1F2] border-[#1DA1F2]/20">X / Twitter</Badge>
+                  <Badge variant="outline">X / Twitter</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">@{profile.username}</p>
                 {profile.description && <p className="text-sm text-muted-foreground mt-1 max-w-2xl">{profile.description}</p>}

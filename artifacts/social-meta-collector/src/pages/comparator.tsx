@@ -8,7 +8,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
 import { useTheme } from "@/context/theme";
-import { PLATFORM_COLORS, getTooltipStyle, getAxisStyle, getGridStyle } from "@/lib/chart-theme";
+import { PLATFORM_COLORS, CHART_PALETTE, getTooltipStyle, getAxisStyle, getGridStyle } from "@/lib/chart-theme";
 import { getApiUrl, authFetch } from "@/lib/api-url";
 
 function fmt(n?: number) {
@@ -190,10 +190,10 @@ export default function ComparatorPage() {
                   <YAxis tick={axisStyle.tick} axisLine={false} tickLine={false} tickFormatter={(v) => fmt(v)} />
                   <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [fmt(v), ""]} />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Bar dataKey="Views" fill="#6C63FF" radius={[4, 4, 0, 0]} maxBarSize={30} />
-                  <Bar dataKey="Likes" fill="#FF6F91" radius={[4, 4, 0, 0]} maxBarSize={30} />
-                  <Bar dataKey="Comments" fill="#2D88FF" radius={[4, 4, 0, 0]} maxBarSize={30} />
-                  <Bar dataKey="Shares" fill="#2EC4B6" radius={[4, 4, 0, 0]} maxBarSize={30} />
+                  <Bar dataKey="Views" fill={CHART_PALETTE[0]} radius={[4, 4, 0, 0]} maxBarSize={30} />
+                  <Bar dataKey="Likes" fill={CHART_PALETTE[1]} radius={[4, 4, 0, 0]} maxBarSize={30} />
+                  <Bar dataKey="Comments" fill={CHART_PALETTE[2]} radius={[4, 4, 0, 0]} maxBarSize={30} />
+                  <Bar dataKey="Shares" fill={CHART_PALETTE[3]} radius={[4, 4, 0, 0]} maxBarSize={30} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

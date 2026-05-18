@@ -81,7 +81,7 @@ export default function YouTubePage() {
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold">{channel.title}</h2>
-                  <Badge variant="secondary" className="text-[#FF0000] border-[#FF0000]/20">YouTube</Badge>
+                  <Badge variant="outline">YouTube</Badge>
                 </div>
                 {channel.description && (
                   <p className="text-sm text-muted-foreground mt-1 max-w-2xl line-clamp-2">{channel.description}</p>
