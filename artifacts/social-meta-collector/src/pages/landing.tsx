@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
-import { Menu, X, ArrowUpRight, ArrowRight, Check } from "lucide-react";
+import { Menu, X, ArrowUpRight, ArrowRight, Check, Lock, KeyRound, ShieldCheck } from "lucide-react";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -10,6 +10,9 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
+import dashboardShot from "@assets/image_1779116755506.png";
+import reportsShot from "@assets/image_1779116783054.png";
+import comparatorShot from "@assets/image_1779116810072.png";
 
 /* ─── Scroll reveal hook ─────────────────────────────────── */
 function useScrollReveal() {
@@ -45,10 +48,47 @@ const demoLineData = [
 
 /* ─── Showcase images ────────────────────────────────────── */
 const showcaseImages = [
-  { src: "screenshots/dashboard.png",   label: "Dashboard",  desc: "Visão geral unificada" },
-  { src: "screenshots/reports.png",     label: "Relatórios", desc: "Análises detalhadas" },
-  { src: "screenshots/tutorials.png",   label: "Tutoriais",  desc: "Aprenda passo a passo" },
-  { src: "screenshots/connections.png", label: "Conexões",   desc: "Integre suas contas" },
+  { src: dashboardShot,  label: "Dashboard",  desc: "Visão geral unificada das 5 plataformas" },
+  { src: reportsShot,    label: "Relatórios", desc: "Tendências de engajamento ao longo do tempo" },
+  { src: comparatorShot, label: "Comparador", desc: "Compare campanhas entre plataformas e períodos" },
+];
+
+/* ─── Platform coverage rows ─────────────────────────────── */
+const coverage = [
+  { name: "YouTube",   endpoints: "channel · videos · analytics" },
+  { name: "Instagram", endpoints: "profile · media · analytics" },
+  { name: "Facebook",  endpoints: "page · posts · analytics" },
+  { name: "TikTok",    endpoints: "profile · videos · analytics" },
+  { name: "X / Twitter", endpoints: "profile · tweets · analytics" },
+];
+
+/* ─── Security pillars ───────────────────────────────────── */
+const securityPillars = [
+  {
+    num: "01",
+    icon: KeyRound,
+    title: "OAuth 2.0 server-side",
+    desc: "Troca de código no servidor — tokens nunca passam pelo navegador.",
+  },
+  {
+    num: "02",
+    icon: Lock,
+    title: "AES-256-GCM em repouso",
+    desc: "encryptToken() embrulha cada access e refresh token antes do banco.",
+  },
+  {
+    num: "03",
+    icon: ShieldCheck,
+    title: "Sessões JWT com TTL curto",
+    desc: "Bearer middleware, expiração configurável, senhas com bcrypt.",
+  },
+];
+
+/* ─── How it works steps ─────────────────────────────────── */
+const steps = [
+  { num: "01", title: "Crie sua conta",          desc: "Workspace pronto em segundos. Sem cartão de crédito." },
+  { num: "02", title: "Conecte uma plataforma",  desc: "Um round-trip OAuth por conta. As outras seguem o mesmo padrão." },
+  { num: "03", title: "Leia o cenário",          desc: "Dashboard, comparador e alertas já populados com seus dados." },
 ];
 
 const clients = ["Nexio", "Brandify", "Cortex", "Lumora", "Aurora"];
@@ -149,7 +189,6 @@ function ImageShowcase() {
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const base = import.meta.env.BASE_URL;
 
   useEffect(() => {
     if (paused) return;
@@ -185,9 +224,10 @@ function ImageShowcase() {
               </span>
             </div>
             <img
-              src={`${base}${showcaseImages[active].src}`}
+              key={showcaseImages[active].src}
+              src={showcaseImages[active].src}
               alt={showcaseImages[active].label}
-              className="w-full block transition-opacity duration-500"
+              className="w-full block animate-[lp-fade_0.6s_ease-out_both]"
             />
           </div>
 
@@ -315,6 +355,60 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* ── COVERAGE (5 platforms) ───────────────────── */}
+        <section className="py-20 md:py-28 px-6 lg:px-10 border-t border-border">
+          <div className="max-w-[1240px] mx-auto grid md:grid-cols-2 gap-12 md:gap-20 items-start">
+            <div data-reveal>
+              <p className="eyebrow mb-4">Cobertura</p>
+              <h2 className="font-display text-foreground">
+                Cada canal<br />
+                <span className="text-muted-foreground italic">que importa.</span>
+              </h2>
+              <p className="mt-6 text-[16px] text-muted-foreground leading-[1.65] max-w-md">
+                Perfil, listagem de conteúdo e analytics para cada plataforma,
+                normalizados em um schema único — para que dashboard, comparador
+                e alertas falem a mesma língua.
+              </p>
+              <div className="mt-10 flex items-baseline gap-4">
+                <span
+                  className="text-[64px] md:text-[80px] leading-none text-foreground"
+                  style={{ fontFamily: "var(--app-font-heading)", letterSpacing: "-0.04em" }}
+                >
+                  5
+                </span>
+                <span className="text-[13.5px] text-muted-foreground leading-[1.4]">
+                  plataformas unificadas<br />sob um único schema
+                </span>
+              </div>
+            </div>
+
+            <div data-reveal className="rounded-lg border border-border bg-background overflow-hidden">
+              <div className="px-5 py-3 border-b border-border flex items-center justify-between bg-foreground/[0.02]">
+                <span className="eyebrow text-[11px]">Fontes conectadas</span>
+                <span className="font-mono text-[11.5px] text-muted-foreground">/auth/status</span>
+              </div>
+              {coverage.map((row, i) => (
+                <div
+                  key={row.name}
+                  className={`px-5 py-4 flex items-baseline justify-between ${
+                    i < coverage.length - 1 ? "border-b border-border/60" : ""
+                  }`}
+                >
+                  <span
+                    className="text-[18px] md:text-[20px] text-foreground"
+                    style={{ fontFamily: "var(--app-font-heading)", letterSpacing: "-0.015em" }}
+                  >
+                    {row.name}
+                  </span>
+                  <span className="font-mono text-[12px] text-muted-foreground">
+                    {row.endpoints}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* ── IMAGE SHOWCASE ───────────────────────────── */}
         <ImageShowcase />
 
@@ -391,6 +485,82 @@ export default function LandingPage() {
                   />
                 </AreaChart>
               </ResponsiveContainer>
+            </div>
+          </div>
+        </section>
+
+        {/* ── SECURITY ─────────────────────────────────── */}
+        <section className="py-20 md:py-28 px-6 lg:px-10 border-t border-border bg-cream">
+          <div className="max-w-[1240px] mx-auto">
+            <div data-reveal className="max-w-2xl mb-16 md:mb-20">
+              <p className="eyebrow mb-4">Confiança</p>
+              <h2 className="font-display text-foreground">
+                Seus tokens não saem<br />
+                <span className="text-muted-foreground italic">do seu perímetro.</span>
+              </h2>
+              <p className="mt-6 text-[16px] text-muted-foreground leading-[1.65] max-w-xl">
+                OAuth 2.0 server-side para todas as cinco plataformas. Access e
+                refresh tokens criptografados com AES-256-GCM antes de tocarem o
+                banco. Sessões em JWT com expirações curtas e rotacionáveis.
+              </p>
+            </div>
+
+            <div data-reveal className="grid md:grid-cols-3 gap-px bg-border border border-border rounded-lg overflow-hidden">
+              {securityPillars.map(({ num, icon: Icon, title, desc }) => (
+                <div key={num} className="bg-background p-7 md:p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <span className="w-9 h-9 rounded-md bg-muted flex items-center justify-center">
+                      <Icon size={16} strokeWidth={1.5} className="text-foreground" />
+                    </span>
+                    <span className="text-[11.5px] font-mono text-muted-foreground tracking-wider">
+                      {num}
+                    </span>
+                  </div>
+                  <h3 className="text-[16px] font-medium text-foreground mb-2">
+                    {title}
+                  </h3>
+                  <p className="text-[13.5px] text-muted-foreground leading-[1.6]">
+                    {desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── HOW IT WORKS ─────────────────────────────── */}
+        <section className="py-20 md:py-28 px-6 lg:px-10 border-t border-border">
+          <div className="max-w-[1240px] mx-auto">
+            <div data-reveal className="max-w-2xl mb-16">
+              <p className="eyebrow mb-4">Como funciona</p>
+              <h2 className="font-display text-foreground">
+                Conecte uma conta.<br />
+                <span className="text-muted-foreground italic">As outras seguem.</span>
+              </h2>
+            </div>
+
+            <div data-reveal className="grid md:grid-cols-3 gap-10 md:gap-14 relative">
+              {steps.map((step, i) => (
+                <div key={step.num} className="relative">
+                  <p className="text-[12px] font-mono text-muted-foreground tracking-wider mb-5">
+                    Passo {step.num}
+                  </p>
+                  <h3
+                    className="text-[22px] md:text-[24px] text-foreground mb-3"
+                    style={{ fontFamily: "var(--app-font-heading)", letterSpacing: "-0.02em" }}
+                  >
+                    {step.title}
+                  </h3>
+                  <p className="text-[14.5px] text-muted-foreground leading-[1.6] max-w-xs">
+                    {step.desc}
+                  </p>
+                  {i < steps.length - 1 && (
+                    <span className="hidden md:block absolute top-[6px] right-0 translate-x-1/2 text-muted-foreground/40">
+                      <ArrowRight size={14} strokeWidth={1.5} />
+                    </span>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </section>
