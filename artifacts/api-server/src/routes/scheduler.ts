@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, count, sql } from "drizzle-orm";
 import { db, syncSchedulesTable } from "@workspace/db";
 import { authMiddleware } from "../middleware/auth.js";
 
@@ -10,6 +10,8 @@ const activeTimers = new Map<number, NodeJS.Timeout>();
 const VALID_PLATFORMS = ["youtube", "instagram", "facebook", "tiktok", "twitter"];
 const MAX_INTERVAL = 1440;
 const MIN_INTERVAL = 5;
+const MAX_SCHEDULES_PER_USER = 5;
+const MAX_TOTAL_SCHEDULES = 50;
 
 async function runSyncForPlatforms(platforms: string[]) {
   for (const platform of platforms) {
@@ -102,19 +104,61 @@ router.post("/scheduler/schedules", authMiddleware, async (req, res) => {
     return;
   }
 
-  try {
-    const [schedule] = await db.insert(syncSchedulesTable).values({
-      userId,
-      platforms: platforms.join(","),
-      intervalMinutes,
-      enabled: true,
-    }).returning();
+  const uniquePlatforms = [...new Set(platforms)];
 
-    scheduleSync(schedule.id, intervalMinutes, platforms);
-    res.json(schedule);
+  if (uniquePlatforms.length > VALID_PLATFORMS.length) {
+    res.status(400).json({ error: `Cannot specify more than ${VALID_PLATFORMS.length} platforms` });
+    return;
+  }
+
+  let limitError: "user" | "global" | null = null;
+  let newSchedule: typeof syncSchedulesTable.$inferSelect | null = null;
+
+  try {
+    await db.transaction(async (tx) => {
+      // Acquire a transaction-scoped advisory lock so concurrent requests
+      // cannot both pass the quota checks before either inserts.
+      // Key (42, 0) is an arbitrary stable namespace for scheduler quotas.
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(42, 0)`);
+
+      const [[userCount], [totalCount]] = await Promise.all([
+        tx.select({ value: count() }).from(syncSchedulesTable).where(eq(syncSchedulesTable.userId, userId)),
+        tx.select({ value: count() }).from(syncSchedulesTable),
+      ]);
+
+      if (userCount.value >= MAX_SCHEDULES_PER_USER) {
+        limitError = "user";
+        return;
+      }
+
+      if (totalCount.value >= MAX_TOTAL_SCHEDULES) {
+        limitError = "global";
+        return;
+      }
+
+      [newSchedule] = await tx.insert(syncSchedulesTable).values({
+        userId,
+        platforms: uniquePlatforms.join(","),
+        intervalMinutes,
+        enabled: true,
+      }).returning();
+    });
   } catch {
     res.status(500).json({ error: "Failed to create schedule" });
+    return;
   }
+
+  if (limitError === "user") {
+    res.status(429).json({ error: `Schedule limit reached. Maximum ${MAX_SCHEDULES_PER_USER} schedules per user.` });
+    return;
+  }
+  if (limitError === "global") {
+    res.status(429).json({ error: "Service schedule capacity reached. Please try again later." });
+    return;
+  }
+
+  scheduleSync(newSchedule!.id, intervalMinutes, uniquePlatforms);
+  res.status(201).json(newSchedule);
 });
 
 router.patch("/scheduler/schedules/:id/toggle", authMiddleware, async (req, res) => {
