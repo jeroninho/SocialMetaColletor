@@ -25,6 +25,27 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
   }
 }
 
+export function adminMiddleware(req: Request, res: Response, next: NextFunction): void {
+  const authHeader = req.headers.authorization;
+  if (!authHeader?.startsWith("Bearer ")) {
+    res.status(401).json({ error: "unauthorized", message: "Missing or malformed Authorization header." });
+    return;
+  }
+
+  const token = authHeader.slice(7);
+  try {
+    const payload = verifyToken(token);
+    if (payload.role !== "admin") {
+      res.status(403).json({ error: "forbidden", message: "Administrator access required." });
+      return;
+    }
+    req.user = payload;
+    next();
+  } catch {
+    res.status(401).json({ error: "unauthorized", message: "Invalid or expired token." });
+  }
+}
+
 export function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
   if (authHeader?.startsWith("Bearer ")) {

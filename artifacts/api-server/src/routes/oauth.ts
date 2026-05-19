@@ -4,6 +4,7 @@ import { eq, sql } from "drizzle-orm";
 import { db, tokensTable, oauthCredentialsTable } from "@workspace/db";
 import { encryptToken, decryptToken } from "../utils/crypto.js";
 import { cached, cacheDelByPattern } from "../services/RedisClient.js";
+import { adminMiddleware } from "../middleware/auth.js";
 
 type TokenUpsertValues = {
   platform: string;
@@ -73,21 +74,31 @@ async function isConfigured(platform: string): Promise<boolean> {
 
 const router = Router();
 
-const stateStore = new Map<string, { platform: string; expiresAt: number }>();
+const stateStore = new Map<string, { platform: string; expiresAt: number; userId: string }>();
 
-function generateState(platform: string): string {
+function generateState(platform: string, userId: string): string {
   const state = randomBytes(24).toString("hex");
-  stateStore.set(state, { platform, expiresAt: Date.now() + 10 * 60 * 1000 });
+  stateStore.set(state, { platform, expiresAt: Date.now() + 10 * 60 * 1000, userId });
   return state;
 }
 
-function verifyState(state: string, expectedPlatform: string): boolean {
+function verifyState(state: string, expectedPlatform: string): { valid: true; userId: string } | { valid: false } {
   const entry = stateStore.get(state);
-  if (!entry) return false;
+  if (!entry) return { valid: false };
   stateStore.delete(state);
-  if (entry.expiresAt < Date.now()) return false;
-  if (entry.platform !== expectedPlatform) return false;
-  return true;
+  if (entry.expiresAt < Date.now()) return { valid: false };
+  if (entry.platform !== expectedPlatform) return { valid: false };
+  return { valid: true, userId: entry.userId };
+}
+
+const connectNonceStore = new Map<string, { userId: string; expiresAt: number }>();
+
+function consumeConnectNonce(nonce: string): string | null {
+  const entry = connectNonceStore.get(nonce);
+  if (!entry) return null;
+  connectNonceStore.delete(nonce);
+  if (entry.expiresAt < Date.now()) return null;
+  return entry.userId;
 }
 
 function getBaseUrl(): string {
@@ -121,6 +132,13 @@ function safeEncrypt(token: string): string {
   }
 }
 
+router.post("/auth/connect-nonce", adminMiddleware, (req, res) => {
+  const userId = req.user!.sub;
+  const nonce = randomBytes(24).toString("hex");
+  connectNonceStore.set(nonce, { userId, expiresAt: Date.now() + 5 * 60 * 1000 });
+  res.json({ nonce });
+});
+
 router.get("/auth/config", async (_req, res) => {
   let hit = false;
   const base = getBaseUrl();
@@ -146,13 +164,20 @@ router.get("/auth/config", async (_req, res) => {
 // ─── YOUTUBE ────────────────────────────────────────────────────────────────
 
 router.get("/auth/youtube/connect", async (req, res) => {
+  const nonce = typeof req.query["nonce"] === "string" ? req.query["nonce"] : null;
+  const userId = nonce ? consumeConnectNonce(nonce) : null;
+  if (!userId) {
+    res.status(401).json({ error: "unauthorized", message: "A valid connect nonce is required." });
+    return;
+  }
+
   const creds = await getCreds("youtube");
   if (!creds) {
     res.status(503).json({ error: "YouTube OAuth not configured. Add credentials in /connections." });
     return;
   }
   const clientId = creds.clientId;
-  const state = generateState("youtube");
+  const state = generateState("youtube", userId);
   const redirectUri = getCallbackUrl("youtube");
   const scopes = [
     "https://www.googleapis.com/auth/youtube.readonly",
@@ -179,7 +204,8 @@ router.get("/auth/youtube/callback", async (req, res) => {
     redirectToFrontend(res as never, "error", "youtube", "Authorization denied by user.");
     return;
   }
-  if (!state || !verifyState(state, "youtube")) {
+  const stateResult = state ? verifyState(state, "youtube") : { valid: false as const };
+  if (!stateResult.valid) {
     redirectToFrontend(res as never, "error", "youtube", "Invalid or expired state. Please try again.");
     return;
   }
@@ -268,13 +294,20 @@ router.get("/auth/youtube/callback", async (req, res) => {
 // ─── INSTAGRAM ──────────────────────────────────────────────────────────────
 
 router.get("/auth/instagram/connect", async (req, res) => {
+  const nonce = typeof req.query["nonce"] === "string" ? req.query["nonce"] : null;
+  const userId = nonce ? consumeConnectNonce(nonce) : null;
+  if (!userId) {
+    res.status(401).json({ error: "unauthorized", message: "A valid connect nonce is required." });
+    return;
+  }
+
   const creds = await getCreds("instagram");
   if (!creds) {
     res.status(503).json({ error: "Instagram OAuth not configured. Add credentials in /connections." });
     return;
   }
   const clientId = creds.clientId;
-  const state = generateState("instagram");
+  const state = generateState("instagram", userId);
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: getCallbackUrl("instagram"),
@@ -292,7 +325,8 @@ router.get("/auth/instagram/callback", async (req, res) => {
     redirectToFrontend(res as never, "error", "instagram", "Authorization denied by user.");
     return;
   }
-  if (!state || !verifyState(state, "instagram")) {
+  const stateResult = state ? verifyState(state, "instagram") : { valid: false as const };
+  if (!stateResult.valid) {
     redirectToFrontend(res as never, "error", "instagram", "Invalid or expired state. Please try again.");
     return;
   }
@@ -386,13 +420,20 @@ router.get("/auth/instagram/callback", async (req, res) => {
 // ─── FACEBOOK ───────────────────────────────────────────────────────────────
 
 router.get("/auth/facebook/connect", async (req, res) => {
+  const nonce = typeof req.query["nonce"] === "string" ? req.query["nonce"] : null;
+  const userId = nonce ? consumeConnectNonce(nonce) : null;
+  if (!userId) {
+    res.status(401).json({ error: "unauthorized", message: "A valid connect nonce is required." });
+    return;
+  }
+
   const creds = await getCreds("facebook");
   if (!creds) {
     res.status(503).json({ error: "Facebook OAuth not configured. Add credentials in /connections." });
     return;
   }
   const clientId = creds.clientId;
-  const state = generateState("facebook");
+  const state = generateState("facebook", userId);
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: getCallbackUrl("facebook"),
@@ -410,7 +451,8 @@ router.get("/auth/facebook/callback", async (req, res) => {
     redirectToFrontend(res as never, "error", "facebook", "Authorization denied by user.");
     return;
   }
-  if (!state || !verifyState(state, "facebook")) {
+  const stateResult = state ? verifyState(state, "facebook") : { valid: false as const };
+  if (!stateResult.valid) {
     redirectToFrontend(res as never, "error", "facebook", "Invalid or expired state. Please try again.");
     return;
   }
@@ -507,13 +549,20 @@ router.get("/auth/facebook/callback", async (req, res) => {
 // ─── TIKTOK ─────────────────────────────────────────────────────────────────
 
 router.get("/auth/tiktok/connect", async (req, res) => {
+  const nonce = typeof req.query["nonce"] === "string" ? req.query["nonce"] : null;
+  const userId = nonce ? consumeConnectNonce(nonce) : null;
+  if (!userId) {
+    res.status(401).json({ error: "unauthorized", message: "A valid connect nonce is required." });
+    return;
+  }
+
   const creds = await getCreds("tiktok");
   if (!creds) {
     res.status(503).json({ error: "TikTok OAuth not configured. Add credentials in /connections." });
     return;
   }
   const clientKey = creds.clientId;
-  const state = generateState("tiktok");
+  const state = generateState("tiktok", userId);
   const csrfState = state;
   const redirectUri = getCallbackUrl("tiktok");
   const scopes = ["user.info.basic", "video.list"];
@@ -535,7 +584,8 @@ router.get("/auth/tiktok/callback", async (req, res) => {
     redirectToFrontend(res as never, "error", "tiktok", "Authorization denied by user.");
     return;
   }
-  if (!state || !verifyState(state, "tiktok")) {
+  const stateResult = state ? verifyState(state, "tiktok") : { valid: false as const };
+  if (!stateResult.valid) {
     redirectToFrontend(res as never, "error", "tiktok", "Invalid or expired state. Please try again.");
     return;
   }
@@ -624,13 +674,20 @@ router.get("/auth/tiktok/callback", async (req, res) => {
 // ─── TWITTER (X) ────────────────────────────────────────────────────────────
 
 router.get("/auth/twitter/connect", async (req, res) => {
+  const nonce = typeof req.query["nonce"] === "string" ? req.query["nonce"] : null;
+  const userId = nonce ? consumeConnectNonce(nonce) : null;
+  if (!userId) {
+    res.status(401).json({ error: "unauthorized", message: "A valid connect nonce is required." });
+    return;
+  }
+
   const creds = await getCreds("twitter");
   if (!creds) {
     res.status(503).json({ error: "Twitter/X OAuth not configured. Add credentials in /connections." });
     return;
   }
   const clientId = creds.clientId;
-  const state = generateState("twitter");
+  const state = generateState("twitter", userId);
   const redirectUri = getCallbackUrl("twitter");
   const scopes = ["tweet.read", "users.read", "offline.access"];
   const codeChallenge = state;
@@ -654,7 +711,8 @@ router.get("/auth/twitter/callback", async (req, res) => {
     redirectToFrontend(res as never, "error", "twitter", "Authorization denied by user.");
     return;
   }
-  if (!state || !verifyState(state, "twitter")) {
+  const stateResult = state ? verifyState(state, "twitter") : { valid: false as const };
+  if (!stateResult.valid) {
     redirectToFrontend(res as never, "error", "twitter", "Invalid or expired state. Please try again.");
     return;
   }

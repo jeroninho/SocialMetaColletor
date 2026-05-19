@@ -15,7 +15,7 @@ import schedulerRouter from "./scheduler";
 import fetchMetadataRouter from "./fetch-metadata";
 import webhooksRouter from "./webhooks";
 import oauthCredentialsRouter from "./oauth-credentials";
-import { optionalAuth } from "../middleware/auth.js";
+import { optionalAuth, authMiddleware, adminMiddleware } from "../middleware/auth.js";
 
 const router: IRouter = Router();
 
@@ -29,6 +29,8 @@ router.use(optionalAuth);
 
 router.use(authRouter);
 router.use(usersRouter);
+
+router.use(adminMiddleware);
 
 router.use(youtubeRouter);
 router.use(instagramRouter);

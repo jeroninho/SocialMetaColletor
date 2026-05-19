@@ -11,6 +11,11 @@ const router = Router();
 
 const SALT_ROUNDS = 12;
 
+function resolveInitialRole(email: string): "admin" | "user" {
+  const adminEmail = process.env["ADMIN_EMAIL"]?.toLowerCase().trim();
+  return adminEmail && email === adminEmail ? "admin" : "user";
+}
+
 const GOOGLE_CLIENT_ID = process.env.YOUTUBE_CLIENT_ID ?? "";
 
 let googleClientPromise: Promise<OAuth2Client | null> | null = null;
@@ -58,12 +63,13 @@ router.post("/auth/register", async (req, res) => {
 
     const senhaHash = await bcrypt.hash(senha, SALT_ROUNDS);
     const id = uuidv4();
+    const role = resolveInitialRole(email.toLowerCase());
 
-    await db.insert(usersTable).values({ id, email: email.toLowerCase(), nome, senhaHash });
+    await db.insert(usersTable).values({ id, email: email.toLowerCase(), nome, senhaHash, role });
 
-    const token = signToken({ sub: id, email: email.toLowerCase(), nome });
+    const token = signToken({ sub: id, email: email.toLowerCase(), nome, role });
 
-    res.status(201).json({ message: "Conta criada com sucesso.", token, user: { id, email: email.toLowerCase(), nome } });
+    res.status(201).json({ message: "Conta criada com sucesso.", token, user: { id, email: email.toLowerCase(), nome, role } });
   } catch (err) {
     req.log.error({ err }, "Error registering user");
     res.status(500).json({ error: "internal_error" });
@@ -98,12 +104,18 @@ router.post("/auth/login", async (req, res) => {
       return;
     }
 
-    const token = signToken({ sub: user.id, email: user.email, nome: user.nome });
+    let role = user.role ?? "user";
+    const expectedRole = resolveInitialRole(user.email);
+    if (expectedRole === "admin" && role !== "admin") {
+      await db.update(usersTable).set({ role: "admin" }).where(eq(usersTable.id, user.id));
+      role = "admin";
+    }
+    const token = signToken({ sub: user.id, email: user.email, nome: user.nome, role });
 
     res.json({
       message: "Login realizado com sucesso.",
       token,
-      user: { id: user.id, email: user.email, nome: user.nome },
+      user: { id: user.id, email: user.email, nome: user.nome, role },
     });
   } catch (err) {
     req.log.error({ err }, "Error during login");
@@ -158,7 +170,8 @@ router.post("/auth/google", async (req, res) => {
       const id = uuidv4();
       const randomPass = uuidv4() + uuidv4();
       const senhaHash = await bcrypt.hash(randomPass, SALT_ROUNDS);
-      await db.insert(usersTable).values({ id, email, nome, senhaHash });
+      const initialRole = resolveInitialRole(email);
+      await db.insert(usersTable).values({ id, email, nome, senhaHash, role: initialRole });
       const [created] = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
       user = created;
     }
@@ -168,11 +181,17 @@ router.post("/auth/google", async (req, res) => {
       return;
     }
 
-    const token = signToken({ sub: user.id, email: user.email, nome: user.nome });
+    let role = user.role ?? "user";
+    const expectedRole = resolveInitialRole(user.email);
+    if (expectedRole === "admin" && role !== "admin") {
+      await db.update(usersTable).set({ role: "admin" }).where(eq(usersTable.id, user.id));
+      role = "admin";
+    }
+    const token = signToken({ sub: user.id, email: user.email, nome: user.nome, role });
     res.json({
       message: "Login realizado com sucesso.",
       token,
-      user: { id: user.id, email: user.email, nome: user.nome },
+      user: { id: user.id, email: user.email, nome: user.nome, role },
     });
   } catch (err) {
     req.log.error({ err }, "Error during Google auth");
@@ -188,7 +207,7 @@ router.get("/auth/me", async (req, res) => {
 
   try {
     const [user] = await db
-      .select({ id: usersTable.id, email: usersTable.email, nome: usersTable.nome, createdAt: usersTable.createdAt })
+      .select({ id: usersTable.id, email: usersTable.email, nome: usersTable.nome, role: usersTable.role, createdAt: usersTable.createdAt })
       .from(usersTable)
       .where(eq(usersTable.id, req.user.sub))
       .limit(1);

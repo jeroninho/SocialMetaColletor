@@ -4,6 +4,7 @@ export interface JwtPayload {
   sub: string;
   email: string;
   nome: string;
+  role: string;
 }
 
 function getSecret(): string {

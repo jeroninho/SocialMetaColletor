@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, oauthCredentialsTable } from "@workspace/db";
 import { encryptToken, decryptToken } from "../utils/crypto.js";
-import { authMiddleware } from "../middleware/auth.js";
+import { authMiddleware, adminMiddleware } from "../middleware/auth.js";
 import { cacheDelByPattern } from "../services/RedisClient.js";
 
 const router = Router();
@@ -41,7 +41,7 @@ const upsertSchema = z.object({
   clientSecret: z.string().min(1, "clientSecret required").max(512),
 });
 
-router.get("/oauth-credentials", authMiddleware, async (_req, res) => {
+router.get("/oauth-credentials", adminMiddleware, async (_req, res) => {
   const rows = await db.select().from(oauthCredentialsTable);
   const dbMap = new Map(rows.map((r) => [r.platform, r]));
 
@@ -68,7 +68,7 @@ router.get("/oauth-credentials", authMiddleware, async (_req, res) => {
   res.json({ credentials: result });
 });
 
-router.put("/oauth-credentials/:platform", authMiddleware, async (req, res) => {
+router.put("/oauth-credentials/:platform", adminMiddleware, async (req, res) => {
   const platform = String(req.params.platform);
   if (!isSupported(platform)) {
     res.status(400).json({ error: "unsupported_platform", message: `Platform must be one of: ${SUPPORTED_PLATFORMS.join(", ")}` });
@@ -96,7 +96,7 @@ router.put("/oauth-credentials/:platform", authMiddleware, async (req, res) => {
   res.json({ ok: true, platform, source: "db", clientIdPreview: preview(parsed.data.clientId.trim()) });
 });
 
-router.delete("/oauth-credentials/:platform", authMiddleware, async (req, res) => {
+router.delete("/oauth-credentials/:platform", adminMiddleware, async (req, res) => {
   const platform = String(req.params.platform);
   if (!isSupported(platform)) {
     res.status(400).json({ error: "unsupported_platform" });

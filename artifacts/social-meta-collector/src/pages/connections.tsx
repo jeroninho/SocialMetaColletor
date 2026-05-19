@@ -31,6 +31,23 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { OAuthCredentialsSetup } from "@/components/oauth-credentials-setup";
+import { getToken } from "@/context/auth";
+
+async function fetchConnectNonce(platform: string): Promise<string | null> {
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const res = await fetch("/api/auth/connect-nonce", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    });
+    if (!res.ok) return null;
+    const data = await res.json() as { nonce?: string };
+    return data.nonce ?? null;
+  } catch {
+    return null;
+  }
+}
 
 const PLATFORM_LABELS: Record<string, string> = {
   youtube: "YouTube",
@@ -69,8 +86,17 @@ function PlatformCard({
   const queryClient = useQueryClient();
   const disconnect = useDisconnectPlatform();
 
-  const handleConnect = () => {
-    window.location.href = `/api/auth/${platform}/connect`;
+  const handleConnect = async () => {
+    const nonce = await fetchConnectNonce(platform);
+    if (!nonce) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível iniciar a conexão. Verifique se você tem permissão.",
+        variant: "destructive",
+      });
+      return;
+    }
+    window.location.href = `/api/auth/${platform}/connect?nonce=${encodeURIComponent(nonce)}`;
   };
 
   const handleDisconnect = async () => {

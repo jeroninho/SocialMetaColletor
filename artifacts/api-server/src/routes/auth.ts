@@ -10,6 +10,7 @@ import {
 import { encryptToken } from "../utils/crypto.js";
 import { YOUTUBE_ANALYTICS_SCOPE } from "../services/YouTubeProvider.js";
 import { cacheDelByPattern } from "../services/RedisClient.js";
+import { authMiddleware, adminMiddleware } from "../middleware/auth.js";
 
 const REQUIRED_SCOPES: Record<string, string[]> = {
   youtube: [YOUTUBE_ANALYTICS_SCOPE],
@@ -140,7 +141,7 @@ function isValidationError(err: unknown): err is { status: number; message: stri
   );
 }
 
-router.get("/auth/status", async (req, res) => {
+router.get("/auth/status", adminMiddleware, async (req, res) => {
   try {
     const tokens = await db
       .select()
@@ -179,7 +180,7 @@ router.get("/auth/status", async (req, res) => {
   }
 });
 
-router.post("/auth/youtube/connect", async (req, res) => {
+router.post("/auth/youtube/connect", adminMiddleware, async (req, res) => {
   const parsed = ConnectYoutubeBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid request body" });
@@ -211,7 +212,7 @@ router.post("/auth/youtube/connect", async (req, res) => {
   }
 });
 
-router.post("/auth/instagram/connect", async (req, res) => {
+router.post("/auth/instagram/connect", adminMiddleware, async (req, res) => {
   const parsed = ConnectInstagramBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid request body" });
@@ -243,7 +244,7 @@ router.post("/auth/instagram/connect", async (req, res) => {
   }
 });
 
-router.post("/auth/facebook/connect", async (req, res) => {
+router.post("/auth/facebook/connect", adminMiddleware, async (req, res) => {
   const parsed = ConnectFacebookBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid request body" });
@@ -275,7 +276,7 @@ router.post("/auth/facebook/connect", async (req, res) => {
   }
 });
 
-router.post("/auth/:platform/disconnect", async (req, res) => {
+router.post("/auth/:platform/disconnect", adminMiddleware, async (req, res) => {
   const parsed = DisconnectPlatformParams.safeParse(req.params);
   if (!parsed.success) {
     res.status(400).json({ error: "Invalid platform" });
