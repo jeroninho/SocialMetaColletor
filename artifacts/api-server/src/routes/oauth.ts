@@ -1,9 +1,38 @@
 import { Router } from "express";
 import { randomBytes } from "crypto";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db, tokensTable, oauthCredentialsTable } from "@workspace/db";
 import { encryptToken, decryptToken } from "../utils/crypto.js";
 import { cached, cacheDelByPattern } from "../services/RedisClient.js";
+
+type TokenUpsertValues = {
+  platform: string;
+  accountName: string;
+  accessToken: string;
+  refreshToken: string | null;
+  expiresAt: Date | null;
+  connected: boolean;
+  scope: string | null;
+};
+
+async function upsertToken(values: TokenUpsertValues): Promise<void> {
+  await db
+    .insert(tokensTable)
+    .values(values)
+    .onConflictDoUpdate({
+      target: tokensTable.platform,
+      set: {
+        accountName: values.accountName,
+        accessToken: values.accessToken,
+        refreshToken: values.refreshToken,
+        expiresAt: values.expiresAt,
+        connected: values.connected,
+        scope: values.scope,
+        connectedAt: sql`now()`,
+        updatedAt: sql`now()`,
+      },
+    });
+}
 
 const ENV_MAP: Record<string, { idKey: string; secretKey: string }> = {
   youtube: { idKey: "YOUTUBE_CLIENT_ID", secretKey: "YOUTUBE_CLIENT_SECRET" },
@@ -214,8 +243,7 @@ router.get("/auth/youtube/callback", async (req, res) => {
     const encryptedRefresh = refreshToken ? safeEncrypt(refreshToken) : null;
     const expiresAt = expiresIn ? new Date(Date.now() + expiresIn * 1000) : null;
 
-    await db.delete(tokensTable).where(eq(tokensTable.platform, "youtube"));
-    await db.insert(tokensTable).values({
+    await upsertToken({
       platform: "youtube",
       accountName,
       accessToken: encryptedAccess,
@@ -333,8 +361,7 @@ router.get("/auth/instagram/callback", async (req, res) => {
     const encryptedAccess = safeEncrypt(accessToken);
     const expiresAt = expiresIn ? new Date(Date.now() + expiresIn * 1000) : null;
 
-    await db.delete(tokensTable).where(eq(tokensTable.platform, "instagram"));
-    await db.insert(tokensTable).values({
+    await upsertToken({
       platform: "instagram",
       accountName,
       accessToken: encryptedAccess,
@@ -455,8 +482,7 @@ router.get("/auth/facebook/callback", async (req, res) => {
     const encryptedAccess = safeEncrypt(longLivedToken);
     const expiresAt = expiresIn ? new Date(Date.now() + expiresIn * 1000) : null;
 
-    await db.delete(tokensTable).where(eq(tokensTable.platform, "facebook"));
-    await db.insert(tokensTable).values({
+    await upsertToken({
       platform: "facebook",
       accountName,
       accessToken: encryptedAccess,
@@ -573,8 +599,7 @@ router.get("/auth/tiktok/callback", async (req, res) => {
     const encryptedRefresh = refreshToken ? safeEncrypt(refreshToken) : null;
     const expiresAt = expiresIn ? new Date(Date.now() + expiresIn * 1000) : null;
 
-    await db.delete(tokensTable).where(eq(tokensTable.platform, "tiktok"));
-    await db.insert(tokensTable).values({
+    await upsertToken({
       platform: "tiktok",
       accountName,
       accessToken: encryptedAccess,
@@ -697,8 +722,7 @@ router.get("/auth/twitter/callback", async (req, res) => {
     const encryptedRefresh = refreshToken ? safeEncrypt(refreshToken) : null;
     const expiresAt = expiresIn ? new Date(Date.now() + expiresIn * 1000) : null;
 
-    await db.delete(tokensTable).where(eq(tokensTable.platform, "twitter"));
-    await db.insert(tokensTable).values({
+    await upsertToken({
       platform: "twitter",
       accountName,
       accessToken: encryptedAccess,

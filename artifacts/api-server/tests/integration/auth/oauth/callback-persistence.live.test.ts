@@ -4,10 +4,11 @@
  * The mocked-DB version verifies handler logic against an in-memory chain
  * shim. This file promotes the highest-risk OAuth callback path
  * (YouTube) to a real Postgres so we also catch SQL-level regressions:
- *   - the `delete then insert` upsert pattern actually clears prior rows
+ *   - the `onConflictDoUpdate` upsert pattern updates the existing row
+ *     instead of inserting a duplicate
  *   - column defaults (`connected`, `connected_at`, `created_at`) are applied
  *   - re-running the callback does not produce duplicate rows for the same
- *     platform
+ *     platform (enforced by the unique constraint on `tokens.platform`)
  *   - the encrypted token round-trips through a TEXT column unchanged
  *
  * Skips automatically when no live DATABASE_URL is configured.
@@ -141,7 +142,7 @@ describe.skipIf(!liveAvailable)("YouTube OAuth callback — live Postgres persis
     expect(deltaMs).toBeLessThan(3700 * 1000);
   });
 
-  it("delete-then-insert keeps exactly one row when the callback runs twice", async () => {
+  it("onConflictDoUpdate keeps exactly one row when the callback runs twice", async () => {
     const first = installFetchMock({
       routes: youtubeFetchRoutes({ accessToken: "first-access", channelTitle: "First Title" }),
     });

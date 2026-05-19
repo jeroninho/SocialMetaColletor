@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db, tokensTable } from "@workspace/db";
 import {
   ConnectYoutubeBody,
@@ -30,6 +30,29 @@ function safeEncrypt(token: string): string {
   } catch {
     return token;
   }
+}
+
+async function upsertConnectToken(
+  platform: string,
+  accountName: string,
+  encryptedToken: string,
+): Promise<void> {
+  await db
+    .insert(tokensTable)
+    .values({ platform, accountName, accessToken: encryptedToken, connected: true })
+    .onConflictDoUpdate({
+      target: tokensTable.platform,
+      set: {
+        accountName,
+        accessToken: encryptedToken,
+        refreshToken: null,
+        expiresAt: null,
+        connected: true,
+        scope: null,
+        connectedAt: sql`now()`,
+        updatedAt: sql`now()`,
+      },
+    });
 }
 
 async function validateYoutubeToken(token: string): Promise<void> {
@@ -179,13 +202,7 @@ router.post("/auth/youtube/connect", async (req, res) => {
   try {
     const encryptedToken = safeEncrypt(accessToken);
 
-    await db.delete(tokensTable).where(eq(tokensTable.platform, "youtube"));
-    await db.insert(tokensTable).values({
-      platform: "youtube",
-      accountName,
-      accessToken: encryptedToken,
-      connected: true,
-    });
+    await upsertConnectToken("youtube", accountName, encryptedToken);
 
     res.json({ success: true, platform: "youtube", accountName });
   } catch (err) {
@@ -217,13 +234,7 @@ router.post("/auth/instagram/connect", async (req, res) => {
   try {
     const encryptedToken = safeEncrypt(accessToken);
 
-    await db.delete(tokensTable).where(eq(tokensTable.platform, "instagram"));
-    await db.insert(tokensTable).values({
-      platform: "instagram",
-      accountName,
-      accessToken: encryptedToken,
-      connected: true,
-    });
+    await upsertConnectToken("instagram", accountName, encryptedToken);
 
     res.json({ success: true, platform: "instagram", accountName });
   } catch (err) {
@@ -255,13 +266,7 @@ router.post("/auth/facebook/connect", async (req, res) => {
   try {
     const encryptedToken = safeEncrypt(accessToken);
 
-    await db.delete(tokensTable).where(eq(tokensTable.platform, "facebook"));
-    await db.insert(tokensTable).values({
-      platform: "facebook",
-      accountName,
-      accessToken: encryptedToken,
-      connected: true,
-    });
+    await upsertConnectToken("facebook", accountName, encryptedToken);
 
     res.json({ success: true, platform: "facebook", accountName });
   } catch (err) {

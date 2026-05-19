@@ -98,24 +98,26 @@ describe.skipIf(!liveAvailable)("GET /api/dashboard/summary — live Postgres to
     expect(yt.analyticsAvailable).toBe(false);
   });
 
-  it("does not double-count when multiple rows exist for the same platform", async () => {
-    // Inserting two rows for the same platform exercises the absence of a
-    // unique constraint; the route's Map(platform → token) keeps only one.
+  it("enforces a unique constraint on tokens.platform", async () => {
+    // The schema-level unique index now prevents duplicate platform rows.
+    // Attempting to insert a second `youtube` row must throw at the DB level,
+    // so the dashboard summary can rely on at most one row per platform.
     const { tokensTable } = await import("@workspace/db");
-    await handle.db.insert(tokensTable).values([
-      {
-        platform: "youtube",
-        accountName: "Older",
-        accessToken: encryptToken("older-token"),
-        connected: true,
-      },
-      {
+    await handle.db.insert(tokensTable).values({
+      platform: "youtube",
+      accountName: "Older",
+      accessToken: encryptToken("older-token"),
+      connected: true,
+    });
+
+    await expect(
+      handle.db.insert(tokensTable).values({
         platform: "youtube",
         accountName: "Newer",
         accessToken: encryptToken("newer-token"),
         connected: true,
-      },
-    ]);
+      }),
+    ).rejects.toThrow();
 
     const installed = installFetchMock({
       routes: [{ match: () => true, respond: () => ({ status: 500, body: {} }) }],
@@ -124,7 +126,6 @@ describe.skipIf(!liveAvailable)("GET /api/dashboard/summary — live Postgres to
     installed.restore();
 
     expect(res.status).toBe(200);
-    // Despite two rows, only one platform is reported as connected.
     expect(res.body.connectedPlatforms).toBe(1);
   });
 

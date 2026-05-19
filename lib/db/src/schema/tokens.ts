@@ -4,7 +4,7 @@ import { z } from "zod/v4";
 
 export const tokensTable = pgTable("tokens", {
   id: serial("id").primaryKey(),
-  platform: text("platform").notNull(),
+  platform: text("platform").notNull().unique(),
   accountName: text("account_name").notNull(),
   accessToken: text("access_token").notNull(),
   refreshToken: text("refresh_token"),
