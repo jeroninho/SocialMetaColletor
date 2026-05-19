@@ -83,7 +83,7 @@ export default function FacebookPage() {
           { label: "Page Fans", value: fmt(page?.fanCount), icon: Users },
           { label: "Followers", value: fmt(page?.followersCount), icon: Users },
           { label: "Total Shares", value: fmt(analytics?.totalShares), icon: Share2 },
-          { label: "Avg Engagement", value: analytics ? `${analytics.averageEngagementRate.toFixed(2)}%` : "—", icon: TrendingUp },
+          { label: "Avg Engagement", value: typeof analytics?.averageEngagementRate === "number" ? `${analytics.averageEngagementRate.toFixed(2)}%` : "—", icon: TrendingUp },
         ].map(({ label, value, icon: Icon }) => (
           <Card key={label}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -123,7 +123,7 @@ export default function FacebookPage() {
                       ))}
                     </TableRow>
                   ))
-                : postsData?.items.map((p) => (
+                : (postsData?.items ?? []).map((p) => (
                     <TableRow key={p.id}>
                       <TableCell className="font-medium max-w-xs truncate text-sm">
                         {p.message ? p.message.slice(0, 70) + (p.message.length > 70 ? "..." : "") : p.story ?? "—"}

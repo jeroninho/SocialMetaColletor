@@ -65,7 +65,7 @@ export default function TwitterPage() {
           { label: "Seguidores", value: fmt(profile?.followersCount), icon: Users },
           { label: "Impressões", value: fmt(analytics?.totalViews), icon: Eye },
           { label: "Curtidas", value: fmt(analytics?.totalLikes), icon: Heart },
-          { label: "Taxa Eng.", value: analytics ? `${analytics.averageEngagementRate.toFixed(2)}%` : "—", icon: TrendingUp },
+          { label: "Taxa Eng.", value: typeof analytics?.averageEngagementRate === "number" ? `${analytics.averageEngagementRate.toFixed(2)}%` : "—", icon: TrendingUp },
         ].map(({ label, value, icon: Icon }) => (
           <Card key={label}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -99,7 +99,7 @@ export default function TwitterPage() {
                 ? Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i}>{Array.from({ length: 7 }).map((_, j) => (<TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>))}</TableRow>
                   ))
-                : tweets?.items.map((t: any) => (
+                : (tweets?.items ?? []).map((t: any) => (
                     <TableRow key={t.id}>
                       <TableCell className="font-medium max-w-xs truncate">{t.text}</TableCell>
                       <TableCell className="text-right text-sm tabular-nums">{fmt(t.impressionCount)}</TableCell>

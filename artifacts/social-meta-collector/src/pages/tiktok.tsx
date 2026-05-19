@@ -65,7 +65,7 @@ export default function TikTokPage() {
           { label: "Seguidores", value: fmt(profile?.followerCount), icon: Users },
           { label: "Total de Curtidas", value: fmt(profile?.heartCount), icon: Heart },
           { label: "Vídeos", value: fmt(profile?.videoCount), icon: Play },
-          { label: "Taxa Eng.", value: analytics ? `${analytics.averageEngagementRate.toFixed(2)}%` : "—", icon: TrendingUp },
+          { label: "Taxa Eng.", value: typeof analytics?.averageEngagementRate === "number" ? `${analytics.averageEngagementRate.toFixed(2)}%` : "—", icon: TrendingUp },
         ].map(({ label, value, icon: Icon }) => (
           <Card key={label}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -98,7 +98,7 @@ export default function TikTokPage() {
                 ? Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i}>{Array.from({ length: 6 }).map((_, j) => (<TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>))}</TableRow>
                   ))
-                : videos?.items.map((v: any) => (
+                : (videos?.items ?? []).map((v: any) => (
                     <TableRow key={v.id}>
                       <TableCell className="font-medium max-w-xs truncate">{v.description}</TableCell>
                       <TableCell className="text-right text-sm tabular-nums">{fmt(v.viewCount)}</TableCell>

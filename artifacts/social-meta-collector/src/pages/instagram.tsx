@@ -89,7 +89,7 @@ export default function InstagramPage() {
           { label: "Followers", value: fmt(profile?.followersCount), icon: Users },
           { label: "Following", value: fmt(profile?.followingCount), icon: Users },
           { label: "Media", value: fmt(profile?.mediaCount), icon: Image },
-          { label: "Avg Engagement", value: analytics ? `${analytics.averageEngagementRate.toFixed(2)}%` : "—", icon: TrendingUp },
+          { label: "Avg Engagement", value: typeof analytics?.averageEngagementRate === "number" ? `${analytics.averageEngagementRate.toFixed(2)}%` : "—", icon: TrendingUp },
         ].map(({ label, value, icon: Icon }) => (
           <Card key={label}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -129,14 +129,14 @@ export default function InstagramPage() {
                       ))}
                     </TableRow>
                   ))
-                : mediaData?.items.map((m) => (
+                : (mediaData?.items ?? []).map((m) => (
                     <TableRow key={m.id}>
                       <TableCell className="font-medium max-w-xs truncate text-sm">
                         {m.caption ? m.caption.slice(0, 70) + (m.caption.length > 70 ? "..." : "") : "—"}
                       </TableCell>
                       <TableCell>
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${mediaTypeColors[m.mediaType] ?? ""}`}>
-                          {m.mediaType.replace("_", " ")}
+                          {(m.mediaType ?? "—").replace("_", " ")}
                         </span>
                       </TableCell>
                       <TableCell className="text-right text-sm tabular-nums">{fmt(m.impressions)}</TableCell>

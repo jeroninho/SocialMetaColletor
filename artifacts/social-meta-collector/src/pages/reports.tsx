@@ -171,7 +171,7 @@ export default function Reports() {
     toast({ title: "PDF exportado!", description: "Arquivo baixado com sucesso." });
   };
 
-  const chartData = trends?.dataPoints.map((dp: any) => ({
+  const chartData = (trends?.dataPoints ?? []).map((dp: any) => ({
     date: new Date(dp.date).toLocaleDateString("pt-BR", { month: "short", day: "numeric" }),
     YouTube: dp.youtube,
     Instagram: dp.instagram,
@@ -181,11 +181,11 @@ export default function Reports() {
   }));
 
   const pieData = [
-    { name: "YouTube", value: trends?.dataPoints.reduce((s: number, d: any) => s + d.youtube, 0) ?? 0, color: PLATFORM_COLORS.youtube },
-    { name: "Instagram", value: trends?.dataPoints.reduce((s: number, d: any) => s + d.instagram, 0) ?? 0, color: PLATFORM_COLORS.instagram },
-    { name: "Facebook", value: trends?.dataPoints.reduce((s: number, d: any) => s + d.facebook, 0) ?? 0, color: PLATFORM_COLORS.facebook },
-    { name: "TikTok", value: trends?.dataPoints.reduce((s: number, d: any) => s + (d.tiktok ?? 0), 0) ?? 0, color: PLATFORM_COLORS.tiktok },
-    { name: "Twitter", value: trends?.dataPoints.reduce((s: number, d: any) => s + (d.twitter ?? 0), 0) ?? 0, color: PLATFORM_COLORS.twitter },
+    { name: "YouTube", value: (trends?.dataPoints ?? []).reduce((s: number, d: any) => s + (d.youtube ?? 0), 0), color: PLATFORM_COLORS.youtube },
+    { name: "Instagram", value: (trends?.dataPoints ?? []).reduce((s: number, d: any) => s + (d.instagram ?? 0), 0), color: PLATFORM_COLORS.instagram },
+    { name: "Facebook", value: (trends?.dataPoints ?? []).reduce((s: number, d: any) => s + (d.facebook ?? 0), 0), color: PLATFORM_COLORS.facebook },
+    { name: "TikTok", value: (trends?.dataPoints ?? []).reduce((s: number, d: any) => s + (d.tiktok ?? 0), 0), color: PLATFORM_COLORS.tiktok },
+    { name: "Twitter", value: (trends?.dataPoints ?? []).reduce((s: number, d: any) => s + (d.twitter ?? 0), 0), color: PLATFORM_COLORS.twitter },
   ].filter((d) => d.value > 0);
 
   const legendStyle = { fontSize: 12, color: dark ? "hsl(220 20% 70%)" : "hsl(220 10% 46%)" };
@@ -337,7 +337,7 @@ export default function Reports() {
                       ))}
                     </TableRow>
                   ))
-                : recentData?.items.map((entry) => {
+                : (recentData?.items ?? []).map((entry) => {
                     const pb = platformBadge[entry.platform];
                     return (
                       <TableRow key={entry.id} className="hover:bg-muted/30 transition-colors border-border/40">

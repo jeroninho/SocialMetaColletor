@@ -103,7 +103,7 @@ export default function YouTubePage() {
           { label: "Subscribers", value: fmt(channel?.subscriberCount), icon: Users },
           { label: "Total Views", value: fmt(channel?.viewCount), icon: Eye },
           { label: "Videos", value: fmt(channel?.videoCount), icon: Video },
-          { label: "Avg Engagement", value: analytics ? `${analytics.averageEngagementRate.toFixed(2)}%` : "—", icon: TrendingUp },
+          { label: "Avg Engagement", value: typeof analytics?.averageEngagementRate === "number" ? `${analytics.averageEngagementRate.toFixed(2)}%` : "—", icon: TrendingUp },
           {
             label: `Watch Time (${periodDays}d)`,
             value: analyticsAvailable ? `${fmt(watchTimeMinutes)} min` : "—",
@@ -167,7 +167,7 @@ export default function YouTubePage() {
                       ))}
                     </TableRow>
                   ))
-                : videosData?.items.map((v) => (
+                : (videosData?.items ?? []).map((v) => (
                     <TableRow key={v.id}>
                       <TableCell className="font-medium max-w-xs truncate">{v.title}</TableCell>
                       <TableCell className="text-right text-sm tabular-nums">{fmt(v.viewCount)}</TableCell>

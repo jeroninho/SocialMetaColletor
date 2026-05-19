@@ -387,7 +387,7 @@ export default function FetchPage() {
               ? Array.from({ length: 3 }).map((_, i) => (
                   <Skeleton key={i} className="h-16 w-full rounded-xl" />
                 ))
-              : history?.items.map((item) => {
+              : (history?.items ?? []).map((item) => {
                   const pc = platformConfig[item.platform] ?? { color: "#888", icon: null, label: item.platform };
                   return (
                     <button
