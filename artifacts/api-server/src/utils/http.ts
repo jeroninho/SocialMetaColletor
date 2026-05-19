@@ -3,6 +3,7 @@ interface HttpGetOptions {
   headers?: Record<string, string>;
   timeoutMs?: number;
   maxBytes?: number;
+  redirect?: "follow" | "error" | "manual";
 }
 
 interface HttpResponse<T> {
@@ -104,6 +105,7 @@ export async function httpGet<T = unknown>(
     headers,
     timeoutMs = 8000,
     maxBytes = DEFAULT_MAX_RESPONSE_BYTES,
+    redirect = "follow",
   } = opts;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -112,7 +114,7 @@ export async function httpGet<T = unknown>(
       method: "GET",
       headers,
       signal: controller.signal,
-      redirect: "follow",
+      redirect,
     });
     const ct = res.headers.get("content-type") ?? "";
     const text = await readBodyWithLimit(res, maxBytes, url, controller);

@@ -1,9 +1,10 @@
-import { pgTable, serial, text, timestamp, integer } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, timestamp, integer, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
 export const fetchHistoryTable = pgTable("fetch_history", {
   id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
   platform: text("platform").notNull(),
   url: text("url").notNull(),
   title: text("title").notNull(),
@@ -19,7 +20,9 @@ export const fetchHistoryTable = pgTable("fetch_history", {
   publishedAt: timestamp("published_at"),
   fetchedAt: timestamp("fetched_at").notNull().defaultNow(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => [
+  index("fetch_history_user_fetched_idx").on(table.userId, table.fetchedAt),
+]);
 
 export const insertFetchHistorySchema = createInsertSchema(fetchHistoryTable).omit({ id: true, createdAt: true });
 export type InsertFetchHistory = z.infer<typeof insertFetchHistorySchema>;

@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { httpGet, LINK_PREVIEW_MAX_RESPONSE_BYTES, ResponseTooLargeError } from "../utils/http.js";
 import { extractMetaTags } from "../utils/meta-tags.js";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db, fetchHistoryTable } from "@workspace/db";
 import {
   FetchMetadataFromUrlBody,
   ListFetchHistoryQueryParams,
 } from "@workspace/api-zod";
+import { authMiddleware } from "../middleware/auth.js";
 
 const router = Router();
 
@@ -28,13 +29,32 @@ interface NormalizedMetadata {
   tags?: string[];
 }
 
+const PLATFORM_HOSTNAMES: Record<Platform, string[]> = {
+  youtube: ["youtube.com", "youtu.be"],
+  tiktok: ["tiktok.com"],
+  instagram: ["instagram.com"],
+  facebook: ["facebook.com", "fb.com", "fb.watch"],
+  twitter: ["twitter.com", "x.com"],
+};
+
 function detectPlatform(url: string): Platform | null {
-  const lower = url.toLowerCase();
-  if (lower.includes("youtube.com") || lower.includes("youtu.be")) return "youtube";
-  if (lower.includes("tiktok.com")) return "tiktok";
-  if (lower.includes("instagram.com")) return "instagram";
-  if (lower.includes("facebook.com") || lower.includes("fb.com") || lower.includes("fb.watch")) return "facebook";
-  if (lower.includes("twitter.com") || lower.includes("x.com")) return "twitter";
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+
+  if (parsed.protocol !== "https:") return null;
+
+  const hostname = parsed.hostname.toLowerCase();
+  for (const [platform, domains] of Object.entries(PLATFORM_HOSTNAMES) as [Platform, string[]][]) {
+    for (const domain of domains) {
+      if (hostname === domain || hostname.endsWith(`.${domain}`)) {
+        return platform;
+      }
+    }
+  }
   return null;
 }
 
@@ -73,6 +93,7 @@ async function fetchViaOpenGraph(url: string, platform: Platform): Promise<Norma
     },
     timeoutMs: 10000,
     maxBytes: LINK_PREVIEW_MAX_RESPONSE_BYTES,
+    redirect: "error",
   });
 
   const html = response.data;
@@ -220,7 +241,7 @@ async function fetchTwitterMetadata(url: string): Promise<NormalizedMetadata> {
   }
 }
 
-router.post("/fetch-metadata", async (req, res) => {
+router.post("/fetch-metadata", authMiddleware, async (req, res) => {
   const parsed = FetchMetadataFromUrlBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: "invalid_request", message: "A valid URL is required." });
@@ -233,7 +254,7 @@ router.post("/fetch-metadata", async (req, res) => {
   if (!platform) {
     res.status(400).json({
       error: "unsupported_platform",
-      message: "URL not recognized. Supported: YouTube, TikTok, Instagram, Facebook, X/Twitter.",
+      message: "URL not recognized. Supported: YouTube, TikTok, Instagram, Facebook, X/Twitter. Only HTTPS URLs are accepted.",
     });
     return;
   }
@@ -258,9 +279,12 @@ router.post("/fetch-metadata", async (req, res) => {
         break;
     }
 
+    const userId = req.user!.sub;
+
     const [saved] = await db
       .insert(fetchHistoryTable)
       .values({
+        userId,
         platform: metadata.platform,
         url: metadata.url,
         title: metadata.title,
@@ -292,14 +316,17 @@ router.post("/fetch-metadata", async (req, res) => {
   }
 });
 
-router.get("/fetch-metadata/history", async (req, res) => {
+router.get("/fetch-metadata/history", authMiddleware, async (req, res) => {
   const parsed = ListFetchHistoryQueryParams.safeParse(req.query);
   const limit = parsed.success ? (parsed.data.limit ?? 20) : 20;
   const offset = parsed.success ? (parsed.data.offset ?? 0) : 0;
 
+  const userId = req.user!.sub;
+
   const items = await db
     .select()
     .from(fetchHistoryTable)
+    .where(eq(fetchHistoryTable.userId, userId))
     .orderBy(desc(fetchHistoryTable.fetchedAt))
     .limit(limit)
     .offset(offset);
