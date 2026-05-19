@@ -11,6 +11,14 @@ import { TwitterProvider } from "../services/TwitterProvider.js";
 
 const router = Router();
 const CACHE_TTL = parseInt(process.env["CACHE_TTL_SECONDS"] ?? "60", 10);
+const PROVIDER_METRICS_TTL = parseInt(
+  process.env["PROVIDER_METRICS_TTL_SECONDS"] ?? "600",
+  10,
+);
+const PROVIDER_FETCH_TIMEOUT_MS = parseInt(
+  process.env["PROVIDER_FETCH_TIMEOUT_MS"] ?? "4000",
+  10,
+);
 
 const youtube = new YouTubeProvider();
 const meta = new MetaProvider();
@@ -26,7 +34,7 @@ router.get("/dashboard/summary", async (req, res) => {
   const summary = await cached(
     `dashboard:summary:${userId}`,
     CACHE_TTL,
-    async () => buildDashboardSummary(req),
+    async () => buildDashboardSummary(req, userId),
     { onHit: () => { hit = true; } },
   );
 
@@ -34,7 +42,23 @@ router.get("/dashboard/summary", async (req, res) => {
   res.json(summary);
 });
 
-async function buildDashboardSummary(req: Parameters<Parameters<typeof router.get>[1]>[0]) {
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error(`${label}_timeout_${ms}ms`)),
+      ms,
+    );
+    p.then(
+      (v) => { clearTimeout(timer); resolve(v); },
+      (e) => { clearTimeout(timer); reject(e); },
+    );
+  });
+}
+
+async function buildDashboardSummary(
+  req: Parameters<Parameters<typeof router.get>[1]>[0],
+  userId: string,
+) {
   const allTokens = await db.select().from(tokensTable);
   const tokenByPlatform = new Map(allTokens.map((t) => [t.platform, t] as const));
 
@@ -83,8 +107,30 @@ async function buildDashboardSummary(req: Parameters<Parameters<typeof router.ge
     if (!connected || !token?.accessToken) {
       return { platform, connected: false, analyticsAvailable: false, metrics: MOCK_FALLBACKS[platform]! };
     }
+
+    const cacheKey = `provider:metrics:${platform}:${userId}:28`;
+    let providerCacheHit = false;
+
     try {
-      const metrics = await fn();
+      const metrics = await cached(
+        cacheKey,
+        PROVIDER_METRICS_TTL,
+        () => withTimeout(fn(), PROVIDER_FETCH_TIMEOUT_MS, `${platform}_fetch`),
+        {
+          onHit: () => { providerCacheHit = true; },
+          // Skip caching empty/degraded payloads so we don't pin a bad
+          // response for the full TTL when an upstream is briefly flaky.
+          cacheIf: (v) =>
+            v.totalViews > 0 ||
+            v.postsCount > 0 ||
+            v.impressions > 0 ||
+            v.followers > 0,
+        },
+      );
+      req.log.debug(
+        { platform, userId, cacheHit: providerCacheHit },
+        "dashboard: provider metrics",
+      );
       const hasSignal =
         metrics.totalViews > 0 ||
         metrics.postsCount > 0 ||
@@ -258,6 +304,7 @@ router.post("/metadata/sync", async (req, res) => {
   await Promise.all([
     cacheDelByPattern("dashboard:"),
     ...platforms.map((p) => cacheDelByPattern(`${p}:`)),
+    ...platforms.map((p) => cacheDelByPattern(`provider:metrics:${p}:`)),
   ]);
 
   const q = getMetadataSyncQueue();
