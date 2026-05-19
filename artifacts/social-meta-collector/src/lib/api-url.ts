@@ -1,6 +1,7 @@
 export function getApiUrl(): string {
-  const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
-  return `${base}/api/`;
+  // The API server is mounted at the absolute `/api` path by the workspace
+  // proxy, independent of this artifact's BASE_URL prefix.
+  return "/api/";
 }
 
 export function getAuthHeaders(): Record<string, string> {
