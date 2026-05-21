@@ -278,7 +278,8 @@ router.get("/auth/youtube/callback", async (req, res) => {
       connected: true,
       scope: grantedScope ?? null,
     });
-  } catch {
+  } catch (err) {
+    req.log.error({ err, platform: "youtube" }, "Failed to save OAuth token");
     redirectToFrontend(res as never, "error", "youtube", "Failed to save token.");
     return;
   }
@@ -404,7 +405,8 @@ router.get("/auth/instagram/callback", async (req, res) => {
       connected: true,
       scope: "user_profile,user_media",
     });
-  } catch {
+  } catch (err) {
+    req.log.error({ err, platform: "instagram" }, "Failed to save OAuth token");
     redirectToFrontend(res as never, "error", "instagram", "Failed to save token.");
     return;
   }
@@ -533,7 +535,8 @@ router.get("/auth/facebook/callback", async (req, res) => {
       connected: true,
       scope: "pages_read_engagement,pages_show_list,read_insights,public_profile",
     });
-  } catch {
+  } catch (err) {
+    req.log.error({ err, platform: "facebook" }, "Failed to save OAuth token");
     redirectToFrontend(res as never, "error", "facebook", "Failed to save token.");
     return;
   }
@@ -658,7 +661,8 @@ router.get("/auth/tiktok/callback", async (req, res) => {
       connected: true,
       scope: grantedScope,
     });
-  } catch {
+  } catch (err) {
+    req.log.error({ err, platform: "tiktok" }, "Failed to save OAuth token");
     redirectToFrontend(res as never, "error", "tiktok", "Failed to save token.");
     return;
   }
@@ -789,7 +793,8 @@ router.get("/auth/twitter/callback", async (req, res) => {
       connected: true,
       scope: grantedScope,
     });
-  } catch {
+  } catch (err) {
+    req.log.error({ err, platform: "twitter" }, "Failed to save OAuth token");
     redirectToFrontend(res as never, "error", "twitter", "Failed to save token.");
     return;
   }
