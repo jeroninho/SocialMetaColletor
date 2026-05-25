@@ -440,7 +440,7 @@ router.get("/auth/facebook/connect", async (req, res) => {
     client_id: clientId,
     redirect_uri: getCallbackUrl("facebook"),
     response_type: "code",
-    scope: "public_profile,email,pages_show_list,pages_read_engagement",
+    scope: "public_profile,pages_show_list,pages_read_engagement",
     state,
   });
   res.redirect(`https://www.facebook.com/v18.0/dialog/oauth?${params}`);
@@ -533,7 +533,7 @@ router.get("/auth/facebook/callback", async (req, res) => {
       refreshToken: null,
       expiresAt,
       connected: true,
-      scope: "public_profile,email,pages_show_list,pages_read_engagement",
+      scope: "public_profile,pages_show_list,pages_read_engagement",
     });
   } catch (err) {
     req.log.error({ err, platform: "facebook" }, "Failed to save OAuth token");
