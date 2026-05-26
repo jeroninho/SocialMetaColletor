@@ -116,7 +116,7 @@ paths:
           required: true
           schema:
             type: string
-            enum: [youtube, instagram, facebook]
+            enum: [youtube, instagram, facebook, tiktok, twitter, ga4, threads]
       responses:
         "200":
           description: Disconnected

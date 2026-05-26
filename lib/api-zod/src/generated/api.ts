@@ -121,7 +121,15 @@ export const ConnectFacebookResponse = zod.object({
  * @summary Disconnect a platform
  */
 export const DisconnectPlatformParams = zod.object({
-  platform: zod.enum(["youtube", "instagram", "facebook"]),
+  platform: zod.enum([
+    "youtube",
+    "instagram",
+    "facebook",
+    "tiktok",
+    "twitter",
+    "ga4",
+    "threads",
+  ]),
 });
 
 export const DisconnectPlatformResponse = zod.object({

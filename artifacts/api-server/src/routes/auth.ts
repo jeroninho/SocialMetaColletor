@@ -159,6 +159,10 @@ router.get("/auth/status", adminMiddleware, async (req, res) => {
       youtube: { connected: false },
       instagram: { connected: false },
       facebook: { connected: false },
+      tiktok: { connected: false },
+      twitter: { connected: false },
+      ga4: { connected: false },
+      threads: { connected: false },
     };
 
     for (const token of tokens) {

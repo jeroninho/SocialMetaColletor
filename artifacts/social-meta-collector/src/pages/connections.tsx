@@ -1,39 +1,44 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useSearch } from "wouter";
 import {
   useGetAuthStatus,
   getGetAuthStatusQueryKey,
-  useDisconnectPlatform,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   Youtube,
   Instagram,
   Facebook,
   CheckCircle,
-  XCircle,
   Loader2,
-  LogIn,
-  Unlink,
   AlertCircle,
   Music,
   Twitter,
+  BarChart3,
+  AtSign,
+  Info,
+  Settings,
+  ChevronDown,
+  ChevronUp,
+  Sparkles,
+  Megaphone,
+  TrendingUp,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { OAuthCredentialsSetup } from "@/components/oauth-credentials-setup";
 import { getToken } from "@/context/auth";
+import { authFetch, getApiUrl } from "@/lib/api-url";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-async function fetchConnectNonce(platform: string): Promise<string | null> {
+async function fetchConnectNonce(): Promise<string | null> {
   const token = getToken();
   if (!token) return null;
   try {
@@ -42,12 +47,23 @@ async function fetchConnectNonce(platform: string): Promise<string | null> {
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
     });
     if (!res.ok) return null;
-    const data = await res.json() as { nonce?: string };
+    const data = (await res.json()) as { nonce?: string };
     return data.nonce ?? null;
   } catch {
     return null;
   }
 }
+
+type ConnectablePlatform =
+  | "youtube"
+  | "instagram"
+  | "facebook"
+  | "tiktok"
+  | "twitter"
+  | "ga4"
+  | "threads";
+
+type ComingSoonPlatform = "meta_ads" | "google_ads";
 
 const PLATFORM_LABELS: Record<string, string> = {
   youtube: "YouTube",
@@ -55,206 +71,343 @@ const PLATFORM_LABELS: Record<string, string> = {
   facebook: "Facebook",
   tiktok: "TikTok",
   twitter: "X / Twitter",
+  ga4: "Google Analytics 4",
+  threads: "Threads",
 };
 
-interface PlatformCardProps {
-  platform: "youtube" | "instagram" | "facebook" | "tiktok" | "twitter";
-  connected: boolean;
+interface PlatformDef {
+  key: ConnectablePlatform;
+  label: string;
+  icon: React.ReactNode;
+  brandColor: string;
+  description: string;
+  isNew?: boolean;
+}
+
+interface ComingSoonDef {
+  key: ComingSoonPlatform;
+  label: string;
+  icon: React.ReactNode;
+  brandColor: string;
+  description: string;
+}
+
+const CONNECTABLE_PLATFORMS: PlatformDef[] = [
+  {
+    key: "youtube",
+    label: "YouTube",
+    icon: <Youtube className="w-6 h-6" />,
+    brandColor: "#FF0000",
+    description: "Métricas de canal, vídeos e analytics avançadas.",
+  },
+  {
+    key: "instagram",
+    label: "Instagram",
+    icon: <Instagram className="w-6 h-6" />,
+    brandColor: "#E1306C",
+    description: "Perfil, posts e estatísticas de engajamento.",
+  },
+  {
+    key: "facebook",
+    label: "Facebook",
+    icon: <Facebook className="w-6 h-6" />,
+    brandColor: "#1877F2",
+    description: "Páginas, publicações e métricas de engajamento.",
+  },
+  {
+    key: "tiktok",
+    label: "TikTok",
+    icon: <Music className="w-6 h-6" />,
+    brandColor: "#000000",
+    description: "Perfil, vídeos e analytics da conta TikTok.",
+  },
+  {
+    key: "twitter",
+    label: "X / Twitter",
+    icon: <Twitter className="w-6 h-6" />,
+    brandColor: "#1DA1F2",
+    description: "Tweets, perfil e métricas de impressões.",
+  },
+  {
+    key: "ga4",
+    label: "Google Analytics",
+    icon: <BarChart3 className="w-6 h-6" />,
+    brandColor: "#F9AB00",
+    description: "Sessões, usuários e funis de conversão do GA4.",
+    isNew: true,
+  },
+  {
+    key: "threads",
+    label: "Threads",
+    icon: <AtSign className="w-6 h-6" />,
+    brandColor: "#000000",
+    description: "Posts, replies e insights do Threads.",
+    isNew: true,
+  },
+];
+
+const COMING_SOON_PLATFORMS: ComingSoonDef[] = [
+  {
+    key: "meta_ads",
+    label: "Meta Ads",
+    icon: <Megaphone className="w-6 h-6" />,
+    brandColor: "#1877F2",
+    description: "Campanhas, gasto, CTR e ROAS do Facebook e Instagram Ads.",
+  },
+  {
+    key: "google_ads",
+    label: "Google Ads",
+    icon: <TrendingUp className="w-6 h-6" />,
+    brandColor: "#4285F4",
+    description: "Campanhas, custo, conversões e palavras-chave do Google Ads.",
+  },
+];
+
+interface PlatformStatus {
+  connected?: boolean;
   accountName?: string;
   connectedAt?: string;
   expiresAt?: string | null;
   needsReconnect?: boolean;
   missingScopes?: string[];
-  icon: React.ReactNode;
-  label: string;
-  onDisconnected: () => void;
 }
 
-function PlatformCard({
-  platform,
-  connected,
-  accountName,
-  connectedAt,
-  expiresAt,
-  needsReconnect,
-  missingScopes,
-  icon,
-  label,
-  onDisconnected,
-}: PlatformCardProps) {
+interface CardPlatformProps {
+  def: PlatformDef;
+  status: PlatformStatus | undefined;
+  onChanged: () => void;
+}
+
+function ConnectableCard({ def, status, onChanged }: CardPlatformProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const disconnect = useDisconnectPlatform();
+  const [busy, setBusy] = useState<"connect" | "disconnect" | null>(null);
+
+  const connected = !!status?.connected;
+  const isExpired = status?.expiresAt ? new Date(status.expiresAt) < new Date() : false;
+  const needsReconnect = connected && !isExpired && !!status?.needsReconnect;
+  const validConnection = connected && !isExpired && !needsReconnect;
 
   const handleConnect = async () => {
-    const nonce = await fetchConnectNonce(platform);
+    setBusy("connect");
+    const nonce = await fetchConnectNonce();
     if (!nonce) {
       toast({
         title: "Erro",
-        description: "Não foi possível iniciar a conexão. Verifique se você tem permissão.",
+        description: "Não foi possível iniciar a conexão. Verifique se você está autenticado.",
         variant: "destructive",
       });
+      setBusy(null);
       return;
     }
-    window.location.href = `/api/auth/${platform}/connect?nonce=${encodeURIComponent(nonce)}`;
+    window.location.href = `/api/auth/${def.key}/connect?nonce=${encodeURIComponent(nonce)}`;
   };
 
   const handleDisconnect = async () => {
+    setBusy("disconnect");
     try {
-      await disconnect.mutateAsync({ platform: platform as "youtube" | "instagram" | "facebook" });
+      const res = await authFetch(`${getApiUrl()}auth/${def.key}/disconnect`, { method: "POST" });
+      if (!res.ok) throw new Error("Failed");
       toast({
-        title: `${label} desconectado`,
+        title: `${def.label} desconectado`,
         description: "Plataforma desconectada com sucesso.",
       });
       queryClient.invalidateQueries({ queryKey: getGetAuthStatusQueryKey() });
-      onDisconnected();
+      onChanged();
     } catch {
       toast({
         title: "Erro",
         description: "Falha ao desconectar. Tente novamente.",
         variant: "destructive",
       });
+    } finally {
+      setBusy(null);
     }
   };
 
-  const isExpired = expiresAt ? new Date(expiresAt) < new Date() : false;
-  const requiresReconnect = connected && !isExpired && !!needsReconnect;
-  const missingAnalytics =
-    platform === "youtube" &&
-    requiresReconnect &&
-    (missingScopes ?? []).some((s) => s.includes("yt-analytics.readonly"));
-
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-md flex items-center justify-center bg-muted">
-              {icon}
-            </div>
-            <div>
-              <CardTitle className="text-base">{label}</CardTitle>
-              {connected && accountName && (
-                <CardDescription className="text-xs mt-0.5">
-                  @{accountName}
-                </CardDescription>
-              )}
-            </div>
-          </div>
-          <Badge
-            variant={
-              requiresReconnect
-                ? "destructive"
-                : connected && !isExpired
-                  ? "default"
-                  : "secondary"
+    <Card
+      className="relative flex flex-col items-center text-center p-4 pt-5 transition-all hover:shadow-md min-h-[200px]"
+      data-testid={`card-platform-${def.key}`}
+      style={
+        validConnection
+          ? {
+              backgroundColor: def.brandColor,
+              borderColor: def.brandColor,
+              color: "white",
             }
-            className="flex items-center gap-1"
-            data-testid={`badge-${platform}-status`}
-          >
-            {requiresReconnect ? (
-              <>
-                <AlertCircle className="w-3 h-3" /> Reconexão necessária
-              </>
-            ) : connected && !isExpired ? (
-              <>
-                <CheckCircle className="w-3 h-3" /> Conectado
-              </>
-            ) : connected && isExpired ? (
-              <>
-                <AlertCircle className="w-3 h-3" /> Expirado
-              </>
-            ) : (
-              <>
-                <XCircle className="w-3 h-3" /> Desconectado
-              </>
-            )}
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {connected && !isExpired ? (
-          <div className="space-y-3">
-            {requiresReconnect && (
-              <div
-                className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 space-y-2"
-                data-testid={`alert-${platform}-reconnect`}
-              >
-                <p className="text-xs text-amber-600 dark:text-amber-400 flex items-start gap-1.5">
-                  <AlertCircle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                  <span>
-                    {missingAnalytics
-                      ? "Esta conexão foi feita antes da inclusão de YouTube Analytics. Reconecte para liberar as métricas avançadas (visualizações, watch time, CTR)."
-                      : "Permissões adicionais são necessárias. Reconecte para continuar usando esta integração."}
-                  </span>
-                </p>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="w-full border-amber-500/50 text-amber-700 dark:text-amber-300 hover:bg-amber-500/10"
-                  onClick={handleConnect}
-                  data-testid={`button-${platform}-reconnect`}
-                >
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Reconectar {label}
-                </Button>
-              </div>
-            )}
-            {connectedAt && (
-              <p className="text-xs text-muted-foreground">
-                Conectado em{" "}
-                {new Date(connectedAt).toLocaleDateString("pt-BR", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </p>
-            )}
-            {expiresAt && (
-              <p className="text-xs text-muted-foreground">
-                Expira em{" "}
-                {new Date(expiresAt).toLocaleDateString("pt-BR", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </p>
-            )}
-            <Separator />
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-destructive border-destructive/30 hover:bg-destructive/5 w-full"
-              onClick={handleDisconnect}
-              disabled={disconnect.isPending}
+          : undefined
+      }
+    >
+      {/* Info tooltip top-left */}
+      <TooltipProvider delayDuration={150}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className={`absolute top-2 left-2 rounded-full p-1 transition-opacity ${
+                validConnection ? "text-white/80 hover:text-white" : "text-muted-foreground hover:text-foreground"
+              }`}
+              aria-label="Mais informações"
             >
-              {disconnect.isPending ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <Unlink className="w-4 h-4 mr-2" />
-              )}
-              Desconectar {label}
-            </Button>
-          </div>
+              <Info className="w-3.5 h-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-[220px] text-xs">
+            {def.description}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      {/* NOVO badge top-right */}
+      {def.isNew && !validConnection && (
+        <Badge
+          className="absolute top-2 right-2 bg-amber-400 text-amber-950 hover:bg-amber-400 border-0 text-[10px] font-bold px-1.5 py-0 h-4"
+        >
+          NOVO
+        </Badge>
+      )}
+
+      {/* Settings icon top-right when connected */}
+      {validConnection && (
+        <button
+          type="button"
+          onClick={handleDisconnect}
+          disabled={busy === "disconnect"}
+          className="absolute top-2 right-2 rounded-full p-1 text-white/80 hover:text-white hover:bg-white/10"
+          aria-label="Desconectar"
+          title="Desconectar"
+        >
+          {busy === "disconnect" ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Settings className="w-3.5 h-3.5" />
+          )}
+        </button>
+      )}
+
+      {/* Icon */}
+      <div
+        className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 ${
+          validConnection ? "bg-white/15 text-white" : ""
+        }`}
+        style={
+          !validConnection
+            ? { backgroundColor: `${def.brandColor}15`, color: def.brandColor }
+            : undefined
+        }
+      >
+        {def.icon}
+      </div>
+
+      {/* Label / account name */}
+      <div className="flex-1 flex flex-col items-center justify-center w-full min-w-0">
+        {validConnection ? (
+          <>
+            <p
+              className="text-sm font-semibold truncate w-full"
+              data-testid={`text-account-${def.key}`}
+              title={status?.accountName ?? def.label}
+            >
+              {status?.accountName ?? def.label}
+            </p>
+            <Badge
+              variant="secondary"
+              className="mt-2 bg-white/20 text-white border-0 text-[10px] font-bold tracking-wide gap-1"
+              data-testid={`badge-${def.key}-status`}
+            >
+              <CheckCircle className="w-3 h-3" />
+              CONECTADO
+            </Badge>
+          </>
         ) : (
-          <div className="space-y-3">
-            {connected && isExpired && (
-              <p className="text-xs text-amber-500 flex items-center gap-1.5">
-                <AlertCircle className="w-3.5 h-3.5" />
-                Token expirado. Reconecte para continuar usando.
+          <>
+            <p className="text-sm font-medium mt-1">{def.label}</p>
+            {needsReconnect && (
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> Reconexão necessária
               </p>
             )}
-            <Button
-              size="sm"
-              className="w-full font-medium"
-              onClick={handleConnect}
-            >
-              <LogIn className="w-4 h-4 mr-2" />
-              Conectar com {label}
-            </Button>
-          </div>
+            {connected && isExpired && (
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3 h-3" /> Token expirado
+              </p>
+            )}
+          </>
         )}
-      </CardContent>
+      </div>
+
+      {/* Action button */}
+      {!validConnection && (
+        <Button
+          size="sm"
+          className="mt-3 w-full font-semibold"
+          onClick={handleConnect}
+          disabled={busy === "connect"}
+          data-testid={`button-connect-${def.key}`}
+        >
+          {busy === "connect" ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : needsReconnect || isExpired ? (
+            "Reconectar"
+          ) : (
+            "Conectar"
+          )}
+        </Button>
+      )}
+    </Card>
+  );
+}
+
+function ComingSoonCard({ def }: { def: ComingSoonDef }) {
+  return (
+    <Card
+      className="relative flex flex-col items-center text-center p-4 pt-5 min-h-[200px] bg-muted/20"
+      data-testid={`card-coming-soon-${def.key}`}
+    >
+      <TooltipProvider delayDuration={150}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="absolute top-2 left-2 rounded-full p-1 text-muted-foreground hover:text-foreground"
+              aria-label="Mais informações"
+            >
+              <Info className="w-3.5 h-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-[220px] text-xs">
+            {def.description}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <Badge
+        className="absolute top-2 right-2 bg-amber-400 text-amber-950 hover:bg-amber-400 border-0 text-[10px] font-bold px-1.5 py-0 h-4 gap-1"
+      >
+        <Sparkles className="w-2.5 h-2.5" /> EM BREVE
+      </Badge>
+
+      <div
+        className="w-12 h-12 rounded-full flex items-center justify-center mb-2"
+        style={{ backgroundColor: `${def.brandColor}15`, color: def.brandColor }}
+      >
+        {def.icon}
+      </div>
+
+      <div className="flex-1 flex flex-col items-center justify-center">
+        <p className="text-sm font-medium">{def.label}</p>
+      </div>
+
+      <Button
+        size="sm"
+        variant="outline"
+        className="mt-3 w-full font-medium"
+        disabled
+        data-testid={`button-coming-soon-${def.key}`}
+      >
+        Saiba mais
+      </Button>
     </Card>
   );
 }
@@ -267,6 +420,7 @@ export default function Connections() {
   const { toast } = useToast();
   const search = useSearch();
   const notifiedRef = useRef(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   useEffect(() => {
     if (notifiedRef.current) return;
@@ -305,33 +459,10 @@ export default function Connections() {
     queryClient.invalidateQueries({ queryKey: getGetAuthStatusQueryKey() });
   };
 
-  const platforms = [
-    {
-      platform: "youtube" as const,
-      label: "YouTube",
-      icon: <Youtube className="w-5 h-5 text-foreground" />,
-    },
-    {
-      platform: "instagram" as const,
-      label: "Instagram",
-      icon: <Instagram className="w-5 h-5 text-foreground" />,
-    },
-    {
-      platform: "facebook" as const,
-      label: "Facebook",
-      icon: <Facebook className="w-5 h-5 text-foreground" />,
-    },
-    {
-      platform: "tiktok" as const,
-      label: "TikTok",
-      icon: <Music className="w-5 h-5 text-foreground" />,
-    },
-    {
-      platform: "twitter" as const,
-      label: "X / Twitter",
-      icon: <Twitter className="w-5 h-5 text-foreground" />,
-    },
-  ];
+  const statusFor = (key: ConnectablePlatform): PlatformStatus | undefined => {
+    const map = authStatus as Record<string, PlatformStatus | undefined> | undefined;
+    return map?.[key];
+  };
 
   if (isLoading) {
     return (
@@ -342,9 +473,9 @@ export default function Connections() {
             Conecte suas redes sociais para começar a coletar métricas.
           </p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <Card key={i} className="h-56 animate-pulse bg-muted/40" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <Card key={i} className="h-[200px] animate-pulse bg-muted/40" />
           ))}
         </div>
       </div>
@@ -356,40 +487,45 @@ export default function Connections() {
       <div>
         <h2 className="text-lg font-semibold">Conexões de Plataformas</h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Conecte suas redes sociais via OAuth 2.0 para começar a coletar
-          métricas automaticamente.
+          Clique em "Conectar" para vincular sua conta via OAuth 2.0. As credenciais OAuth ficam pré-configuradas;
+          se quiser usar suas próprias, abra "Configuração avançada" no final da página.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-6">
-        {platforms.map(({ platform, label, icon }) => {
-          const status = (authStatus as Record<string, {
-            connected?: boolean;
-            accountName?: string;
-            connectedAt?: string;
-            expiresAt?: string | null;
-            needsReconnect?: boolean;
-            missingScopes?: string[];
-          } | undefined> | undefined)?.[platform];
-          return (
-            <PlatformCard
-              key={platform}
-              platform={platform}
-              label={label}
-              icon={icon}
-              connected={status?.connected ?? false}
-              accountName={status?.accountName}
-              connectedAt={status?.connectedAt as string | undefined}
-              expiresAt={status?.expiresAt as string | null | undefined}
-              needsReconnect={status?.needsReconnect}
-              missingScopes={status?.missingScopes}
-              onDisconnected={refresh}
-            />
-          );
-        })}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+        {CONNECTABLE_PLATFORMS.map((def) => (
+          <ConnectableCard
+            key={def.key}
+            def={def}
+            status={statusFor(def.key)}
+            onChanged={refresh}
+          />
+        ))}
+        {COMING_SOON_PLATFORMS.map((def) => (
+          <ComingSoonCard key={def.key} def={def} />
+        ))}
       </div>
 
-      <OAuthCredentialsSetup />
+      <div className="pt-4 border-t border-border/60">
+        <button
+          type="button"
+          onClick={() => setShowAdvanced((v) => !v)}
+          className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          data-testid="button-toggle-advanced"
+        >
+          {showAdvanced ? (
+            <ChevronUp className="w-4 h-4" />
+          ) : (
+            <ChevronDown className="w-4 h-4" />
+          )}
+          Configuração avançada — usar minhas próprias credenciais OAuth
+        </button>
+        {showAdvanced && (
+          <div className="mt-4 animate-in fade-in slide-in-from-top-2 duration-200">
+            <OAuthCredentialsSetup />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

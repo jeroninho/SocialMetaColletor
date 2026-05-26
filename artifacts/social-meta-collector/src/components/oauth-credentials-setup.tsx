@@ -29,11 +29,13 @@ import {
   Trash2,
   Loader2,
   ShieldCheck,
+  BarChart3,
+  AtSign,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { authFetch, getApiUrl } from "@/lib/api-url";
 
-type Platform = "youtube" | "instagram" | "facebook" | "tiktok" | "twitter";
+type Platform = "youtube" | "instagram" | "facebook" | "tiktok" | "twitter" | "ga4" | "threads";
 type Source = "db" | "env" | "none";
 
 interface CredEntry {
@@ -108,9 +110,29 @@ const PLATFORM_META: Record<Platform, {
     secretLabel: "Client Secret",
     helpText: "Em User authentication settings, ative OAuth 2.0, defina Type como Confidential client, e cole a URI abaixo em Callback URI.",
   },
+  ga4: {
+    label: "Google Analytics 4",
+    color: "#F9AB00",
+    icon: <BarChart3 className="w-5 h-5" style={{ color: "#F9AB00" }} />,
+    portalUrl: "https://console.cloud.google.com/apis/credentials",
+    portalName: "Google Cloud Console",
+    idLabel: "Client ID",
+    secretLabel: "Client Secret",
+    helpText: "Reusa o mesmo OAuth Client do YouTube. Habilite Google Analytics Admin API e Data API no projeto, adicione a URI abaixo em Authorized redirect URIs. Se já configurou o YouTube, deixe estes campos vazios.",
+  },
+  threads: {
+    label: "Threads",
+    color: "#000000",
+    icon: <AtSign className="w-5 h-5" />,
+    portalUrl: "https://developers.facebook.com/apps/",
+    portalName: "Meta for Developers",
+    idLabel: "Threads App ID",
+    secretLabel: "Threads App Secret",
+    helpText: "No painel Meta, adicione o produto Threads API (não confundir com Instagram). Configure Redirect Callback URLs com a URI abaixo, e copie o App ID e App Secret específicos do produto Threads.",
+  },
 };
 
-const PLATFORMS: Platform[] = ["youtube", "instagram", "facebook", "tiktok", "twitter"];
+const PLATFORMS: Platform[] = ["youtube", "instagram", "facebook", "tiktok", "twitter", "ga4", "threads"];
 
 function CopyableUrl({ url }: { url: string }) {
   const [copied, setCopied] = useState(false);

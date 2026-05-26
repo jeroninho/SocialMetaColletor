@@ -467,13 +467,27 @@ export const useConnectFacebook = <
  * @summary Disconnect a platform
  */
 export const getDisconnectPlatformUrl = (
-  platform: "youtube" | "instagram" | "facebook",
+  platform:
+    | "youtube"
+    | "instagram"
+    | "facebook"
+    | "tiktok"
+    | "twitter"
+    | "ga4"
+    | "threads",
 ) => {
   return `/api/auth/${platform}/disconnect`;
 };
 
 export const disconnectPlatform = async (
-  platform: "youtube" | "instagram" | "facebook",
+  platform:
+    | "youtube"
+    | "instagram"
+    | "facebook"
+    | "tiktok"
+    | "twitter"
+    | "ga4"
+    | "threads",
   options?: RequestInit,
 ): Promise<SuccessResponse> => {
   return customFetch<SuccessResponse>(getDisconnectPlatformUrl(platform), {
@@ -489,14 +503,32 @@ export const getDisconnectPlatformMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof disconnectPlatform>>,
     TError,
-    { platform: "youtube" | "instagram" | "facebook" },
+    {
+      platform:
+        | "youtube"
+        | "instagram"
+        | "facebook"
+        | "tiktok"
+        | "twitter"
+        | "ga4"
+        | "threads";
+    },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof disconnectPlatform>>,
   TError,
-  { platform: "youtube" | "instagram" | "facebook" },
+  {
+    platform:
+      | "youtube"
+      | "instagram"
+      | "facebook"
+      | "tiktok"
+      | "twitter"
+      | "ga4"
+      | "threads";
+  },
   TContext
 > => {
   const mutationKey = ["disconnectPlatform"];
@@ -510,7 +542,16 @@ export const getDisconnectPlatformMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof disconnectPlatform>>,
-    { platform: "youtube" | "instagram" | "facebook" }
+    {
+      platform:
+        | "youtube"
+        | "instagram"
+        | "facebook"
+        | "tiktok"
+        | "twitter"
+        | "ga4"
+        | "threads";
+    }
   > = (props) => {
     const { platform } = props ?? {};
 
@@ -536,14 +577,32 @@ export const useDisconnectPlatform = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof disconnectPlatform>>,
     TError,
-    { platform: "youtube" | "instagram" | "facebook" },
+    {
+      platform:
+        | "youtube"
+        | "instagram"
+        | "facebook"
+        | "tiktok"
+        | "twitter"
+        | "ga4"
+        | "threads";
+    },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof disconnectPlatform>>,
   TError,
-  { platform: "youtube" | "instagram" | "facebook" },
+  {
+    platform:
+      | "youtube"
+      | "instagram"
+      | "facebook"
+      | "tiktok"
+      | "twitter"
+      | "ga4"
+      | "threads";
+  },
   TContext
 > => {
   return useMutation(getDisconnectPlatformMutationOptions(options));

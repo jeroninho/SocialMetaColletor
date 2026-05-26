@@ -41,11 +41,19 @@ const ENV_MAP: Record<string, { idKey: string; secretKey: string }> = {
   facebook: { idKey: "FACEBOOK_CLIENT_ID", secretKey: "FACEBOOK_CLIENT_SECRET" },
   tiktok: { idKey: "TIKTOK_CLIENT_KEY", secretKey: "TIKTOK_CLIENT_SECRET" },
   twitter: { idKey: "TWITTER_CLIENT_ID", secretKey: "TWITTER_CLIENT_SECRET" },
+  ga4: { idKey: "YOUTUBE_CLIENT_ID", secretKey: "YOUTUBE_CLIENT_SECRET" },
+  threads: { idKey: "THREADS_CLIENT_ID", secretKey: "THREADS_CLIENT_SECRET" },
 };
 
 function safeDecrypt(s: string): string {
   try { return decryptToken(s); } catch { return s; }
 }
+
+// Platforms that reuse another platform's OAuth client when their own creds are missing.
+// GA4 shares the Google OAuth client with YouTube.
+const CREDS_FALLBACK_PLATFORM: Record<string, string> = {
+  ga4: "youtube",
+};
 
 async function getCreds(platform: string): Promise<{ clientId: string; clientSecret: string } | null> {
   try {
@@ -58,14 +66,34 @@ async function getCreds(platform: string): Promise<{ clientId: string; clientSec
       return { clientId: safeDecrypt(row.clientId), clientSecret: safeDecrypt(row.clientSecret) };
     }
   } catch {
-    // fall through to env
+    // fall through to env / sibling
   }
+
   const env = ENV_MAP[platform];
-  if (!env) return null;
-  const clientId = process.env[env.idKey];
-  const clientSecret = process.env[env.secretKey];
-  if (!clientId || !clientSecret) return null;
-  return { clientId, clientSecret };
+  if (env) {
+    const clientId = process.env[env.idKey];
+    const clientSecret = process.env[env.secretKey];
+    if (clientId && clientSecret) return { clientId, clientSecret };
+  }
+
+  // Last resort: check sibling platform's DB-stored creds (e.g. GA4 -> YouTube).
+  const sibling = CREDS_FALLBACK_PLATFORM[platform];
+  if (sibling) {
+    try {
+      const [row] = await db
+        .select()
+        .from(oauthCredentialsTable)
+        .where(eq(oauthCredentialsTable.platform, sibling))
+        .limit(1);
+      if (row) {
+        return { clientId: safeDecrypt(row.clientId), clientSecret: safeDecrypt(row.clientSecret) };
+      }
+    } catch {
+      // give up
+    }
+  }
+
+  return null;
 }
 
 async function isConfigured(platform: string): Promise<boolean> {
@@ -146,7 +174,7 @@ router.get("/auth/config", async (_req, res) => {
     `auth:config:${base}`,
     3600,
     async () => {
-      const platforms = ["youtube", "instagram", "facebook", "tiktok", "twitter"] as const;
+      const platforms = ["youtube", "instagram", "facebook", "tiktok", "twitter", "ga4", "threads"] as const;
       const entries = await Promise.all(
         platforms.map(async (p) => [p, {
           callbackUrl: `${base}/api/auth/${p}/callback`,
@@ -805,6 +833,257 @@ router.get("/auth/twitter/callback", async (req, res) => {
     cacheDelByPattern("comparator:"),
   ]);
   redirectToFrontend(res as never, "success", "twitter");
+});
+
+// ─── GOOGLE ANALYTICS 4 ─────────────────────────────────────────────────────
+
+router.get("/auth/ga4/connect", async (req, res) => {
+  const nonce = typeof req.query["nonce"] === "string" ? req.query["nonce"] : null;
+  const userId = nonce ? consumeConnectNonce(nonce) : null;
+  if (!userId) {
+    res.status(401).json({ error: "unauthorized", message: "A valid connect nonce is required." });
+    return;
+  }
+
+  const creds = await getCreds("ga4");
+  if (!creds) {
+    res.status(503).json({ error: "GA4 OAuth not configured. Add credentials in /connections." });
+    return;
+  }
+  const state = generateState("ga4", userId);
+  const redirectUri = getCallbackUrl("ga4");
+  const scopes = [
+    "https://www.googleapis.com/auth/analytics.readonly",
+    "https://www.googleapis.com/auth/userinfo.profile",
+  ];
+
+  const url = "https://accounts.google.com/o/oauth2/v2/auth"
+    + "?client_id=" + encodeURIComponent(creds.clientId)
+    + "&redirect_uri=" + encodeURIComponent(redirectUri)
+    + "&response_type=code"
+    + "&scope=" + encodeURIComponent(scopes.join(" "))
+    + "&state=" + encodeURIComponent(state)
+    + "&access_type=offline"
+    + "&prompt=consent";
+
+  res.redirect(url);
+});
+
+router.get("/auth/ga4/callback", async (req, res) => {
+  const { code, state, error } = req.query as Record<string, string>;
+
+  if (error || !code) {
+    redirectToFrontend(res as never, "error", "ga4", "Authorization denied by user.");
+    return;
+  }
+  const stateResult = state ? verifyState(state, "ga4") : { valid: false as const };
+  if (!stateResult.valid) {
+    redirectToFrontend(res as never, "error", "ga4", "Invalid or expired state. Please try again.");
+    return;
+  }
+
+  const creds = await getCreds("ga4");
+  if (!creds) {
+    redirectToFrontend(res as never, "error", "ga4", "OAuth credentials not configured.");
+    return;
+  }
+
+  let accessToken: string;
+  let refreshToken: string | undefined;
+  let expiresIn: number | undefined;
+  let grantedScope: string | undefined;
+
+  try {
+    const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        code,
+        client_id: creds.clientId,
+        client_secret: creds.clientSecret,
+        redirect_uri: getCallbackUrl("ga4"),
+        grant_type: "authorization_code",
+      }),
+    });
+    if (!tokenRes.ok) {
+      redirectToFrontend(res as never, "error", "ga4", "Failed to exchange code for token.");
+      return;
+    }
+    const tokenData = await tokenRes.json() as Record<string, unknown>;
+    accessToken = tokenData.access_token as string;
+    refreshToken = tokenData.refresh_token as string | undefined;
+    expiresIn = tokenData.expires_in as number | undefined;
+    grantedScope = tokenData.scope as string | undefined;
+  } catch {
+    redirectToFrontend(res as never, "error", "ga4", "Network error during token exchange.");
+    return;
+  }
+
+  let accountName = "Google Analytics 4";
+  try {
+    const summariesRes = await fetch(
+      "https://analyticsadmin.googleapis.com/v1beta/accountSummaries",
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    if (summariesRes.ok) {
+      const data = await summariesRes.json() as { accountSummaries?: Array<{ displayName?: string; propertySummaries?: Array<{ displayName?: string }> }> };
+      const first = data.accountSummaries?.[0];
+      const propName = first?.propertySummaries?.[0]?.displayName;
+      accountName = propName ?? first?.displayName ?? "Google Analytics 4";
+    }
+  } catch {
+    // use default
+  }
+
+  try {
+    const encryptedAccess = safeEncrypt(accessToken);
+    const encryptedRefresh = refreshToken ? safeEncrypt(refreshToken) : null;
+    const expiresAt = expiresIn ? new Date(Date.now() + expiresIn * 1000) : null;
+
+    await upsertToken({
+      platform: "ga4",
+      accountName,
+      accessToken: encryptedAccess,
+      refreshToken: encryptedRefresh,
+      expiresAt,
+      connected: true,
+      scope: grantedScope ?? null,
+    });
+  } catch (err) {
+    req.log.error({ err, platform: "ga4" }, "Failed to save OAuth token");
+    redirectToFrontend(res as never, "error", "ga4", "Failed to save token.");
+    return;
+  }
+
+  await Promise.all([
+    cacheDelByPattern("ga4:"),
+    cacheDelByPattern("dashboard:"),
+  ]);
+  redirectToFrontend(res as never, "success", "ga4");
+});
+
+// ─── THREADS ────────────────────────────────────────────────────────────────
+
+router.get("/auth/threads/connect", async (req, res) => {
+  const nonce = typeof req.query["nonce"] === "string" ? req.query["nonce"] : null;
+  const userId = nonce ? consumeConnectNonce(nonce) : null;
+  if (!userId) {
+    res.status(401).json({ error: "unauthorized", message: "A valid connect nonce is required." });
+    return;
+  }
+
+  const creds = await getCreds("threads");
+  if (!creds) {
+    res.status(503).json({ error: "Threads OAuth not configured. Add credentials in /connections." });
+    return;
+  }
+  const state = generateState("threads", userId);
+  const params = new URLSearchParams({
+    client_id: creds.clientId,
+    redirect_uri: getCallbackUrl("threads"),
+    response_type: "code",
+    scope: "threads_basic,threads_manage_insights",
+    state,
+  });
+  res.redirect(`https://threads.net/oauth/authorize?${params}`);
+});
+
+router.get("/auth/threads/callback", async (req, res) => {
+  const { code, state, error } = req.query as Record<string, string>;
+
+  if (error || !code) {
+    redirectToFrontend(res as never, "error", "threads", "Authorization denied by user.");
+    return;
+  }
+  const stateResult = state ? verifyState(state, "threads") : { valid: false as const };
+  if (!stateResult.valid) {
+    redirectToFrontend(res as never, "error", "threads", "Invalid or expired state. Please try again.");
+    return;
+  }
+
+  const creds = await getCreds("threads");
+  if (!creds) {
+    redirectToFrontend(res as never, "error", "threads", "OAuth credentials not configured.");
+    return;
+  }
+
+  let accessToken: string;
+  let expiresIn: number | undefined;
+  try {
+    const tokenRes = await fetch("https://graph.threads.net/oauth/access_token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        client_id: creds.clientId,
+        client_secret: creds.clientSecret,
+        grant_type: "authorization_code",
+        redirect_uri: getCallbackUrl("threads"),
+        code,
+      }),
+    });
+    if (!tokenRes.ok) {
+      redirectToFrontend(res as never, "error", "threads", "Failed to exchange code for token.");
+      return;
+    }
+    const tokenData = await tokenRes.json() as Record<string, unknown>;
+    accessToken = tokenData.access_token as string;
+    expiresIn = tokenData.expires_in as number | undefined;
+  } catch {
+    redirectToFrontend(res as never, "error", "threads", "Network error during token exchange.");
+    return;
+  }
+
+  // Try to exchange for long-lived token (60 days)
+  try {
+    const llRes = await fetch(
+      `https://graph.threads.net/access_token?grant_type=th_exchange_token&client_secret=${encodeURIComponent(creds.clientSecret)}&access_token=${encodeURIComponent(accessToken)}`
+    );
+    if (llRes.ok) {
+      const data = await llRes.json() as Record<string, unknown>;
+      accessToken = (data.access_token as string) ?? accessToken;
+      expiresIn = (data.expires_in as number) ?? expiresIn;
+    }
+  } catch {
+    // use short-lived token
+  }
+
+  let accountName = "Threads Account";
+  try {
+    const profileRes = await fetch(
+      `https://graph.threads.net/v1.0/me?fields=id,username,name&access_token=${encodeURIComponent(accessToken)}`
+    );
+    if (profileRes.ok) {
+      const profile = await profileRes.json() as Record<string, unknown>;
+      accountName = (profile.username as string) ?? (profile.name as string) ?? "Threads Account";
+    }
+  } catch {
+    // use default
+  }
+
+  try {
+    const encryptedAccess = safeEncrypt(accessToken);
+    const expiresAt = expiresIn ? new Date(Date.now() + expiresIn * 1000) : null;
+
+    await upsertToken({
+      platform: "threads",
+      accountName,
+      accessToken: encryptedAccess,
+      refreshToken: null,
+      expiresAt,
+      connected: true,
+      scope: "threads_basic,threads_manage_insights",
+    });
+  } catch (err) {
+    req.log.error({ err, platform: "threads" }, "Failed to save OAuth token");
+    redirectToFrontend(res as never, "error", "threads", "Failed to save token.");
+    return;
+  }
+
+  await Promise.all([
+    cacheDelByPattern("threads:"),
+    cacheDelByPattern("dashboard:"),
+  ]);
+  redirectToFrontend(res as never, "success", "threads");
 });
 
 export default router;

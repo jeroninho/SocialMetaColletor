@@ -8,7 +8,7 @@ import { cacheDelByPattern } from "../services/RedisClient.js";
 
 const router = Router();
 
-const SUPPORTED_PLATFORMS = ["youtube", "instagram", "facebook", "tiktok", "twitter"] as const;
+const SUPPORTED_PLATFORMS = ["youtube", "instagram", "facebook", "tiktok", "twitter", "ga4", "threads"] as const;
 type Platform = typeof SUPPORTED_PLATFORMS[number];
 
 const ENV_MAP: Record<Platform, { idKey: string; secretKey: string }> = {
@@ -17,6 +17,8 @@ const ENV_MAP: Record<Platform, { idKey: string; secretKey: string }> = {
   facebook: { idKey: "FACEBOOK_CLIENT_ID", secretKey: "FACEBOOK_CLIENT_SECRET" },
   tiktok: { idKey: "TIKTOK_CLIENT_KEY", secretKey: "TIKTOK_CLIENT_SECRET" },
   twitter: { idKey: "TWITTER_CLIENT_ID", secretKey: "TWITTER_CLIENT_SECRET" },
+  ga4: { idKey: "YOUTUBE_CLIENT_ID", secretKey: "YOUTUBE_CLIENT_SECRET" },
+  threads: { idKey: "THREADS_CLIENT_ID", secretKey: "THREADS_CLIENT_SECRET" },
 };
 
 function isSupported(p: string): p is Platform {
