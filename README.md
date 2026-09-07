@@ -159,6 +159,7 @@ Use o endpoint `GET /api/auth/config` para obter as URIs exatas com o domínio a
 | `DATABASE_URL` | Sim | URL de conexão PostgreSQL |
 | `JWT_SECRET` | Sim | Segredo de assinatura JWT (mín. 32 chars) |
 | `TOKEN_SECRET` | Sim | Chave AES-256-GCM em hex (64 chars = 32 bytes) |
+| `APP_BASE_URL` | Sim em produção | Origem pública da aplicação usada nos callbacks OAuth (ex: `https://app.example.com`) |
 | `YOUTUBE_CLIENT_ID` | Sim* | Client ID do Google OAuth 2.0 (YouTube) |
 | `YOUTUBE_CLIENT_SECRET` | Sim* | Client Secret do Google OAuth 2.0 (YouTube) |
 | `INSTAGRAM_CLIENT_ID` | Sim* | App ID do Meta (Instagram OAuth) |
@@ -211,15 +212,15 @@ cd social-meta-collector
 # 2. Instale dependências
 pnpm install
 
-# 3. Configure variáveis de ambiente
-#    Defina DATABASE_URL, JWT_SECRET, TOKEN_SECRET no painel de Secrets
+# 3. Configure variáveis de ambiente no shell ou em um arquivo .env não versionado
+#    Defina DATABASE_URL, JWT_SECRET, TOKEN_SECRET e APP_BASE_URL
 
 # 4. Crie as tabelas no banco
 pnpm --filter @workspace/db run push
 
 # 5. Inicie os serviços
 pnpm --filter @workspace/api-server run dev       # Backend :8080
-pnpm --filter @workspace/social-meta-collector run dev  # Frontend
+pnpm --filter @workspace/social-meta-collector run dev  # Frontend :5173
 ```
 
 ---

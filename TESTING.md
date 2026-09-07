@@ -55,15 +55,14 @@ backend and frontend before the suite runs:
 
 | Process | Command | Wait URL |
 | --- | --- | --- |
-| API server | `pnpm --filter @workspace/api-server run dev` (PORT=8080) | `http://localhost:80/api/healthz` |
-| Frontend (Vite) | `pnpm --filter @workspace/social-meta-collector run dev` (PORT=24982, BASE_PATH=/) | `http://localhost:80/` |
+| API server | `pnpm --filter @workspace/api-server run dev` (PORT=8080) | `http://127.0.0.1:8080/api/healthz` |
+| Frontend (Vite) | `pnpm --filter @workspace/social-meta-collector run dev` (PORT=5173, BASE_PATH=/) | `http://127.0.0.1:5173/` |
 
-Both wait URLs go through the platform's path-based proxy on `:80`, which is
-how the registered artifact services are normally reached. With
-`reuseExistingServer: true` (the default outside CI), Playwright will piggy-back
-on the workflows that the Replit workspace already keeps running — no extra
-processes are spawned. In CI (`CI=1`), Playwright owns the lifecycle and will
-fail fast if either service does not become healthy within 180 s.
+The frontend Vite server proxies `/api` to the backend using `API_PORT`
+(default `8080`). With `reuseExistingServer: true` (the default outside CI),
+Playwright reuses compatible local services when they are already running. In
+CI (`CI=1`), Playwright owns the lifecycle and fails if either service does not
+become healthy within 180 seconds.
 
 ### Targeting an already-running deployment
 
@@ -71,22 +70,16 @@ Set any of the following to skip the `webServer` block and point Playwright at
 an existing URL:
 
 ```bash
-# Live Replit preview (auto-detected when REPLIT_DEV_DOMAIN is set)
-pnpm --filter @workspace/playwright-e2e run test:remote
-
-# Arbitrary base URL (production smoke)
-PLAYWRIGHT_BASE_URL=https://example.com pnpm test:e2e
+# Existing deployment (production smoke)
+PLAYWRIGHT_BASE_URL=https://example.com pnpm --filter @workspace/playwright-e2e run test:remote
 
 # Force-skip the webServer even on localhost (e.g. you're running workflows by hand)
 PLAYWRIGHT_SKIP_WEBSERVER=1 pnpm test:e2e
 ```
 
-By default the Playwright suite targets `http://localhost:80` (the in-workspace
-proxy fronting the artifact services). To point it at any other URL —
-including the live Replit preview at `https://$REPLIT_DEV_DOMAIN` or a
-production domain — set `PLAYWRIGHT_BASE_URL` (the convenience
-`pnpm --filter @workspace/playwright-e2e run test:remote` script defaults it
-to `https://$REPLIT_DEV_DOMAIN`).
+By default the Playwright suite targets `http://127.0.0.1:5173`. To point it at
+another deployment, set `PLAYWRIGHT_BASE_URL`. If the API has a different
+origin, also set `PLAYWRIGHT_API_URL`.
 
 ### Continuous integration
 
