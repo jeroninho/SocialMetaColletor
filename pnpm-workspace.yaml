@@ -5,12 +5,15 @@ packages:
   - playwright
   - scripts
 
+allowBuilds:
+  bcrypt: set this to true or false
+  core-js: set this to true or false
+  esbuild: set this to true or false
+  msgpackr-extract: set this to true or false
+
 autoInstallPeers: false
 
 catalog:
-  '@replit/vite-plugin-cartographer': ^0.5.1
-  '@replit/vite-plugin-dev-banner': ^0.1.1
-  '@replit/vite-plugin-runtime-error-modal': ^0.0.6
   '@tailwindcss/vite': ^4.1.14
   '@tanstack/react-query': ^5.90.21
   '@types/node': 25.3.5
@@ -34,13 +37,14 @@ catalog:
 minimumReleaseAge: 1440
 
 minimumReleaseAgeExclude:
-  - '@replit/*'
-  - stripe-replit-sync
   - dompurify
 
 onlyBuiltDependencies:
   - '@swc/core'
+  - bcrypt
+  - core-js
   - esbuild
+  - msgpackr-extract
   - msw
   - unrs-resolver
 

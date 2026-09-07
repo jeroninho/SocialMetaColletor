@@ -17,7 +17,7 @@ export function makeTestUser(suffix: string | number = Date.now()): TestUser {
 
 interface Fixtures {
   testUser: TestUser;
-  /** Origin of the running app (e.g. https://<repl>.replit.dev or http://localhost:80). */
+  /** Origin of the running app (for example, http://localhost:5173). */
   appBaseUrl: string;
   /** Origin of the API server. By default the app base + /api. */
   apiBaseUrl: string;
@@ -26,7 +26,7 @@ interface Fixtures {
 
 function resolveAppBaseUrl(): string {
   if (process.env["PLAYWRIGHT_BASE_URL"]) return process.env["PLAYWRIGHT_BASE_URL"];
-  return "http://localhost:80";
+  return `http://127.0.0.1:${process.env["WEB_PORT"] ?? "5173"}`;
 }
 
 export const test = base.extend<Fixtures>({

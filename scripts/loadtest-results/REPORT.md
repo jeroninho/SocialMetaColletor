@@ -108,5 +108,5 @@ pnpm --filter @workspace/scripts run spiketest
 pnpm --filter @workspace/scripts run stresstest
 
 # Or against a different host:
-LOADTEST_BASE_URL=https://my-app.replit.app pnpm --filter @workspace/scripts run loadtest
+LOADTEST_BASE_URL=https://app.example.com pnpm --filter @workspace/scripts run loadtest
 ```

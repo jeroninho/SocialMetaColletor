@@ -55,8 +55,7 @@ That's by design:
   fresh namespace and tests cannot see each other's rows.
 - We avoid a heavyweight container or per-suite cluster startup, which
   would dominate the suite's runtime.
-- The DB user must have `CREATE` and `DROP` privileges on the database;
-  the default Replit Postgres user does.
+- The DB user must have `CREATE` and `DROP` privileges on the test database.
 
 If a future need calls for full server-level isolation (e.g. testing
 `pg_stat_statements`, replication, or extension installation), swap

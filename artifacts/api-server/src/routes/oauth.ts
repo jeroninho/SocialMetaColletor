@@ -130,9 +130,18 @@ function consumeConnectNonce(nonce: string): string | null {
 }
 
 function getBaseUrl(): string {
-  const domain = process.env.REPLIT_DEV_DOMAIN || process.env.REPLIT_DOMAINS;
-  if (!domain) return "http://localhost:3000";
-  return `https://${domain}`;
+  const configuredUrl = process.env.APP_BASE_URL?.trim();
+  if (!configuredUrl) return "http://localhost:5173";
+
+  try {
+    const url = new URL(configuredUrl);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      throw new Error("unsupported protocol");
+    }
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    throw new Error("APP_BASE_URL must be an absolute http(s) URL.");
+  }
 }
 
 function getCallbackUrl(platform: string): string {

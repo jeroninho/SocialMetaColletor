@@ -7,7 +7,7 @@
     "test": "playwright test --config=playwright.config.ts",
     "test:install": "playwright install --with-deps chromium",
     "test:install-browsers": "playwright install chromium",
-    "test:remote": "PLAYWRIGHT_BASE_URL=${PLAYWRIGHT_BASE_URL:-https://$REPLIT_DEV_DOMAIN} playwright test --config=playwright.config.ts"
+    "test:remote": "sh -c 'test -n \"$PLAYWRIGHT_BASE_URL\" || { echo \"PLAYWRIGHT_BASE_URL is required\" >&2; exit 1; }; playwright test --config=playwright.config.ts'"
   },
   "devDependencies": {
     "@playwright/test": "^1.50.1",
